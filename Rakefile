@@ -12,8 +12,8 @@ require 'rake'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "static-runner"
-  gem.homepage = "http://github.com/mwylde/static-runner"
+  gem.name = "slinky"
+  gem.homepage = "http://github.com/mwylde/slinky"
   gem.license = "MIT"
   gem.summary = %Q{Static file server for javascript apps}
   gem.description = %Q{A static file server for rich javascript apps that automatically compiles SASS, HAML, CoffeeScript and more}

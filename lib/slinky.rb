@@ -4,11 +4,11 @@ require 'eventmachine'
 require 'evma_httpserver'
 require 'uri'
 
-require "#{ROOT}/static-runner/em-popen3"
-require "#{ROOT}/static-runner/server"
-require "#{ROOT}/static-runner/runner"
+require "#{ROOT}/slinky/em-popen3"
+require "#{ROOT}/slinky/server"
+require "#{ROOT}/slinky/runner"
 
-Dir.glob("#{File.dirname(__FILE__)}/static-runner/compilers/*.rb").each{|compiler|
+Dir.glob("#{ROOT}/slinky/compilers/*.rb").each{|compiler|
 	begin
 		require compiler
 	rescue

@@ -1,4 +1,4 @@
-module StaticRunner
+module Slinky
   class Server < EventMachine::Connection
     include EM::HttpServer
 
