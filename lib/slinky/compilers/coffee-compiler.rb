@@ -5,8 +5,8 @@ module Slinky
     :outputs => ["js"]
     
     def CoffeeCompiler::command from, to
-      dir = to.split('/')[0..-2].join('/')
-      %Q?coffee --compile --output "#{dir}" "#{from}"?
+      root = File.dirname(__FILE__)
+      %Q?#{root}/coffee-helper "#{from}" "#{to}"?
     end
   end
 end
