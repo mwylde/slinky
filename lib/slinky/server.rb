@@ -22,7 +22,7 @@ module Slinky
     
     EXTENSION_REGEX = /(^[\w\d\:\/\.]*)\.(\w+)/
     def process_http_request
-      resp = EventMachine::DelegatedHttpResponse.new(self)
+      @resp = EventMachine::DelegatedHttpResponse.new(self)
 
       _, _, _, _, _, path, _, query  = URI.split @http_request_uri
       _, file, extension = path.match(EXTENSION_REGEX).to_a
@@ -42,24 +42,32 @@ module Slinky
           files_by_ext[ext] = f
         end
 
+        compiler = nil
+        input = nil
         compilers[extension].each do |c|
-          broken = false
           c[:inputs].each do |i|
             if files_by_ext[i]
-              compile files_by_ext[i], path[1..-1], c, resp
-              broken = true
+              compiler = c
+              input = files_by_ext[i]
               break
             end
           end
-          break if broken
+          break if compiler
+        end
+
+        if compiler
+          compile input, path[1..-1], compiler
+        else
+          puts "Trying to get compiled file, but no source"
+          serve_file path[1..-1]
         end
       else
         puts "Serving static file #{path}."
-        serve_file path[1..-1], resp
+        serve_file path[1..-1]
       end
     end
 
-    def compile from, to, compiler, resp
+    def compile from, to, compiler
       command = compiler[:klass].command from, to
 
       puts "Running command '#{command}'"
@@ -69,22 +77,23 @@ module Slinky
           $stderr.write "Failed on #{from}: #{stderr.strip}\n"
         else
           puts "Compiled #{from}"
-          serve_file to, resp
+          serve_file to
         end
       end
     end
-    
-    def serve_file path, resp
+
+    def serve_file path
       if File.exists? path
-        puts "File exists"
-        stream_file_data path, :http_chunks => true do
-          resp.status = 200
-          resp.send_response
+        puts "File exists: '#{path}'"
+
+        send_file_data path do
+          @resp.send_headers
+          @resp.send_trailer
         end
       else
-        resp.status = 404
-        resp.content = "File '#{path}' not found."
-        resp.send_response
+        @resp.status = 404
+        @resp.content = "File '#{path}' not found."
+        @resp.send_response
       end
     end
   end

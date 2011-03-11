@@ -4,7 +4,7 @@ module Slinky
       :inputs => ["sass", "scss"],
       :outputs => ["css"]
     
-    def Slinky::command from, to
+    def SassCompiler::command from, to
       %Q?sass "#{from}:#{to}"?
     end
   end
