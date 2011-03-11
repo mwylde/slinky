@@ -1,11 +1,11 @@
 module StaticRunner
-  class SassCompiler
-    Runner.register_compiler SassCompiler,
-      :handles => ["css"],
-      :extensions => ["sass", "scss"]
-
-    def compile file to
-      %Q?sass "#{file}:#{to}"?
+  module SassCompiler
+    Server.register_compiler self,
+      :inputs => ["sass", "scss"],
+      :outputs => ["css"]
+    
+    def SassCompiler::command from, to
+      %Q?sass "#{from}:#{to}"?
     end
   end
 end
