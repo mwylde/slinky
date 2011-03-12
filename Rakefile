@@ -19,9 +19,6 @@ Jeweler::Tasks.new do |gem|
   gem.description = %Q{A static file server for rich javascript apps that automatically compiles SASS, HAML, CoffeeScript and more}
   gem.email = "mwylde@wesleyan.edu"
   gem.authors = ["mwylde"]
-
-  gem.add_runtime_dependency 'eventmachine', '>= 0.12.10'
-  gem.add_runtime_dependency 'eventmachine_httpserver', '>= 0.2.1'
 end
 Jeweler::RubygemsDotOrgTasks.new
 
