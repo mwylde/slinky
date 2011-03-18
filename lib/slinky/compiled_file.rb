@@ -6,10 +6,11 @@ module Slinky
 
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
-    def initialize source, compiler
+    def initialize source, compiler, output_ext
       @source = source
       @compiler = compiler
       @last_compiled = Time.new(0)
+      @output_ext = output_ext
     end
 
     # Compiles the source file to a temporary location
@@ -45,12 +46,13 @@ module Slinky
     # Returns whether the source file has changed since it was last
     # compiled.
     def needs_update?
+      return true if @compiler.to_s.match "SassCompiler"
       File.new(source).mtime > @last_compiled
     end
 
     private
     def tmp_path
-      Tempfile.new("slinky").path
+      Tempfile.new("slinky").path + "." + @output_ext
     end
   end
 end

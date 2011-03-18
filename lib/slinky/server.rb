@@ -1,10 +1,17 @@
 module Slinky
+  CONTENT_TYPES = {
+    'html' => 'text/html',
+    'js' => 'application/x-javascript',
+    'css' => 'text/css'
+  }
+
+  EXTENSION_REGEX = /(.+)\.(\w+)/
+  
   class Server < EventMachine::Connection
     include EM::HttpServer
 
     @compilers = []
     @compilers_by_ext = {}
-
 
     @files = {}
 
@@ -27,7 +34,6 @@ module Slinky
       self.class.instance_variable_get(:@files)
     end
     
-    EXTENSION_REGEX = /(^[\w\d\:\/\.]*)\.(\w+)/
     def process_http_request
       @resp = EventMachine::DelegatedHttpResponse.new(self)
 
@@ -61,7 +67,7 @@ module Slinky
         compilers[extension].each do |c|
           c[:inputs].each do |i|
             if files_by_ext[i]
-              cfile = CompiledFile.new files_by_ext[i], c[:klass]
+              cfile = CompiledFile.new files_by_ext[i], c[:klass], extension
               files[path] = cfile
               break
             end
@@ -95,15 +101,25 @@ module Slinky
     def serve_file path
       if File.exists? path
         size = File.size? path
-        if true || size < EventMachine::FileStreamer::MappingThreshold
-          s = File.open(path).read
-          @resp.content = s
-          @resp.send_response
-        else
-          stream_file_data path do
-            @resp.send_headers
-            @resp.send_trailer
+        _, _, extension = path.match(EXTENSION_REGEX).to_a
+        @resp.content_type CONTENT_TYPES[extension]
+        # File reading code from rack/file.rb
+        range = 0..size-1
+        EM.defer do
+          File.open path do |file|
+            file.seek(range.begin)
+            remaining_len = range.end-range.begin+1
+            while remaining_len > 0
+              
+              part = file.read([8192, remaining_len].min)
+              break unless part
+              remaining_len -= part.length
+
+              @resp.chunk part
+              @resp.send_chunks
+            end
           end
+          @resp.send_trailer
         end
       else
         @resp.status = 404
