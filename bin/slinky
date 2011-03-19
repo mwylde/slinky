@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'slinky'
+require_relative '../lib/slinky'
 
 Slinky::Runner.run

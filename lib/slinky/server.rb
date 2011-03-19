@@ -99,8 +99,7 @@ module Slinky
     end
 
     def serve_file path
-      if File.exists? path
-        size = File.size? path
+      if File.exists?(path) && size = File.size?(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
         @resp.content_type CONTENT_TYPES[extension]
         # File reading code from rack/file.rb

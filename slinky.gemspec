@@ -27,10 +27,15 @@ Gem::Specification.new do |s|
     "VERSION",
     "bin/slinky",
     "lib/slinky.rb",
+    "lib/slinky/compiled_file.rb",
+    "lib/slinky/compilers/coffee-compiler.rb",
+    "lib/slinky/compilers/coffee-helper",
+    "lib/slinky/compilers/haml-compiler.rb",
     "lib/slinky/compilers/sass-compiler.rb",
     "lib/slinky/em-popen3.rb",
     "lib/slinky/runner.rb",
     "lib/slinky/server.rb",
+    "slinky.gemspec",
     "spec/slinky_spec.rb",
     "spec/spec_helper.rb"
   ]
