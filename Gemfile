@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
-gem "eventmachine"
-gem "eventmachine_httpserver"
+gem "eventmachine", ">= 0.12.0"
+gem "eventmachine_httpserver", ">= 0.2.0"
 
 group :development do
   gem "bacon", ">= 0"
