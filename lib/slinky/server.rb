@@ -101,7 +101,9 @@ module Slinky
     def serve_file path
       if File.exists?(path) && size = File.size?(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
-        @resp.content_type CONTENT_TYPES[extension]
+        if extension
+          @resp.content_type CONTENT_TYPES[extension[2]]
+        end
         # File reading code from rack/file.rb
         range = 0..size-1
         EM.defer do
