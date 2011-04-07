@@ -101,24 +101,18 @@ module Slinky
     def serve_file path
       if File.exists?(path) && size = File.size?(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
-        if extension
-          @resp.content_type CONTENT_TYPES[extension[2]]
-        end
+        @resp.content_type CONTENT_TYPES[extension]
         # File reading code from rack/file.rb
         range = 0..size-1
-        EM.defer do
-          File.open path do |file|
-            file.seek(range.begin)
-            remaining_len = range.end-range.begin+1
-            while remaining_len > 0
-              
-              part = file.read([8192, remaining_len].min)
-              break unless part
-              remaining_len -= part.length
-
-              @resp.chunk part
-              @resp.send_chunks
-            end
+        File.open path do |file|
+          file.seek(range.begin)
+          remaining_len = range.end-range.begin+1
+          while remaining_len > 0
+            part = file.read([8192, remaining_len].min)
+            break unless part
+            remaining_len -= part.length
+            @resp.chunk part
+            @resp.send_chunks
           end
           @resp.send_trailer
         end
