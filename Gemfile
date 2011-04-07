@@ -2,6 +2,7 @@ source "http://rubygems.org"
 
 gem "eventmachine", ">= 0.12.0"
 gem "eventmachine_httpserver", ">= 0.2.0"
+gem "rainbow", ">= 1.1.1"
 
 group :development do
   gem "bacon", ">= 0"

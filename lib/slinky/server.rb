@@ -103,19 +103,16 @@ module Slinky
         _, _, extension = path.match(EXTENSION_REGEX).to_a
         @resp.content_type CONTENT_TYPES[extension]
         # File reading code from rack/file.rb
-        range = 0..size-1
         File.open path do |file|
-          file.seek(range.begin)
-          remaining_len = range.end-range.begin+1
-          while remaining_len > 0
-            part = file.read([8192, remaining_len].min)
+          @resp.content = ""
+          while size > 0
+            part = file.read([8192, size].min)
             break unless part
-            remaining_len -= part.length
-            @resp.chunk part
-            @resp.send_chunks
+            size -= part.length
+            @resp.content << part
           end
-          @resp.send_trailer
         end
+        @resp.send_response
       else
         @resp.status = 404
         @resp.content = "File '#{path}' not found."

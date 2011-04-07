@@ -19,14 +19,12 @@ module Slinky
 
       command = @compiler.command @source, path
 
-      puts "Running command '#{command}'"
-
       EM.system3 command do |stdout, stderr, status|
         @last_compiled = Time.now
         if status.exitstatus != 0
-          $stderr.write "Failed on #{@source}: #{stderr.strip}\n"
+          $stderr.write "Failed on #{@source}: #{stderr.strip}\n".foreground(:red)
         else
-          puts "Compiled #{@source}"
+          puts "Compiled #{@source}".foreground(:green)
           @path = path
         end
         cb.call(@path, status, stdout, stderr)
