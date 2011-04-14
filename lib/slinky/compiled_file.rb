@@ -16,19 +16,48 @@ module Slinky
     # Compiles the source file to a temporary location
     def compile &cb
       path = @path || tmp_path
+      @last_compiled = Time.now
+      if @compiler.respond_to? :compile
+        compiler_compile path, cb
+      else
+        compiler_command path, cb
+      end
+    end
 
+    def compiler_compile path, cb
+      begin
+        out = @compiler.compile @source
+        compile_succeeded
+        @path = path
+        File.open(path, "w+") do |f|
+          f.write out
+        end
+      rescue
+        compile_failed $!
+      end
+      cb.call @path, nil, nil, $! 
+    end
+
+    def command path, cb
       command = @compiler.command @source, path
 
       EM.system3 command do |stdout, stderr, status|
-        @last_compiled = Time.now
         if status.exitstatus != 0
-          $stderr.write "Failed on #{@source}: #{stderr.strip}\n".foreground(:red)
+          compile_failed stderr.strip
         else
-          puts "Compiled #{@source}".foreground(:green)
+          compile_succeeded
           @path = path
         end
         cb.call(@path, status, stdout, stderr)
       end
+    end
+
+    def compile_succeeded
+      puts "Compiled #{@source}".foreground(:green)
+    end
+
+    def compile_failed e
+      $stderr.write "Failed on #{@source}: #{e}\n".foreground(:red)
     end
 
     # Calls the supplied callback with the path of the compiled file,

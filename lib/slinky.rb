@@ -5,6 +5,7 @@ require 'evma_httpserver'
 require 'uri'
 require 'tempfile'
 require 'rainbow'
+require 'rbtrace'
 
 require "#{ROOT}/slinky/em-popen3"
 require "#{ROOT}/slinky/compiled_file"
