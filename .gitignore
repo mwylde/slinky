@@ -10,6 +10,7 @@ doc
 
 # bundler
 .bundle
+rake
 
 # jeweler generated
 pkg
