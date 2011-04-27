@@ -1,12 +1,14 @@
+require 'pathname'
+
 module Slinky
   class Manifest
     attr_accessor :manifest_dir
-    def self.build dir
+    def self.construct dir
       md = build_rec dir
       Manifest.new md
     end
 
-    def self.build_rec dir
+    def self.construct_rec dir
       md = ManifestDir.new dir
       Dir.glob("#{dir}/*").each do |path|
         if File.new(path).directory?
@@ -33,6 +35,17 @@ module Slinky
     def initialize manifest_dir
       @manifest_dir = manifest_dir
     end
+
+    def build build_dir
+      p = Pathname.new(build_dir)
+      @manifest_dir.files.each{|mf|
+        path = (p + File.basename(mf.source_path)).realpath
+        mf.build path
+      }
+      @manifest_dir.children.each{|c|
+        c.build (p + File.basename(c.path)).realpath
+      }
+    end
   end
 
   class ManifestDir
@@ -46,21 +59,28 @@ module Slinky
 
   module Slinky
     class ManifestFile
-      BUILD_DIRECTIVES = /^\s*(slinky_require)\s+(".+"|'.+')\s*$/
+      BUILD_DIRECTIVES = /^\s*(slinky_require)\s+(".+"|'.+')\s*\n/
       
       attr_accessor :source_path, :last_built, :build_path, :build_tasks
 
-      def initialize source, build_tasks = [], build_path = nil
+      def initialize source
         @source = source
-        @build_path = build_path || source
         @last_built = Time.new(0)
-        @build_tasks = build_tasks
         @directives = File.open @source do |f|
           f.read.scan(BUILD_DIRECTIVES).collect{|x|
             [x[0], x[1][1..-2]]
           }
         end
       end
+
+      def build path
+        File.open @source do |rf|
+          File.open path, "w+" do |wf|
+            wf.write rf.read.gsub(BUILD_DIRECTIVES, "")
+          end
+        end
+      end
+      
     end
   end
 end

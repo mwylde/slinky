@@ -7,29 +7,71 @@ module Slinky
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
     def initialize source, compiler, output_ext
-      super source, [{:type => :compile, :compiler => :compiler, :output_ext => output_ext}]
+      super source
       @source = source
       @compiler = compiler
       @last_compiled = Time.new(0)
       @output_ext = output_ext
     end
 
+    def build path
+      compiler_compile path, EM::DefaultDeferrable
+    end
+
     # Compiles the source file to a temporary location
     def compile &cb
       path = @path || tmp_path
-
-      command = @compiler.command @source, path
-
-      EM.system3 command do |stdout, stderr, status|
-        @last_compiled = Time.now
-        if status.exitstatus != 0
-          $stderr.write "Failed on #{@source}: #{stderr.strip}\n".foreground(:red)
-        else
-          puts "Compiled #{@source}".foreground(:green)
-          @path = path
-        end
-        cb.call(@path, status, stdout, stderr)
+      @last_compiled = Time.now
+      if @compiler.respond_to? :compile
+        compiler_compile path, cb
+      else
+        compile_failed "invalid compiler"
+        cb.call @path, nil, nil, "invalid compiler"
+        # compiler_command path, cb
       end
+    end
+
+    def compiler_compile path, cb
+      begin
+        out = File.open @source do |f|
+          s = f.read.gsub(BUILD_DIRECTIVES, "")
+          out = @compiler.compile s @source
+        end
+        
+        compile_succeeded
+        @path = path
+        File.open(path, "w+") do |f|
+          f.write out
+        end
+      rescue
+        compile_failed $!
+      end
+      cb.call @path, nil, nil, $! 
+    end
+
+    # def compiler_command path, cb
+    #   #NOTE: This currently won't strip out compiler directives, so
+    #   #use at own risk. Ideally all compilers would have ruby version
+    #   #so we don't have to use this
+    #   command = @compiler.command @source, path
+
+    #   EM.system3 command do |stdout, stderr, status|
+    #     if status.exitstatus != 0
+    #       compile_failed stderr.strip
+    #     else
+    #       compile_succeeded
+    #       @path = path
+    #     end
+    #     cb.call(@path, status, stdout, stderr)
+    #   end
+    # end
+
+    def compile_succeeded
+      puts "Compiled #{@source}".foreground(:green)
+    end
+
+    def compile_failed e
+      $stderr.write "Failed on #{@source}: #{e}\n".foreground(:red)
     end
 
     # Calls the supplied callback with the path of the compiled file,

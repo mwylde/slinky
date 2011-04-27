@@ -1,12 +1,13 @@
+require 'coffee-script'
+
 module Slinky
   module CoffeeCompiler
     Server.register_compiler self,
     :inputs => ["coffee"],
     :outputs => ["js"]
-    
-    def CoffeeCompiler::command from, to
-      root = File.dirname(__FILE__)
-      %Q?#{root}/coffee-helper "#{from}" "#{to}"?
+
+    def CoffeeCompiler::compile s, file
+      CoffeeScript::compile(s)
     end
   end
 end
