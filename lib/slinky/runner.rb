@@ -1,6 +1,5 @@
 module Slinky
   class Runner
-
     COMMANDS = %w{start build}
         
     def initialize argv

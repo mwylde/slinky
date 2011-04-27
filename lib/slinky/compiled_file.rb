@@ -7,6 +7,7 @@ module Slinky
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
     def initialize source, compiler, output_ext
+      super source, [{:type => :compile, :compiler => :compiler, :output_ext => output_ext}]
       @source = source
       @compiler = compiler
       @last_compiled = Time.new(0)

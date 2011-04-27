@@ -46,7 +46,7 @@ module Slinky
 
   module Slinky
     class ManifestFile
-      BUILD_DIRECTIVES = {:require => /slinky_require '(.+?)'/}
+      BUILD_DIRECTIVES = /^\s*(slinky_require)\s+(".+"|'.+')\s*$/
       
       attr_accessor :source_path, :last_built, :build_path, :build_tasks
 
@@ -54,10 +54,11 @@ module Slinky
         @source = source
         @build_path = build_path || source
         @last_built = Time.new(0)
-        @build_tasks = []
-        @directives = []
-        File.open @source do |f|
-          f.read.scan 
+        @build_tasks = build_tasks
+        @directives = File.open @source do |f|
+          f.read.scan(BUILD_DIRECTIVES).collect{|x|
+            [x[0], x[1][1..-2]]
+          }
         end
       end
     end
