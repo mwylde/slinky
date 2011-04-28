@@ -62,7 +62,7 @@ module Slinky
         end
 
         cfile = nil
-        # find a compiler that outputs the request kind of file and
+        # find a compiler that outputs the requested kind of file and
         # which has an input file type that exists on the file system
         compilers[extension].each do |c|
           c[:inputs].each do |i|

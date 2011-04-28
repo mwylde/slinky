@@ -4,6 +4,10 @@ module Slinky
   class CompiledFile < ManifestFile
     attr_reader :source, :last_compiled
 
+    def self.compiler_for_file?
+      
+    end
+    
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
     def initialize source, compiler, output_ext

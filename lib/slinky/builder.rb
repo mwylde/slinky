@@ -1,16 +1,8 @@
 module Slinky
   class Builder
-    def initialize dir
-      @dir = dir
-    end
-
-    def build
-      manifest = Manifest.build(@dir)
-      manifest.files.each do |file|
-        File.open(file) do
-          
-        end
-      end
+    def self.build dir, build_dir
+      manifest = Manifest.new(dir)
+      manifest.build build_dir
     end
   end
 end

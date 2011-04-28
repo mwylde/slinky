@@ -42,7 +42,7 @@ module Slinky
     end
 
     def command_build
-      Builder.new(@options[:build_dir]).build
+      Builder.build(".", @options[:build_dir])
     end
   end
 end
