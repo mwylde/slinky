@@ -27,7 +27,8 @@ module Slinky
         return
       end
 
-      if cfile = cfile_for_file(path)
+      if cfile = Compilers.cfile_for_file(path)
+        files[path] = cfile
         serve_compiled_file cfile
       else
         serve_file path

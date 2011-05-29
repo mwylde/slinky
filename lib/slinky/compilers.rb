@@ -24,7 +24,7 @@ module Slinky
       def cfile_for_file path
         _, file, extension = path.match(EXTENSION_REGEX).to_a
 
-        compilers = self.class.compilers_by_ext
+        compilers = compilers_by_ext
 
         # if there's a file extension and we have a compiler that
         # outputs that kind of file, look for an input with the same
@@ -44,7 +44,6 @@ module Slinky
             c[:inputs].each do |i|
               if files_by_ext[i]
                 cfile = CompiledFile.new files_by_ext[i], c[:klass], extension
-                files[path] = cfile
                 break
               end
             end
