@@ -8,8 +8,8 @@ module Slinky
   class Manifest
     attr_accessor :manifest_dir
 
-    def initialize dir
-      @manifest_dir = ManifestDir.new dir
+    def initialize dir, build_dir
+      @manifest_dir = ManifestDir.new dir, build_dir
     end
 
     def files
@@ -24,67 +24,64 @@ module Slinky
       f
     end
 
-    def build build_dir
-      @manifest_dir.build build_dir
+    def build
+      @manifest_dir.build
     end
   end
 
   class ManifestDir
     attr_accessor :dir, :files, :children
-    def initialize dir
+    def initialize dir, build_dir
       @dir = dir
       @files = []
       @children = []
+      @build_dir = Pathname.new(build_dir)
 
       Dir.glob("#{dir}/*").each do |path|
+        next if path == build_dir
         if File.directory? path
-          @children << ManifestDir.new(path)
+          build_dir = (@build_dir + File.basename(path)).cleanpath
+          @children << ManifestDir.new(path, build_dir)
         else
-          mf = ManifestFile.new(path)
-          @files << ManifestFile.new(path)
+          build_path = (@build_dir + File.basename(path)).cleanpath
+          @files << ManifestFile.new(path, build_path)
         end
       end
     end
 
-    def build build_dir
-      p = Pathname.new(build_dir)
-      if !p.exist?
-        p.mkdir
+    def build
+      if !@build_dir.exist?
+        @build_dir.mkdir
       end
-      @files.each{|mf|
-        path = (p + File.basename(mf.source)).cleanpath
-        mf.build path
-      }
-      @children.each{|c|
-        path = (p + File.basename(c.dir)).cleanpath
-        c.build path
+      (@files + @children).each{|m|
+        m.build
       }
     end
   end
 
   class ManifestFile
-    attr_accessor :source_path, :build_path
-    attr_reader :last_built, :relative_dir
+    attr_accessor :source, :build_path
+    attr_reader :last_built
 
-    def initialize source, project_dir, build_tasks = []
+    def initialize source, build_path
       @source = File.realpath(source)
       @last_built = Time.new(0)
-      project_dir = File.realpath(project_dir)
-      @relative_dir =
-        File.dirname(@source.gsub(project_dir, ""))
 
-      @cfile = Compilers.cfile_for_file(source)
+      @cfile = Compilers.cfile_for_file(@source)
 
-      @directives = find_directives      
+      @directives = find_directives
+      @build_path = build_path
     end
 
-    def build dir
+    def build
       # mangle file appropriately
       path = @source
+      build_path = @build_path
       if @cfile
         @cfile.file do |cpath, _, _, _|
           path = cpath
         end
+        build_path = build_path.sub_ext @cfile.output_ext
       end
       if @directives
         File.open(path) do |f|
@@ -96,12 +93,13 @@ module Slinky
         end
       end
 
-      # copy built file to proper place in build tree
-      build_dir = File.realpath(dir) + @relative_dir
-      FileUtils.mkdir_p(build_dir)
       filename = File.basename(@source)
-      FileUtils.cp(path, build_dir + "/" + filename)
-      @last_built = Time.now
+      if path
+        FileUtils.cp(path, build_path)
+        @last_built = Time.now
+      else
+        exit
+      end
     end
 
     def find_directives
@@ -123,7 +121,7 @@ module Slinky
         end
       end
 
-      directives
+      directives && directives.size > 0 ? directives : nil
     end
   end
 end

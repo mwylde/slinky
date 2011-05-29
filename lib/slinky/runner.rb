@@ -43,6 +43,8 @@ module Slinky
     end
 
     def command_start
+      Signal.trap('INT') { puts "Slinky fading away ... "; exit(0); }
+
       EM::run {
         EM::start_server "0.0.0.0", @options[:port], Slinky::Server
         puts "Started static file server on port #{@options[:port]}"

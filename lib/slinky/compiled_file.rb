@@ -2,11 +2,7 @@ module Slinky
   # Stores information about compiled files, including location,
   # source file and last modified time
   class CompiledFile
-    attr_reader :source, :last_compiled
-
-    def self.compiler_for_file?
-      
-    end
+    attr_reader :source, :last_compiled, :output_ext
     
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
