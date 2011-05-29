@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{slinky}
-  s.version = "0.1.1"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["mwylde"]
-  s.date = %q{2011-03-28}
+  s.date = %q{2011-04-21}
   s.default_executable = %q{slinky}
   s.description = %q{A static file server for rich javascript apps that automatically compiles SASS, HAML, CoffeeScript and more}
   s.email = %q{mwylde@wesleyan.edu}
@@ -42,7 +42,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/mwylde/slinky}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.5.2}
+  s.rubygems_version = %q{1.6.2}
   s.summary = %q{Static file server for javascript apps}
   s.test_files = [
     "spec/slinky_spec.rb",
@@ -55,6 +55,9 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<eventmachine>, [">= 0.12.0"])
       s.add_runtime_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+      s.add_runtime_dependency(%q<rainbow>, [">= 1.1.1"])
+      s.add_runtime_dependency(%q<haml>, [">= 3.0.0"])
+      s.add_runtime_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_development_dependency(%q<bacon>, [">= 0"])
       s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
@@ -63,6 +66,9 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<eventmachine>, [">= 0.12.0"])
       s.add_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+      s.add_dependency(%q<rainbow>, [">= 1.1.1"])
+      s.add_dependency(%q<haml>, [">= 3.0.0"])
+      s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_dependency(%q<bacon>, [">= 0"])
       s.add_dependency(%q<yard>, ["~> 0.6.0"])
       s.add_dependency(%q<bundler>, ["~> 1.0.0"])
@@ -72,6 +78,9 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<eventmachine>, [">= 0.12.0"])
     s.add_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+    s.add_dependency(%q<rainbow>, [">= 1.1.1"])
+    s.add_dependency(%q<haml>, [">= 3.0.0"])
+    s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
     s.add_dependency(%q<bacon>, [">= 0"])
     s.add_dependency(%q<yard>, ["~> 0.6.0"])
     s.add_dependency(%q<bundler>, ["~> 1.0.0"])
