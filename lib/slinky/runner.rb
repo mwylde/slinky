@@ -15,10 +15,18 @@ module Slinky
       @arguments = @argv
     end
 
+    def version
+      root = File.expand_path(File.dirname(__FILE__))
+      File.open("#{root}/../../VERSION"){|f|
+        puts "slinky #{f.read.strip}"
+      }
+      exit
+    end
+
     def parser
       @parser ||= OptionParser.new do |opts|
         opts.banner = "Usage: slinky [options] #{COMMANDS.join('|')}"
-        
+        opts.on("-v", "--version", "Outputs current version number and exits"){ version }
         opts.on("-o DIR", "--build-dir DIR", "Directory to which the site will be built.", "Use in conjunction with the 'build' command."){|dir| @options[:build_dir] = File.expand_path(dir)}
         opts.on("-p PORT", "--port PORT", "Port to run on (default: #{@options[:port]})"){|p| @options[:port] = p.to_i}
       end
