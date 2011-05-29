@@ -2,15 +2,20 @@ module Slinky
   # Stores information about compiled files, including location,
   # source file and last modified time
   class CompiledFile
-    attr_reader :source, :last_compiled
-
+    attr_reader :source, :last_compiled, :output_ext
+    
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
     def initialize source, compiler, output_ext
+      super source
       @source = source
       @compiler = compiler
       @last_compiled = Time.new(0)
       @output_ext = output_ext
+    end
+
+    def build path
+      compiler_compile path, EM::DefaultDeferrable
     end
 
     # Compiles the source file to a temporary location
@@ -20,13 +25,19 @@ module Slinky
       if @compiler.respond_to? :compile
         compiler_compile path, cb
       else
-        compiler_command path, cb
+        compile_failed "invalid compiler"
+        cb.call @path, nil, nil, "invalid compiler"
+        # compiler_command path, cb
       end
     end
 
     def compiler_compile path, cb
       begin
-        out = @compiler.compile @source
+        out = File.open @source do |f|
+          s = f.read.gsub(BUILD_DIRECTIVES, "")
+          out = @compiler.compile s, @source
+        end
+        
         compile_succeeded
         @path = path
         File.open(path, "w+") do |f|
@@ -38,19 +49,22 @@ module Slinky
       cb.call @path, nil, nil, $! 
     end
 
-    def command path, cb
-      command = @compiler.command @source, path
+    # def compiler_command path, cb
+    #   #NOTE: This currently won't strip out compiler directives, so
+    #   #use at own risk. Ideally all compilers would have ruby version
+    #   #so we don't have to use this
+    #   command = @compiler.command @source, path
 
-      EM.system3 command do |stdout, stderr, status|
-        if status.exitstatus != 0
-          compile_failed stderr.strip
-        else
-          compile_succeeded
-          @path = path
-        end
-        cb.call(@path, status, stdout, stderr)
-      end
-    end
+    #   EM.system3 command do |stdout, stderr, status|
+    #     if status.exitstatus != 0
+    #       compile_failed stderr.strip
+    #     else
+    #       compile_succeeded
+    #       @path = path
+    #     end
+    #     cb.call(@path, status, stdout, stderr)
+    #   end
+    # end
 
     def compile_succeeded
       puts "Compiled #{@source}".foreground(:green)

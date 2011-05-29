@@ -2,12 +2,11 @@ require 'haml'
 
 module Slinky
   module HamlCompiler
-    Server.register_compiler self,
+    Compilers.register_compiler self,
     :inputs => ["haml"],
     :outputs => ["html"]
 
-    def HamlCompiler::compile file
-      s = File.read(file)
+    def HamlCompiler::compile s, file
       haml_engine = Haml::Engine.new(s)
       haml_engine.render
     end    

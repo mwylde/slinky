@@ -5,4 +5,4 @@ root = File.expand_path(File.dirname(__FILE__))
 #require "#{root}/../lib/slinky"
 require 'slinky'
 
-Slinky::Runner.run
+Slinky::Runner.new(ARGV).run
