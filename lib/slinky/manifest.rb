@@ -22,6 +22,7 @@ module Slinky
     def files
       files_rec @manifest_dir, []
     end
+    
     def files_rec md, f
       f += md.files
       md.children.each do |c|

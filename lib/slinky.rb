@@ -15,11 +15,11 @@ require "#{ROOT}/slinky/builder"
 
 # load compilers
 Dir.glob("#{ROOT}/slinky/compilers/*.rb").each{|compiler|
-	begin
-		require compiler
-	rescue
-		puts "Failed to load #{compiler}: #{$!}"
-	rescue LoadError
-		puts "Failed to load #{compiler}: syntax error"
-	end
+  begin
+    require compiler
+  rescue
+    puts "Failed to load #{compiler}: #{$!}"
+  rescue LoadError
+    puts "Failed to load #{compiler}: syntax error"
+  end
 }

@@ -10,25 +10,7 @@ module Slinky
   class Server < EventMachine::Connection
     include EM::HttpServer
 
-    @compilers = []
-    @compilers_by_ext = {}
-
     @files = {}
-
-    class << self
-      def register_compiler klass, options
-        options[:klass] = klass
-        @compilers << options
-        options[:outputs].each do |output|
-          @compilers_by_ext[output] ||= []
-          @compilers_by_ext[output] << options
-        end
-      end
-
-      def compilers_by_ext
-        @compilers_by_ext
-      end
-    end
 
     def files
       self.class.instance_variable_get(:@files)
@@ -41,7 +23,7 @@ module Slinky
       path = path[1..-1] #get rid of the leading /
       _, file, extension = path.match(EXTENSION_REGEX).to_a
 
-      compilers = self.class.compilers_by_ext
+      compilers = Compilers.compilers_by_ext
 
       # Check if we've already seen this file. If so, we can skip a
       # bunch of processing.

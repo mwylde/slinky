@@ -1,6 +1,6 @@
 module Slinky
   module HamlCompiler
-    Server.register_compiler self,
+    Compilers.register_compiler self,
     :inputs => ["haml"],
     :outputs => ["html"]
     

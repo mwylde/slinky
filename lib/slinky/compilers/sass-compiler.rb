@@ -1,6 +1,6 @@
 module Slinky
   module SassCompiler
-    Server.register_compiler self,
+    Compilers.register_compiler self,
       :inputs => ["sass", "scss"],
       :outputs => ["css"]
     
