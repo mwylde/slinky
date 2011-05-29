@@ -9,6 +9,7 @@ require 'optparse'
 
 require "#{ROOT}/slinky/em-popen3"
 require "#{ROOT}/slinky/compilers"
+require "#{ROOT}/slinky/manifest"
 require "#{ROOT}/slinky/compiled_file"
 require "#{ROOT}/slinky/server"
 require "#{ROOT}/slinky/runner"

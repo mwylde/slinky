@@ -6,8 +6,7 @@ module Slinky
     :inputs => ["haml"],
     :outputs => ["html"]
 
-    def HamlCompiler::compile file
-      s = File.read(file)
+    def HamlCompiler::compile s, file
       haml_engine = Haml::Engine.new(s)
       haml_engine.render
     end    

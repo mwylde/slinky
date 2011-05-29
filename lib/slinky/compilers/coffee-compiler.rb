@@ -6,8 +6,7 @@ module Slinky
     :inputs => ["coffee"],
     :outputs => ["js"]
 
-    def CoffeeCompiler::compile file
-      s = File.read(file)
+    def CoffeeCompiler::compile s, file
       CoffeeScript::compile(s)
     end
   end
