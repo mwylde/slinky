@@ -51,20 +51,6 @@ module Slinky
     # http://en.wikipedia.org/wiki/Topological_sorting for more
     # information.
     def dependency_list
-      # Algorithm (from wikipedia)
-      # L ← Empty list that will contain the sorted elements
-      # S ← Set of all nodes with no incoming edges
-      # while S is non-empty do
-      #   remove a node n from S
-      #   insert n into L
-      #   for each node m with an edge e from n to m do
-      #     remove edge e from the graph
-      #     if m has no other incoming edges then
-      #       insert m into S
-      #       if graph has edges then
-      #         output error message (graph has at least one cycle)
-      #       else 
-      #        output message (proposed topologically sorted order: L)
       build_dependency_graph unless @dependency_graph
       graph = @dependency_graph.clone
       # will contain sorted elements
@@ -74,18 +60,16 @@ module Slinky
       while s.size > 0
         n = s.delete s.first
         l << n
-        graph.delete_if{|e|
-          if e[1] == n
-            m = e[0]
-            s << m unless _graph.any{|e| e[1] == m}
-            true
-          else
-            false
-          end
+        @files.each{|m|
+          e = graph.find{|e| e[0] == n && e[1] == m}
+          next unless e
+          graph.delete e
+          s << m unless graph.any?{|e| e[1] == m}
         }
       end
       if graph != []
-        problems = graph.collect{|e| e[1].source}
+        puts l.collect{|x| x.source}.inspect
+        problems = graph.collect{|e| e.collect{|x| x.source}.join(":")}
         puts "Dependencies #{problems.join(",")} could not be satisfied".foreground(:red)
         exit
       end
