@@ -2,7 +2,9 @@ module Slinky
   # Stores information about compiled files, including location,
   # source file and last modified time
   class CompiledFile
-    attr_reader :source, :last_compiled, :output_ext
+    attr_accessor :source
+    attr_accessor :print_name
+    attr_reader :last_compiled, :output_ext
     
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
@@ -66,12 +68,16 @@ module Slinky
     #   end
     # end
 
+    def name
+      @print_name || @source
+    end
+
     def compile_succeeded
-      puts "Compiled #{@source}".foreground(:green)
+      puts "Compiled #{name}".foreground(:green)
     end
 
     def compile_failed e
-      $stderr.write "Failed on #{@source}: #{e}\n".foreground(:red)
+      $stderr.write "Failed on #{name}: #{e}\n".foreground(:red)
     end
 
     # Calls the supplied callback with the path of the compiled file,
