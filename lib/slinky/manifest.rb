@@ -4,14 +4,15 @@ require 'pathname'
 module Slinky
   # extensions of files that can contain build directives
   DIRECTIVE_FILES = %w{js css html haml sass scss coffee}
-  #BUILD_DIRECTIVES = /(slinky_require)\(\s*(['"])(.+)['"]\s*\)/
-  #BUILD_DIRECTIVES = /^\s*(slinky_require)\s+(".+"|'.+')\s*\n/
-  BUILD_DIRECTIVES = /(slinky_require|slinky_scripts|slinky_css)\((".*"|'.+'|)\)/
+  REQUIRE_DIRECTIVE = /^\W*(slinky_require)\((".*"|'.+'|)\)\W*$/
+  SCRIPTS_DIRECTIVE = /^\W*(slinky_scripts)\W*$/
+  STYLES_DIRECTIVE  = /^\W*(slinky_styles)\W*$/
+  BUILD_DIRECTIVES = Regexp.union(REQUIRE_DIRECTIVE, SCRIPTS_DIRECTIVE, STYLES_DIRECTIVE)
   
   class Manifest
     attr_accessor :manifest_dir
 
-    def initialize dir, build_dir
+    def initialize dir, build_dir = nil
       @manifest_dir = ManifestDir.new dir, build_dir
     end
 
@@ -26,6 +27,18 @@ module Slinky
       md.children.each do |c|
         files_rec c
       end
+    end
+
+    def scripts_string
+      if @devel
+        
+      else
+        '<script type="text/javscript" src="/scripts.js" />'
+      end
+    end
+
+    def styles_string
+      '<link rel="stylesheet" href="/styles.css" />'
     end
 
     def build_dependency_graph
@@ -116,7 +129,7 @@ module Slinky
     attr_accessor :source, :build_path
     attr_reader :last_built, :directives
 
-    def initialize source, build_path
+    def initialize source, build_path, options = {:devel => false}
       @source = source
       @last_built = Time.new(0)
 
@@ -124,6 +137,7 @@ module Slinky
 
       @directives = find_directives
       @build_path = build_path
+      @devel = true if options[:devel]
     end
 
     def build
@@ -133,7 +147,10 @@ module Slinky
 
       if @directives.size > 0
         File.open(path){|f|
-          out = f.read.gsub(BUILD_DIRECTIVES, "")
+          out = f.read
+          out.gsub!(REQUIRE_DIRECTIVE, "")
+          out.gsub!(SCRIPTS_DIRECTIVE, scripts_string)
+          out.gsub!(STYLES_DIRECTIVE, styles_string)
           path = Tempfile.new("slinky").path
           File.open(path, "w+"){|f|
             f.write(out)
@@ -171,9 +188,9 @@ module Slinky
           File.open(@source) {|f|
             matches = f.read.scan(BUILD_DIRECTIVES).to_a
             matches.each{|slice|
-              key, value = slice
+              key, value = slice[1..-1].compact
               directives[key.to_sym] ||= []
-              directives[key.to_sym] << value[1..-2]
+              directives[key.to_sym] << value[1]
             }
           } rescue nil
         end

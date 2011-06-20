@@ -10,6 +10,11 @@ module Slinky
 
     @files = {}
 
+    def initialize
+      super
+      @manifest = Manifest.new(".")
+    end
+    
     def files
       self.class.instance_variable_get(:@files)
     end
