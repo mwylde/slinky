@@ -1,16 +1,21 @@
-require 'rubygems'
-require 'bundler'
-begin
-  Bundler.setup(:default, :development)
-rescue Bundler::BundlerError => e
-  $stderr.puts e.message
-  $stderr.puts "Run `bundle install` to install missing gems"
-  exit e.status_code
-end
-require 'bacon'
-
-$LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'static-runner'
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+require 'rspec'
+require 'slinky'
 
-Bacon.summary_on_exit
+# Requires supporting files with custom matchers and macros, etc,
+# in ./support/ and its subdirectories.
+Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
+
+RSpec.configure do |config|
+  
+end
+
+def run_for secs
+  EM.run do
+    yield
+    EM.add_timer(secs) {
+      EM.stop_event_loop
+    }
+  end
+end
