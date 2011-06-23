@@ -31,7 +31,10 @@ module Slinky
 
     def scripts_string
       if @devel
-        
+        dependency_list.collect{|d|
+          # we take [1..-1] to eliminate the starting . in ./path/to/script.js
+          %Q\<script type="text/javascript" src="#{d.output_path[1..-1]}" />\
+        }.join("\n")
       else
         '<script type="text/javscript" src="/scripts.js" />'
       end
@@ -138,6 +141,14 @@ module Slinky
       @directives = find_directives
       @build_path = build_path
       @devel = true if options[:devel]
+    end
+
+    def output_path
+      if @cfile
+        Pathname.new(@source).sub_ext ".#{@cfile.output_ext}"
+      else
+        @source
+      end
     end
 
     def build
