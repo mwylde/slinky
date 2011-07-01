@@ -1,6 +1,7 @@
 # rcov generated
 coverage
-
+coverage.data
+lib/coverage.data
 # rdoc generated
 rdoc
 

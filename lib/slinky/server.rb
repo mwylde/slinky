@@ -10,9 +10,9 @@ module Slinky
 
     @files = {}
 
-    def initialize
+    def initialize dir = "."
       super
-      @manifest = Manifest.new(".")
+      @manifest = Manifest.new(dir)
     end
     
     def files

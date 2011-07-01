@@ -12,8 +12,9 @@ module Slinky
   class Manifest
     attr_accessor :manifest_dir
 
-    def initialize dir, build_dir = nil
-      @manifest_dir = ManifestDir.new dir, build_dir
+    def initialize dir, options = {:devel => true, :build_to => ""}
+      @manifest_dir = ManifestDir.new dir, options[:build_to]
+      @devel = options[:devel]
     end
 
     def files
@@ -33,7 +34,7 @@ module Slinky
       if @devel
         dependency_list.collect{|d|
           # we take [1..-1] to eliminate the starting . in ./path/to/script.js
-          %Q\<script type="text/javascript" src="#{d.output_path[1..-1]}" />\
+          %Q\<script type="text/javascript" src="#{d.output_path.to_s[1..-1]}" />\
         }.join("\n")
       else
         '<script type="text/javscript" src="/scripts.js" />'

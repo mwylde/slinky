@@ -22,16 +22,31 @@ Jeweler::Tasks.new do |gem|
 end
 Jeweler::RubygemsDotOrgTasks.new
 
+namespace :cover_me do
+  task :report do
+    require 'cover_me'
+    # CoverMe.config do |c|
+    #   # where is your project's root:
+    #   c.project.root = Dir.pwd
+      
+    #   # what files are you interested in coverage for:
+    #   c.file_pattern = /(#{CoverMe.config.project.root}\/lib\/.+\.rb)/i
+    # end
+    CoverMe.complete!
+  end
+end
+
+# task :spec do
+#   Rake::Task['cover_me:report'].invoke
+# end
+
 require 'rspec/core'
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.pattern = FileList['spec/**/*_spec.rb']
 end
 
-RSpec::Core::RakeTask.new(:rcov) do |spec|
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rcov = true
-end
+
 
 task :default => :spec
 

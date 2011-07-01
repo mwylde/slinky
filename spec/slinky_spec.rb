@@ -20,12 +20,48 @@ describe "Slinky" do
         Slinky::Runner.new(["start"]).run
       end
     end
+    
     it "should accept a port option" do
       port = 53453
       $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
       run_for 1 do
         Slinky::Runner.new(["start","--port", port.to_s]).run
       end
+    end
+  end
+
+  context "Manifest" do
+    before :all do
+      FakeFS.activate!
+      @mprod = Slinky::Manifest.new("/tmp", :devel => false, :build_to => "/build")
+      @mdevel = Slinky::Manifest.new("/tmp")
+      @md_prod = @mprod.manifest_dir
+      @md_devel = @mdevel.manifest_dir
+    end
+    after :all do
+      FakeFS.deactivate!
+    end
+    
+    it "should build manifest dir with all files in current dir" do
+      @md_prod.files.collect{|f| f.source}.should == ["/tmp/test.haml"]
+      @md_devel.files.collect{|f| f.source}.should == ["/tmp/test.haml"]
+    end
+
+    it "should build manifest with all files in fs" do
+      @mprod.files.collect{|f|
+        f.source
+      }.sort.should == @files.collect{|x| "/tmp/" + x}.sort
+      @mdevel.files.collect{|f|
+        f.source
+      }.sort.should == @files.collect{|x| "/tmp/" + x}.sort
+    end
+
+    it "should produce an appropriate scripts string for production" do
+      @mprod.scripts_string.should == '<script type="text/javscript" src="/scripts.js" />'
+    end
+
+    it "should produce an appropriate scripts string for devel" do
+
     end
   end
 end
