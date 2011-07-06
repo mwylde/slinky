@@ -61,7 +61,7 @@ describe "Slinky" do
     end
 
     it "should produce an appropriate scripts string for devel" do
-
+      # @mdevel.scripts_string.should == '<
     end
   end
 end

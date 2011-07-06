@@ -161,7 +161,7 @@ module Slinky
         File.open(path){|f|
           out = f.read
           out.gsub!(REQUIRE_DIRECTIVE, "")
-          out.gsub!(SCRIPTS_DIRECTIVE, scripts_string)
+          out.gsub!(SCRIPTS_DIRECTIVE, "@scripts")
           out.gsub!(STYLES_DIRECTIVE, styles_string)
           path = Tempfile.new("slinky").path
           File.open(path, "w+"){|f|
