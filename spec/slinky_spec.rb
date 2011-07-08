@@ -63,6 +63,41 @@ describe "Slinky" do
     it "should produce an appropriate scripts string for devel" do
       # @mdevel.scripts_string.should == '<
     end
+
+    it "should allow the creation of ManifestFiles" do
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "", @mprod)
+    end
+
+    it "should correctly determine output_path" do
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      mf.output_path.to_s.should == "/tmp/test.html"
+      mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
+      mf.output_path.to_s.should == "/tmp/l1/test.js"
+    end
+
+    it "should build tmp file without directives" do
+      original = "/tmp/test.haml"
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      path = mf.handle_directives
+      File.read(original).match(/slinky_scripts|slinky_styles/).should_not == nil
+      File.read(path).match(/slinky_scripts|slinky_styles/).should == nil
+    end
+
+    it "should compile files that need it" do
+      $stdout.should_receive(:puts).with("Compiled /tmp/test.haml".foreground(:green))
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      build_path = mf.process
+      build_path.to_s.split(".")[-1].should == "html"
+      File.read("/tmp/test.haml").match("<head>").should == nil
+      File.read(build_path).match("<head>").should_not == nil
+    end
+
+    it "should properly determine build directives" do
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      mf.find_directives.should == {:slinky_scripts => [], :slinky_styles => []}
+      mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
+      mf.find_directives.should == {:slinky_require => ["test2.js", "test3.js"]}
+    end
   end
 end
 

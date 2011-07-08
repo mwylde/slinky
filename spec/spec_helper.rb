@@ -36,14 +36,15 @@ eos
 
     File.open("l1/test.js", "w+"){|f|
       f.write <<eos
-
+slinky_require('test2.js')
+slinky_require("test3.js")
 eos
     }
 
     File.open("l1/l2/test.txt", "w+"){|f| f.write("hello\n") }
     File.open("l1/l2/l3/test2.txt", "w+"){|f| f.write("goodbye\n") }
 
-    @files = ["test.haml", "l1/test.sass", "l1/l2/test.txt", "l1/l2/l3/test2.txt"]
+    @files = ["test.haml", "l1/test.js", "l1/test.sass", "l1/l2/test.txt", "l1/l2/l3/test2.txt"]
     FakeFS.deactivate!
   end
 end

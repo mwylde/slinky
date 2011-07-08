@@ -15,7 +15,7 @@ module Slinky
     # document in such a way that after compilation the string will be
     # intact in the final output.
     def HamlCompiler::escape s
-      ":plain\n" + s
+      s
     end
   end
 end
