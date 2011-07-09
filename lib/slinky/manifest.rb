@@ -152,12 +152,12 @@ module Slinky
     # equal to the source path unless the file needs to be compiled,
     # in which case the extension returned is the output extension
     #
-    # @return String the output path
+    # @return Pathname the output path
     def output_path
       if @cfile
         Pathname.new(@source).sub_ext ".#{@cfile.output_ext}"
       else
-        @source
+        Pathname.new(@source)
       end
     end
 
@@ -209,41 +209,52 @@ module Slinky
     # Takes a path and compiles the file if necessary.
     # @return Pathname the path of the compiled file, or the original
     #   path if compiling is not necessary
-    def compile path
+    def compile path, to = nil
       if @cfile
         cfile = @cfile.clone
         cfile.source = path
         cfile.print_name = @source
+        cfile.output_path = to if to
         cfile.file do |cpath, _, _, _|
           path = cpath
         end
-        Pathname.new(path).sub_ext ".#{cfile.output_ext}"
-      else
-        Pathname.new(path)
       end
+      Pathname.new(path)
     end
 
     # Gets manifest file ready for serving or building by handling the
     # directives and compiling the file if neccesary.
+    # @param String path to which the file should be compiled
     #
     # @return String the path of the processed file, ready for serving
-    def process
+    def process to = nil
       # mangle file appropriately
       path = handle_directives
-      compile path      
+      compile path, to
+    end
+
+    # Path to which the file will be built
+    def build_to
+      Pathname.new(@build_path) + output_path.basename
     end
 
     # Builds the file by handling and compiling it and then copying it
     # to the build path
     def build
-      build_path = process
-      filename = File.basename(@source)
-      if path
-        FileUtils.cp(path, build_path)
-        @last_built = Time.now
-      else
-        raise BuildFailedError
+      if !File.exists? @build_path
+        FileUtils.mkdir_p(@build_path)
       end
+      to = build_to
+      path = process to
+      
+      if !path
+        raise BuildFailedError
+      elsif path != to
+        FileUtils.cp(path, to)
+        @last_built = Time.now
+      end
+
+      to
     end
   end
 end

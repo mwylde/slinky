@@ -2,8 +2,7 @@ module Slinky
   # Stores information about compiled files, including location,
   # source file and last modified time
   class CompiledFile
-    attr_accessor :source
-    attr_accessor :print_name
+    attr_accessor :source, :print_name, :output_path
     attr_reader :last_compiled, :output_ext
     
     # Creates a new CompiledFile, compiling the provided source file
@@ -22,13 +21,13 @@ module Slinky
 
     # Compiles the source file to a temporary location
     def compile &cb
-      path = @path || tmp_path
+      path = @output_path || tmp_path
       @last_compiled = Time.now
       if @compiler.respond_to? :compile
         compiler_compile path, cb
       else
         compile_failed "invalid compiler"
-        cb.call @path, nil, nil, "invalid compiler"
+        cb.call @output_path, nil, nil, "invalid compiler"
         # compiler_command path, cb
       end
     end
@@ -41,14 +40,14 @@ module Slinky
         end
         
         compile_succeeded
-        @path = path
+        @output_path = path
         File.open(path, "w+") do |f|
           f.write out
         end
       rescue
         compile_failed $!
       end
-      cb.call @path, nil, nil, $! 
+      cb.call @output_path, nil, nil, $! 
     end
 
     # def compiler_command path, cb
@@ -62,9 +61,9 @@ module Slinky
     #       compile_failed stderr.strip
     #     else
     #       compile_succeeded
-    #       @path = path
+    #       @output_path = path
     #     end
-    #     cb.call(@path, status, stdout, stderr)
+    #     cb.call(@output_path, status, stdout, stderr)
     #   end
     # end
 
@@ -86,7 +85,7 @@ module Slinky
       if needs_update?
         compile &cb
       else
-        cb.call @path, nil, nil, nil
+        cb.call @output_path, nil, nil, nil
       end
     end
 

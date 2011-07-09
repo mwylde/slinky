@@ -9,37 +9,18 @@ describe "Slinky" do
 
     it "should output a version" do
       $stdout.should_receive(:puts).with(/slinky \d+\.\d+\.\d+/)
-      lambda { ::Slinky::Runner.new(["--version"]).run }.should raise_error SystemExit      
-    end
-  end
-
-  context "Server" do
-    it "should start when passed 'start'" do
-      $stdout.should_receive(:puts).with(/Started static file server on port 5323/)
-      run_for 1 do
-        Slinky::Runner.new(["start"]).run
-      end
-    end
-    
-    it "should accept a port option" do
-      port = 53453
-      $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
-      run_for 1 do
-        Slinky::Runner.new(["start","--port", port.to_s]).run
-      end
+      FakeFS.deactivate!
+      lambda { ::Slinky::Runner.new(["--version"]).run }.should raise_error SystemExit
+      FakeFS.activate!
     end
   end
 
   context "Manifest" do
-    before :all do
-      FakeFS.activate!
+    before :each do
       @mprod = Slinky::Manifest.new("/tmp", :devel => false, :build_to => "/build")
       @mdevel = Slinky::Manifest.new("/tmp")
       @md_prod = @mprod.manifest_dir
       @md_devel = @mdevel.manifest_dir
-    end
-    after :all do
-      FakeFS.deactivate!
     end
     
     it "should build manifest dir with all files in current dir" do
@@ -90,6 +71,11 @@ describe "Slinky" do
       build_path.to_s.split(".")[-1].should == "html"
       File.read("/tmp/test.haml").match("<head>").should == nil
       File.read(build_path).match("<head>").should_not == nil
+
+      $stdout.should_receive(:puts).with("Compiled /tmp/test.haml".foreground(:green))
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      build_path = mf.process "/tmp/build/test.html"
+      File.read("/tmp/build/test.html").match("<head>").should_not == nil
     end
 
     it "should properly determine build directives" do
@@ -97,6 +83,45 @@ describe "Slinky" do
       mf.find_directives.should == {:slinky_scripts => [], :slinky_styles => []}
       mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
       mf.find_directives.should == {:slinky_require => ["test2.js", "test3.js"]}
+    end
+
+    it "should properly determine build_to path" do
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      mf.build_to.should == Pathname.new("/tmp/build/test.html")
+      mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
+      mf.build_to.should == Pathname.new("/tmp/build/test.js")
+    end
+
+    it "should build both compiled files and non-compiled files" do
+      $stdout.should_receive(:puts).with("Compiled /tmp/test.haml".foreground(:green))
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      path = mf.build
+      path.to_s.should == "/tmp/build/test.html"
+      File.read("/tmp/test.haml").match("<head>").should == nil
+      File.read(path).match("<head>").should_not == nil
+
+      $stdout.should_not_receive(:puts)
+      mf = Slinky::ManifestFile.new("/tmp/l1/l2/test.txt", "/tmp/build/l1/l2", @mprod)
+      path = mf.build
+      path.to_s.should == "/tmp/build/l1/l2/test.txt"
+      File.read("/tmp/build/l1/l2/test.txt").should == "hello\n"
+    end
+  end
+
+  context "Server" do
+    it "should start when passed 'start'" do
+      $stdout.should_receive(:puts).with(/Started static file server on port 5323/)
+      run_for 1 do
+        Slinky::Runner.new(["start"]).run
+      end
+    end
+    
+    it "should accept a port option" do
+      port = 53453
+      $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
+      run_for 1 do
+        Slinky::Runner.new(["start","--port", port.to_s]).run
+      end
     end
   end
 end
