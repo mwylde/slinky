@@ -8,22 +8,26 @@ module Slinky
   class Server < EventMachine::Connection
     include EM::HttpServer
 
-    @files = {}
-
+    # Creates a new Slinky::Server
+    #
+    # @param String dir The directory from which files will be served
     def initialize dir = "."
       super
       @manifest = Manifest.new(dir)
     end
-    
-    def files
-      self.class.instance_variable_get(:@files)
-    end
-    
-    def process_http_request
-      @resp = EventMachine::DelegatedHttpResponse.new(self)
 
-      _, _, _, _, _, path, _, query  = URI.split @http_request_uri
-      path = path[1..-1] #get rid of the leading /
+    # Splits a uri into its components, returning only the path sans
+    # initial forward slash.
+    def self.path_for_uri uri
+      _, _, _, _, _, path, _, _  = URI.split uri
+      path[1..-1] #get rid of the leading /
+    end
+
+
+    # Method called for every HTTP request made 
+    def process_http_request
+      path = Server.path_for_uri(@http_request_uri)
+      @resp = EventMachine::DelegatedHttpResponse.new(self)
 
       # Check if we've already seen this file. If so, we can skip a
       # bunch of processing.

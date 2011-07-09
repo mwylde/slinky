@@ -17,19 +17,26 @@ module Slinky
       @devel = options[:devel]
     end
 
+    # Returns a list of all files contained in this manifest
+    #
+    # @return [ManifestFile] a list of manifest files
     def files
       @files = []
       files_rec @manifest_dir
       @files
     end
     
-    def files_rec md
-      @files += md.files
-      md.children.each do |c|
-        files_rec c
-      end
-    end
 
+    # Finds the file at the given path in the manifest if one exists,
+    # otherwise nil.
+    #
+    # @param String path the path of the file relative to the manifest
+    #
+    # @return ManifestFile the manifest file at that path if one exists
+    def find_by_path path
+      @manifest_dir.find_by_path path
+    end
+    
     def scripts_string
       if @devel
         dependency_list.collect{|d|
@@ -45,6 +52,12 @@ module Slinky
       '<link rel="stylesheet" href="/styles.css" />'
     end
 
+    # Builds the directed graph representing the dependencies of all
+    # files in the manifest that contain a slinky_require
+    # declaration. The graph is represented as a list of pairs (from,
+    # to), each of which describes an edge.
+    #
+    # @return [[ManifestFile, ManifestFile]]
     def build_dependency_graph
       graph = []
       files.each{|mf|
@@ -52,7 +65,6 @@ module Slinky
           pf = Pathname.new(mf.source).dirname + rf
           required = @files.find{|f| Pathname.new(f.source) == pf}
           if required
-            puts "Created edge: #{[required.source, mf.source].inspect}"
             graph << [required, mf]
           else
             puts "Could not find file #{pf} required by #{mf.source}".foreground(:red)
@@ -96,6 +108,14 @@ module Slinky
     def build
       @manifest_dir.build
     end
+
+    private
+    def files_rec md
+      @files += md.files
+      md.children.each do |c|
+        files_rec c
+      end
+    end
   end
 
   class ManifestDir
@@ -117,6 +137,27 @@ module Slinky
           build_path = (@build_dir + File.basename(path)).cleanpath
           @files << ManifestFile.new(path, build_path, manifest)
         end
+      end
+    end
+
+    # Finds the file at the given path in the directory if one exists,
+    # otherwise nil.
+    #
+    # @param String path the path of the file relative to the directory
+    #
+    # @return ManifestFile the manifest file at that path if one exists
+    def find_by_path path
+      components = path.to_s.split(File::SEPARATOR).reject{|x| x == ""}
+      case components.size
+      when 0
+        nil
+      when 1
+        @files.find{|f| File.basename(f.source) == components[0]}
+      else
+        child = @children.find{|d|
+          Pathname.new(d.dir).basename.to_s == components[0]
+        }
+        child ? child.find_by_path(components[1..-1].join(File::SEPARATOR)) : nil
       end
     end
 

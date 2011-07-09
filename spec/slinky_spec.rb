@@ -37,6 +37,12 @@ describe "Slinky" do
       }.sort.should == @files.collect{|x| "/tmp/" + x}.sort
     end
 
+    it "should find files in the manifest by path" do
+      @mdevel.find_by_path("test.haml").source.should == "/tmp/test.haml"
+      @mdevel.find_by_path("asdf.haml").should == nil
+      @mdevel.find_by_path("l1/l2/test.txt").source.should == "/tmp/l1/l2/test.txt"
+    end
+
     it "should produce an appropriate scripts string for production" do
       @mprod.scripts_string.should == '<script type="text/javscript" src="/scripts.js" />'
     end
@@ -122,6 +128,10 @@ describe "Slinky" do
       run_for 1 do
         Slinky::Runner.new(["start","--port", port.to_s]).run
       end
+    end
+
+    it "path_for_uri should work correctly" do
+      Slinky::Server.path_for_uri("http://localhost:124/test/hello/asdf.js?query=string&another").should == "test/hello/asdf.js"
     end
   end
 end
