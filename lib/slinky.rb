@@ -6,6 +6,7 @@ require 'uri'
 require 'tempfile'
 require 'rainbow'
 require 'optparse'
+require 'mime/types'
 
 require "#{ROOT}/slinky/em-popen3"
 require "#{ROOT}/slinky/compilers"

@@ -1,10 +1,4 @@
 module Slinky
-  CONTENT_TYPES = {
-    'html' => 'text/html',
-    'js' => 'application/x-javascript',
-    'css' => 'text/css'
-  }
-
   class Server < EventMachine::Connection
     include EM::HttpServer
 
@@ -23,60 +17,53 @@ module Slinky
       path[1..-1] #get rid of the leading /
     end
 
-
-    # Method called for every HTTP request made 
-    def process_http_request
-      path = Server.path_for_uri(@http_request_uri)
-      @resp = EventMachine::DelegatedHttpResponse.new(self)
-
-      # Check if we've already seen this file. If so, we can skip a
-      # bunch of processing.
-      if files[path]
-        serve_compiled_file files[path]
-        return
-      end
-
-      if cfile = Compilers.cfile_for_file(path)
-        files[path] = cfile
-        serve_compiled_file cfile
-      else
-        serve_file path
-      end
-    end
-
-    def serve_compiled_file cfile
-      cfile.file do |path, status, stdout, stderr|
-        if path
-          serve_file path
+    # Takes a manifest file and produces a response for it
+    def self.handle_file resp, mf
+      if mf
+        if path = mf.process
+          serve_file resp, path.to_s
         else
-          puts "Status: #{status.inspect}"
-          @resp.status = 500
-          @resp.content = "Error compiling #{cfile.source}:\n #{stdout}"
-          @resp.send_response
+          resp.status = 500
+          resp.content = "Error compiling #{mf.source}"
         end
+      else
+        not_found resp
       end
+      resp
     end
 
-    def serve_file path
-      if File.exists?(path) && size = File.size?(path)
+    # Serves a file from the file system
+    def self.serve_file resp, path
+      if File.exists?(path) && size = File.size(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
-        @resp.content_type CONTENT_TYPES[extension]
+        resp.content_type MIME::Types.type_for(path).first
         # File reading code from rack/file.rb
         File.open path do |file|
-          @resp.content = ""
+          resp.content = ""
           while size > 0
             part = file.read([8192, size].min)
             break unless part
             size -= part.length
-            @resp.content << part
+            resp.content << part
           end
         end
-        @resp.send_response
       else
-        @resp.status = 404
-        @resp.content = "File '#{path}' not found."
-        @resp.send_response
+        not_found resp
       end
+    end
+
+    # Returns the proper responce for files that do not exist
+    def self.not_found resp
+      resp.status = 404
+      resp.content = "File not found"
+    end
+
+    # Method called for every HTTP request made 
+    def process_http_request
+      path = Server.path_for_uri(@http_request_uri)
+      file = @manifest.find_by_path(path)
+      resp = EventMachine::DelegatedHttpResponse.new(self)
+      Server.handle_file(resp, file).send_response
     end
   end
 end

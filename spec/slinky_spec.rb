@@ -41,6 +41,7 @@ describe "Slinky" do
       @mdevel.find_by_path("test.haml").source.should == "/tmp/test.haml"
       @mdevel.find_by_path("asdf.haml").should == nil
       @mdevel.find_by_path("l1/l2/test.txt").source.should == "/tmp/l1/l2/test.txt"
+      @mdevel.find_by_path("l1/test.css").source.should == "/tmp/l1/test.sass"
     end
 
     it "should produce an appropriate scripts string for production" do
@@ -112,26 +113,58 @@ describe "Slinky" do
       path.to_s.should == "/tmp/build/l1/l2/test.txt"
       File.read("/tmp/build/l1/l2/test.txt").should == "hello\n"
     end
+
+    it "should match files" do
+      mf = Slinky::ManifestFile.new("/tmp/l1/l2/test.txt", "/tmp/build/l1/l2", @mprod)
+      mf.matches?("test.txt").should == true
+      mf = Slinky::ManifestFile.new("/tmp/l1/test.sass", "", @prod)
+      mf.matches?("test.css").should == true
+      mf.matches?("test.sass").should == true
+    end
   end
 
   context "Server" do
+    before :each do
+      @resp = double("EventMachine::DelegatedHttpResponse")
+      @resp.stub(:content=){|c| @content = c}
+      @resp.stub(:content){ @content }
+    end
     it "should start when passed 'start'" do
       $stdout.should_receive(:puts).with(/Started static file server on port 5323/)
-      run_for 1 do
+      run_for 0.3 do
         Slinky::Runner.new(["start"]).run
       end
     end
-    
+
     it "should accept a port option" do
       port = 53453
       $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
-      run_for 1 do
+      run_for 0.3 do
         Slinky::Runner.new(["start","--port", port.to_s]).run
       end
     end
 
     it "path_for_uri should work correctly" do
       Slinky::Server.path_for_uri("http://localhost:124/test/hello/asdf.js?query=string&another").should == "test/hello/asdf.js"
+    end
+
+    it "should serve files" do
+      @resp.should_receive(:content_type).with(MIME::Types.type_for("/tmp/l1/test.js").first)
+      Slinky::Server.serve_file @resp, "/tmp/l1/test.js"
+      @resp.content.should == File.read("/tmp/l1/test.js")
+    end
+
+    it "should serve 404s" do
+      @resp.should_receive(:status=).with(404)
+      Slinky::Server.serve_file @resp, "/tmp/asdf/faljshd"
+      @resp.content.should == "File not found"
+    end
+
+    it "should handle static files" do
+      mf = Slinky::ManifestFile.new("/tmp/l1/l2/test.txt", nil, @mdevel)
+      @resp.should_receive(:content_type).with(MIME::Types.type_for("/tmp/l1/le/test.txt").first)
+      Slinky::Server.handle_file @resp, mf
+      @resp.content.should == File.read("/tmp/l1/l2/test.txt")
     end
   end
 end

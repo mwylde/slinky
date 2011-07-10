@@ -24,8 +24,7 @@ module Slinky
       @files = []
       files_rec @manifest_dir
       @files
-    end
-    
+    end    
 
     # Finds the file at the given path in the manifest if one exists,
     # otherwise nil.
@@ -152,7 +151,7 @@ module Slinky
       when 0
         nil
       when 1
-        @files.find{|f| File.basename(f.source) == components[0]}
+        @files.find{|f| f.matches? components[0]}
       else
         child = @children.find{|d|
           Pathname.new(d.dir).basename.to_s == components[0]
@@ -187,6 +186,19 @@ module Slinky
       @build_path = build_path
       @manifest = manifest
       @devel = true if options[:devel]
+    end
+
+    # Predicate which determines whether the supplied name is the same
+    # as the file's name, taking into account compiled file
+    # extensions. For example, if mf refers to "/tmp/test/hello.sass",
+    # `mf.matches? "hello.sass"` and `mf.matches? "hello.css"` should
+    # both return true.
+    #
+    # @param [String] a filename
+    # @return [Bool] True if the filename matches, false otherwise
+    def matches? s
+      name = Pathname.new(@source).basename.to_s
+      name == s || output_path.basename.to_s == s
     end
 
     # Returns the path to which this file should be output. This is
