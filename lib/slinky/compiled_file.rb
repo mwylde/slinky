@@ -35,19 +35,18 @@ module Slinky
     def compiler_compile path, cb
       begin
         out = File.open @source do |f|
-          s = f.read.gsub(BUILD_DIRECTIVES, "")
-          out = @compiler.compile s, @source
+          @compiler.compile f.read, @source
         end
         
         compile_succeeded
-        @output_path = path
         File.open(path, "w+") do |f|
           f.write out
         end
       rescue
         compile_failed $!
+        path = nil
       end
-      cb.call @output_path, nil, nil, $! 
+      cb.call((path ? path.to_s : nil), nil, nil, $!)
     end
 
     # def compiler_command path, cb
@@ -76,7 +75,7 @@ module Slinky
     end
 
     def compile_failed e
-      $stderr.write "Failed on #{name}: #{e}\n".foreground(:red)
+      $stderr.puts "Failed on #{name}: #{e}".foreground(:red)
     end
 
     # Calls the supplied callback with the path of the compiled file,

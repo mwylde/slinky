@@ -272,7 +272,7 @@ module Slinky
           path = cpath
         end
       end
-      Pathname.new(path)
+      path ? Pathname.new(path) : nil
     end
 
     # Gets manifest file ready for serving or building by handling the

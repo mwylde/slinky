@@ -85,6 +85,13 @@ describe "Slinky" do
       File.read("/tmp/build/test.html").match("<head>").should_not == nil
     end
 
+    it "should report errors for bad files" do
+      $stderr.should_receive(:puts).with(/Failed on/)
+      mf = Slinky::ManifestFile.new("/tmp/l1/l2/bad.sass", "/tmp/build", @mprod)
+      build_path = mf.process
+      build_path.should == nil
+    end
+
     it "should properly determine build directives" do
       mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
       mf.find_directives.should == {:slinky_scripts => [], :slinky_styles => []}
