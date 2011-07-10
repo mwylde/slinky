@@ -166,6 +166,21 @@ describe "Slinky" do
       Slinky::Server.handle_file @resp, mf
       @resp.content.should == File.read("/tmp/l1/l2/test.txt")
     end
+
+    it "should handle compiled files" do
+      mf = Slinky::ManifestFile.new("/tmp/l1/test.sass", nil, @mdevel)
+      @resp.should_receive(:content_type).with(MIME::Types.type_for("test.css").first)
+      $stdout.should_receive(:puts).with("Compiled /tmp/l1/test.sass".foreground(:green))
+      Slinky::Server.handle_file @resp, mf
+      @resp.content.should == Slinky::SassCompiler::compile(File.read("/tmp/l1/test.sass"), "")
+    end
+
+    it "should handle non-existant files" do
+      mf = Slinky::ManifestFile.new("/tmp/l1/asdf.txt", nil, @mdevel)
+      @resp.should_receive(:status=).with(404)
+      Slinky::Server.handle_file @resp, mf
+      @resp.content.should == "File not found"
+    end
   end
 end
 
