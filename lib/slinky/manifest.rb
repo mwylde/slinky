@@ -18,9 +18,10 @@ module Slinky
   class DependencyError < StandardError; end
   
   class Manifest
-    attr_accessor :manifest_dir
+    attr_accessor :manifest_dir, :dir
 
     def initialize dir, options = {:devel => true, :build_to => ""}
+      @dir = dir
       @manifest_dir = ManifestDir.new dir, options[:build_to], self
       @devel = options[:devel]
     end
@@ -46,9 +47,8 @@ module Slinky
     
     def scripts_string
       if @devel
-        dependency_list.collect{|d|
-          # we take [1..-1] to eliminate the starting . in ./path/to/script.js
-          %Q\<script type="text/javascript" src="#{d.output_path.to_s[1..-1]}" />\
+        dependency_list.reject{|x| x.output_path.extname != ".js"}.collect{|d|
+          %Q\<script type="text/javascript" src="#{d.relative_output_path}" />\
         }.join("")
       else
         '<script type="text/javscript" src="/scripts.js" />'
@@ -56,7 +56,13 @@ module Slinky
     end
 
     def styles_string
-      '<link rel="stylesheet" href="/styles.css" />'
+      if @devel
+        dependency_list.reject{|x| x.output_path.extname != ".css"}.collect{|d|
+          %Q\<link rel="stylesheet" href="#{d.relative_output_path}" />\
+        }.join("")
+      else
+        '<link rel="stylesheet" href="/styles.css" />'
+      end
     end
 
     # Builds the directed graph representing the dependencies of all
@@ -218,6 +224,11 @@ module Slinky
       else
         Pathname.new(@source)
       end
+    end
+
+    # Returns the output path relative to the manifest directory
+    def relative_output_path
+      output_path.relative_path_from Pathname.new(@manifest.dir)
     end
 
     # Looks through the file for directives

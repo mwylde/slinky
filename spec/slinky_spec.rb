@@ -44,12 +44,24 @@ describe "Slinky" do
       @mdevel.find_by_path("l1/test.css").source.should == "/tmp/l1/test.sass"
     end
 
-    it "should produce an appropriate scripts string for production" do
+    it "should produce the correct scripts string for production" do
       @mprod.scripts_string.should == '<script type="text/javscript" src="/scripts.js" />'
     end
 
-    it "should produce an appropriate scripts string for devel" do
-      # @mdevel.scripts_string.should == '<
+    it "should produce the correct scripts string for devel" do
+      @mdevel.scripts_string.should == '<script type="text/javascript" src="l1/test5.js" /><script type="text/javascript" src="l1/l2/test6.js" /><script type="text/javascript" src="l1/test2.js" /><script type="text/javascript" src="l1/l2/test3.js" /><script type="text/javascript" src="l1/test.js" />'
+    end
+
+    it "should produce the correct styles string for production" do
+      @mprod.styles_string.should == '<link rel="stylesheet" href="/styles.css" />'
+    end
+
+    it "should produce the correct styles string for development" do
+      File.open("/tmp/l1/l2/bad.sass", "w+"){|f|
+        f.write "require('../test.sass')\ncolor: red;"
+      }
+      manifest = Slinky::Manifest.new("/tmp")
+      @mdevel.styles_string.should == '<link rel="stylesheet" href="l1/test.css" /><link rel="stylesheet" href="l1/l2/bad.css" />'
     end
 
     it "should allow the creation of ManifestFiles" do
@@ -61,6 +73,13 @@ describe "Slinky" do
       mf.output_path.to_s.should == "/tmp/test.html"
       mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
       mf.output_path.to_s.should == "/tmp/l1/test.js"
+    end
+
+    it "should correctly determine relative_output_path" do
+      mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
+      mf.relative_output_path.to_s.should == "test.html"
+      mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
+      mf.relative_output_path.to_s.should == "l1/test.js"
     end
 
     it "should build tmp file without directives" do
