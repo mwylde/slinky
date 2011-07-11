@@ -8,6 +8,14 @@ module Slinky
   SCRIPTS_DIRECTIVE = /^\W*(slinky_scripts)\W*$/
   STYLES_DIRECTIVE  = /^\W*(slinky_styles)\W*$/
   BUILD_DIRECTIVES = Regexp.union(REQUIRE_DIRECTIVE, SCRIPTS_DIRECTIVE, STYLES_DIRECTIVE)
+
+  # Raised when a compilation fails for any reason
+  class BuildFailedError < StandardError; end
+  # Raised when a required file is not found.
+  class FileNotFoundError < StandardError; end
+  # Raised when there is a cycle in the dependency graph (i.e., file A
+  # requires file B which requires C which requires A)
+  class DependencyError < StandardError; end
   
   class Manifest
     attr_accessor :manifest_dir
@@ -53,21 +61,21 @@ module Slinky
 
     # Builds the directed graph representing the dependencies of all
     # files in the manifest that contain a slinky_require
-    # declaration. The graph is represented as a list of pairs (from,
-    # to), each of which describes an edge.
+    # declaration. The graph is represented as a list of pairs
+    # (required, by), each of which describes an edge.
     #
-    # @return [[ManifestFile, ManifestFile]]
+    # @return [[ManifestFile, ManifestFile]] the graph
     def build_dependency_graph
       graph = []
       files.each{|mf|
         mf.directives[:slinky_require].each{|rf|
-          pf = Pathname.new(mf.source).dirname + rf
-          required = @files.find{|f| Pathname.new(f.source) == pf}
+          required = mf.parent.find_by_path(rf)
           if required
             graph << [required, mf]
           else
-            puts "Could not find file #{pf} required by #{mf.source}".foreground(:red)
-            exit
+            error = "Could not find file #{rf} required by #{mf.source}"
+            $stderr.puts error.foreground(:red)
+            raise FileNotFoundError.new(error)
           end
         } if mf.directives[:slinky_require]
       }
@@ -96,10 +104,9 @@ module Slinky
         }
       end
       if graph != []
-        puts l.collect{|x| x.source}.inspect
-        problems = graph.collect{|e| e.collect{|x| x.source}.join(":")}
-        puts "Dependencies #{problems.join(",")} could not be satisfied".foreground(:red)
-        exit
+        problems = graph.collect{|e| e.collect{|x| x.source}.join(" -> ")}
+        $stderr.puts "Dependencies #{problems.join(", ")} could not be satisfied".foreground(:red)
+        raise DependencyError
       end
       l
     end
@@ -134,7 +141,7 @@ module Slinky
           @children << ManifestDir.new(path, build_dir, manifest)
         else
           build_path = (@build_dir + File.basename(path)).cleanpath
-          @files << ManifestFile.new(path, build_path, manifest)
+          @files << ManifestFile.new(path, build_path, manifest, self)
         end
       end
     end
@@ -170,13 +177,12 @@ module Slinky
     end
   end
 
-  class BuildFailedError < StandardError; end
-  
   class ManifestFile
     attr_accessor :source, :build_path
-    attr_reader :last_built, :directives
+    attr_reader :last_built, :directives, :parent, :manifest
 
-    def initialize source, build_path, manifest, options = {:devel => false}
+    def initialize source, build_path, manifest, parent = nil, options = {:devel => false}
+      @parent = parent
       @source = source
       @last_built = Time.new(0)
 

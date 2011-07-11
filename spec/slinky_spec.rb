@@ -96,7 +96,7 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/tmp/test.haml", "/tmp/build", @mprod)
       mf.find_directives.should == {:slinky_scripts => [], :slinky_styles => []}
       mf = Slinky::ManifestFile.new("/tmp/l1/test.js", "/tmp/build", @mprod)
-      mf.find_directives.should == {:slinky_require => ["test2.js", "test3.js"]}
+      mf.find_directives.should == {:slinky_require => ["test2.js", "l2/test3.js"]}
     end
 
     it "should properly determine build_to path" do
@@ -127,6 +127,34 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/tmp/l1/test.sass", "", @prod)
       mf.matches?("test.css").should == true
       mf.matches?("test.sass").should == true
+    end
+
+    it "should correctly build the dependency graph" do
+      @mprod.build_dependency_graph.collect{|x| x.collect{|y| y.source}}.sort.should ==
+        [["/tmp/l1/test2.js", "/tmp/l1/test.js"],
+         ["/tmp/l1/l2/test3.coffee", "/tmp/l1/test.js"],
+         ["/tmp/l1/test5.js", "/tmp/l1/test2.js"],
+         ["/tmp/l1/l2/test6.js", "/tmp/l1/l2/test3.coffee"]].sort
+    end
+
+    it "should fail if a required file isn't in the manifest" do
+      FileUtils.rm("/tmp/l1/test2.js")
+      manifest = Slinky::Manifest.new("/tmp", :devel => false, :build_to => "/build")
+      $stderr.should_receive(:puts).with("Could not find file test2.js required by /tmp/l1/test.js".foreground(:red))
+      proc {
+        manifest.build_dependency_graph
+      }.should raise_error Slinky::FileNotFoundError
+    end
+
+    it "should build a correct dependency list" do
+      @mprod.dependency_list.collect{|x| x.source}.should == ["/tmp/test.haml", "/tmp/l1/test.sass", "/tmp/l1/test5.js", "/tmp/l1/l2/bad.sass", "/tmp/l1/l2/test.txt", "/tmp/l1/l2/test6.js", "/tmp/l1/l2/l3/test2.txt", "/tmp/l1/test2.js", "/tmp/l1/l2/test3.coffee", "/tmp/l1/test.js"]
+    end
+
+    it "should fail if there is a cycle in the dependency graph" do
+      File.open("/tmp/l1/test5.js", "w+"){|f| f.write("slinky_require('test.js')")}
+      manifest = Slinky::Manifest.new("/tmp", :devel => false, :build_to => "/build")
+      $stderr.should_receive(:puts).with("Dependencies /tmp/l1/test2.js -> /tmp/l1/test.js, /tmp/l1/test5.js -> /tmp/l1/test2.js, /tmp/l1/test.js -> /tmp/l1/test5.js could not be satisfied".foreground(:red))
+      proc { manifest.dependency_list }.should raise_error Slinky::DependencyError
     end
   end
 

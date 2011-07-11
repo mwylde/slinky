@@ -43,14 +43,29 @@ eos
     File.open("/tmp/l1/test.js", "w+"){|f|
       f.write <<eos
 slinky_require('test2.js')
-slinky_require("test3.js")
+slinky_require("l2/test3.js")
 eos
     }
+
+    File.open("/tmp/l1/test2.js", "w+"){|f|
+      f.write <<eos
+slinky_require('test5.js')
+eos
+    }
+
+    File.open("/tmp/l1/l2/test3.coffee", "w+"){|f|
+      f.write <<eos
+slinky_require('test6.js')
+eos
+    }
+
+    File.open("/tmp/l1/test5.js", "w+").close()
+    File.open("/tmp/l1/l2/test6.js", "w+").close()
 
     File.open("/tmp/l1/l2/test.txt", "w+"){|f| f.write("hello\n") }
     File.open("/tmp/l1/l2/l3/test2.txt", "w+"){|f| f.write("goodbye\n") }
 
-    @files = ["test.haml", "l1/test.js", "l1/test.sass", "l1/l2/bad.sass", "l1/l2/test.txt", "l1/l2/l3/test2.txt"]
+    @files = ["test.haml", "l1/test.js", "l1/test.sass", "l1/l2/bad.sass", "l1/l2/test.txt", "l1/l2/l3/test2.txt", "l1/test2.js", "l1/l2/test3.coffee", "l1/test5.js", "l1/l2/test6.js"]
 
   end
 
