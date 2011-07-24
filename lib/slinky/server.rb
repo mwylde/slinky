@@ -34,7 +34,8 @@ module Slinky
 
     # Serves a file from the file system
     def self.serve_file resp, path
-      if File.exists?(path) && size = File.size(path)
+      if File.exists?(path) && !File.directory?(path)
+        size = File.size(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
         resp.content_type MIME::Types.type_for(path).first
         # File reading code from rack/file.rb
@@ -63,6 +64,9 @@ module Slinky
       path = Server.path_for_uri(@http_request_uri)
       file = @manifest.find_by_path(path)
       resp = EventMachine::DelegatedHttpResponse.new(self)
+      if file.is_a? ManifestDir
+        file = @manifest.find_by_path(path+"/index.html")
+      end
       Server.handle_file(resp, file).send_response
     end
   end
