@@ -7,6 +7,7 @@ require 'tempfile'
 require 'rainbow'
 require 'optparse'
 require 'mime/types'
+require 'yui/compressor'
 
 require "#{ROOT}/slinky/em-popen3"
 require "#{ROOT}/slinky/compilers"

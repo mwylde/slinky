@@ -22,7 +22,8 @@ module Slinky
 
     def initialize dir, options = {}
       @dir = dir
-      @manifest_dir = ManifestDir.new dir, (options[:build_to] || ""), self
+      @build_to = options[:build_to] || ""
+      @manifest_dir = ManifestDir.new dir, @build_to, self
       @devel = (options[:devel].nil?) ? true : options[:devel]
     end
 
@@ -53,6 +54,20 @@ module Slinky
       else
         '<script type="text/javscript" src="/scripts.js" />'
       end
+    end
+
+    def compress_scripts
+      scripts = dependency_list.reject{|x| x.output_path.extname != ".js"}
+
+      s = scripts.collect{|s|
+        File.open(s.build_to.to_s, 'rb'){|f| f.read}
+      }.join("\n")
+      
+      compressor = YUI::JavaScriptCompressor.new(:munge => true)
+      File.open("#{@build_to}/scripts.js", "w+"){|f|
+        f.write(compressor.compress(s))
+      }
+      scripts.collect{|s| FileUtils.rm(s.build_to)}
     end
 
     def styles_string
@@ -119,6 +134,9 @@ module Slinky
 
     def build
       @manifest_dir.build
+      unless @devel
+        compress_scripts
+      end
     end
 
     private

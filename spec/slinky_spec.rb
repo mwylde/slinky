@@ -189,12 +189,14 @@ describe "Slinky" do
       File.exists?("/src/build/build/").should_not == true
     end
 
-    # it "should combine and compress javascript" do
-    #   @mprod.build
-    #   File.exists?("/build/scripts.js").should == true
-    #   File.size("/build/scripts.js").should > 100
-    #   File.read("/build/scripts.js").match('test.do("Hello, world")')
-    # end
+    it "should combine and compress javascript" do
+      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
+      @mprod.build
+      File.exists?("/build/scripts.js").should == true
+      File.size("/build/scripts.js").should > 90
+      File.read("/build/scripts.js").match('test.do("Hello, world")')
+      File.exists?("/build/l1/test.js").should == false
+    end
   end
 
   context "Server" do
@@ -263,13 +265,9 @@ describe "Slinky" do
     it "should build manifest to build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
       Slinky::Builder.build("/src", "/build")
-      manifest = Slinky::Manifest.new("/build")
-      manifest.files.collect{|f|
-        f.source
-      }.sort.should == @files.collect{|x|
-        f = Pathname("/build/") + Pathname.new(x)
-        f.sub_ext(@compilation_subs[f.extname] || f.extname).to_s
-      }.sort
+      File.exists?("/build").should == true
+      File.exists?("/build/scripts.js").should == true
+      File.exists?("/build/l1/l2/test.txt").should == true
     end
   end
 end
