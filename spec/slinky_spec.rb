@@ -194,8 +194,16 @@ describe "Slinky" do
       @mprod.build
       File.exists?("/build/scripts.js").should == true
       File.size("/build/scripts.js").should > 90
-      File.read("/build/scripts.js").match('test.do("Hello, world")')
+      File.read("/build/scripts.js").should_match('test.do("Hello, world")')
       File.exists?("/build/l1/test.js").should == false
+    end
+
+    it "should combine and compress css" do
+      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
+      @mprod.build
+      File.exists?("/build/styles.css").should == true
+      File.size("/build/styles.css").should > 50
+      File.read("/build/styles.css").should_match(/color: red/)
     end
   end
 
