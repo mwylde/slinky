@@ -61,7 +61,7 @@ describe "Slinky" do
         f.write "require('../test.sass')\ncolor: red;"
       }
       manifest = Slinky::Manifest.new("/tmp")
-      @mdevel.styles_string.should == '<link rel="stylesheet" href="l1/test.css" /><link rel="stylesheet" href="l1/l2/bad.css" />'
+      @mdevel.styles_string.should == '<link rel="stylesheet" href="l1/test.css" /><link rel="stylesheet" href="l1/l2/test2.css" />'
     end
 
     it "should allow the creation of ManifestFiles" do
@@ -105,6 +105,9 @@ describe "Slinky" do
     end
 
     it "should report errors for bad files" do
+      File.open("/tmp/l1/l2/bad.sass", "w+"){|f|
+        f.write "color: red;"
+      }
       $stderr.should_receive(:puts).with(/Failed on/)
       mf = Slinky::ManifestFile.new("/tmp/l1/l2/bad.sass", "/tmp/build", @mprod)
       build_path = mf.process
@@ -166,7 +169,7 @@ describe "Slinky" do
     end
 
     it "should build a correct dependency list" do
-      @mprod.dependency_list.collect{|x| x.source}.should == ["/tmp/test.haml", "/tmp/l1/test.sass", "/tmp/l1/test5.js", "/tmp/l1/l2/bad.sass", "/tmp/l1/l2/test.txt", "/tmp/l1/l2/test6.js", "/tmp/l1/l2/l3/test2.txt", "/tmp/l1/test2.js", "/tmp/l1/l2/test3.coffee", "/tmp/l1/test.js"]
+      @mprod.dependency_list.collect{|x| x.source}.should == ["/tmp/test.haml", "/tmp/l1/test.sass", "/tmp/l1/test5.js", "/tmp/l1/l2/test.txt", "/tmp/l1/l2/test2.css", "/tmp/l1/l2/test6.js", "/tmp/l1/l2/l3/test2.txt", "/tmp/l1/test2.js", "/tmp/l1/l2/test3.coffee", "/tmp/l1/test.js"]
     end
 
     it "should fail if there is a cycle in the dependency graph" do
@@ -236,5 +239,30 @@ describe "Slinky" do
       @resp.content.should == "File not found"
     end
   end
+  context "Builder" do
+    before :each do
+      @compilation_subs = {".sass" => ".css", ".coffee" => ".js", ".haml" => ".html"}
+      module Slinky
+        module CoffeeCompiler
+          def CoffeeCompiler::compile s, file
+            FakeFS.deactivate!
+            o = CoffeeScript::compile(s)
+            FakeFS.activate!
+            o
+          end
+        end
+      end
+    end
+    it "should build manifest to build directory" do
+      $stdout.should_receive(:puts).with(/Compiled \/tmp\/.+/).exactly(3).times
+      Slinky::Builder.build("/tmp", "/build")
+      manifest = Slinky::Manifest.new("/build")
+      manifest.files.collect{|f|
+        f.source
+      }.sort.should == @files.collect{|x|
+        f = Pathname("/build/") + Pathname.new(x)
+        f.sub_ext(@compilation_subs[f.extname] || f.extname).to_s
+      }.sort
+    end
+  end
 end
-

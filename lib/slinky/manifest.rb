@@ -20,10 +20,10 @@ module Slinky
   class Manifest
     attr_accessor :manifest_dir, :dir
 
-    def initialize dir, options = {:devel => true, :build_to => ""}
+    def initialize dir, options = {}
       @dir = dir
-      @manifest_dir = ManifestDir.new dir, options[:build_to], self
-      @devel = options[:devel]
+      @manifest_dir = ManifestDir.new dir, (options[:build_to] || ""), self
+      @devel = (options[:devel].nil?) ? true : options[:devel]
     end
 
     # Returns a list of all files contained in this manifest
@@ -146,8 +146,7 @@ module Slinky
           build_dir = (@build_dir + File.basename(path)).cleanpath
           @children << ManifestDir.new(path, build_dir, manifest)
         else
-          build_path = (@build_dir + File.basename(path)).cleanpath
-          @files << ManifestFile.new(path, build_path, manifest, self)
+           @files << ManifestFile.new(path, @build_dir, manifest, self)
         end
       end
     end
