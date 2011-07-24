@@ -71,7 +71,7 @@ module Slinky
     end
 
     def compile_succeeded
-      puts "Compiled #{name}".foreground(:green)
+      $stdout.puts "Compiled #{name}".foreground(:green)
     end
 
     def compile_failed e

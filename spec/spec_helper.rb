@@ -10,15 +10,28 @@ require 'cover_me'
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
+module Slinky
+  module CoffeeCompiler
+    def CoffeeCompiler::compile s, file
+      FakeFS.deactivate!
+      o = CoffeeScript::compile(s)
+      FakeFS.activate!
+      o
+    end
+  end
+end
+
+
 RSpec.configure do |config|
   config.before :all do
     FakeFS.activate!
+    FileUtils.mkdir("/tmp")
   end
   config.before :each do
-    FileUtils.rm_rf("/tmp") rescue nil
-    FileUtils.mkdir("/tmp")
-    FileUtils.mkdir_p("/tmp/l1/l2/l3")
-    File.open("/tmp/test.haml", "w+"){|f|
+    FileUtils.rm_rf("/src") rescue nil
+    FileUtils.mkdir("/src")
+    FileUtils.mkdir_p("/src/l1/l2/l3")
+    File.open("/src/test.haml", "w+"){|f|
       f.write <<eos
 !!!5
 %head
@@ -29,43 +42,45 @@ RSpec.configure do |config|
 eos
     }
 
-    File.open("/tmp/l1/test.sass", "w+"){|f|
+    File.open("/src/l1/test.sass", "w+"){|f|
       f.write <<eos
 h1
   color: red
 eos
     }
 
-    File.open("/tmp/l1/l2/test2.css", "w+"){|f|
+    File.open("/src/l1/l2/test2.css", "w+"){|f|
       f.write <<eos
 h1 { color: red }
 eos
     }
 
-    File.open("/tmp/l1/test.js", "w+"){|f|
+    File.open("/src/l1/test.js", "w+"){|f|
       f.write <<eos
 slinky_require('test2.js')
 slinky_require("l2/test3.js")
 eos
     }
 
-    File.open("/tmp/l1/test2.js", "w+"){|f|
+    File.open("/src/l1/test2.js", "w+"){|f|
       f.write <<eos
 slinky_require('test5.js')
 eos
     }
 
-    File.open("/tmp/l1/l2/test3.coffee", "w+"){|f|
+    File.open("/src/l1/l2/test3.coffee", "w+"){|f|
       f.write <<eos
 slinky_require('test6.js')
+test = {do: (x) -> console.log(x)}
+test.do("Hello, world")
 eos
     }
 
-    File.open("/tmp/l1/test5.js", "w+").close()
-    File.open("/tmp/l1/l2/test6.js", "w+").close()
+    File.open("/src/l1/test5.js", "w+").close()
+    File.open("/src/l1/l2/test6.js", "w+").close()
 
-    File.open("/tmp/l1/l2/test.txt", "w+"){|f| f.write("hello\n") }
-    File.open("/tmp/l1/l2/l3/test2.txt", "w+"){|f| f.write("goodbye\n") }
+    File.open("/src/l1/l2/test.txt", "w+"){|f| f.write("hello\n") }
+    File.open("/src/l1/l2/l3/test2.txt", "w+"){|f| f.write("goodbye\n") }
 
       @files = ["test.haml", "l1/test.js", "l1/test.sass", "l1/l2/test2.css", "l1/l2/test.txt", "l1/l2/l3/test2.txt", "l1/test2.js", "l1/l2/test3.coffee", "l1/test5.js", "l1/l2/test6.js"]
 

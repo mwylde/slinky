@@ -141,7 +141,7 @@ module Slinky
 
       Dir.glob("#{dir}/*").each do |path|
         # skip the build dir
-        next if File.realpath(path) == File.realpath(build_dir) rescue false
+        next if Pathname.new(path) == Pathname.new(build_dir)
         if File.directory? path
           build_dir = (@build_dir + File.basename(path)).cleanpath
           @children << ManifestDir.new(path, build_dir, manifest)
@@ -319,10 +319,9 @@ module Slinky
       if !path
         raise BuildFailedError
       elsif path != to
-        FileUtils.cp(path, to)
+        FileUtils.cp(path.to_s, to.to_s)
         @last_built = Time.now
       end
-
       to
     end
   end
