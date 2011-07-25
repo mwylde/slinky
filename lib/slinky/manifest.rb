@@ -8,6 +8,7 @@ module Slinky
   SCRIPTS_DIRECTIVE = /^\W*(slinky_scripts)\W*$/
   STYLES_DIRECTIVE  = /^\W*(slinky_styles)\W*$/
   BUILD_DIRECTIVES = Regexp.union(REQUIRE_DIRECTIVE, SCRIPTS_DIRECTIVE, STYLES_DIRECTIVE)
+  CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
   # Raised when a compilation fails for any reason
   class BuildFailedError < StandardError; end
@@ -68,6 +69,24 @@ module Slinky
         f.write(compressor.compress(s))
       }
       scripts.collect{|s| FileUtils.rm(s.build_to)}
+    end
+
+    def compress_styles
+      sheets = dependency_list.reject{|x| x.output_path.extname != ".css"}
+
+      s = sheets.collect{|s|
+        css = File.open(s.build_to.to_s, 'rb'){|f| f.read}
+        css.gsub(CSS_URL_MATCHER){|url|
+          p = s.relative_output_path.dirname.to_s + "/#{$1}"
+          "url('#{p}')"
+        }
+      }.join("\n")
+
+      compressor = YUI::CssCompressor.new()
+      File.open("#{@build_to}/styles.css", "w+"){|f|
+        f.write(compressor.compress(s))
+      }
+      sheets.collect{|s| FileUtils.rm(s.build_to)}
     end
 
     def styles_string
@@ -136,6 +155,7 @@ module Slinky
       @manifest_dir.build
       unless @devel
         compress_scripts
+        compress_styles
       end
     end
 

@@ -194,7 +194,7 @@ describe "Slinky" do
       @mprod.build
       File.exists?("/build/scripts.js").should == true
       File.size("/build/scripts.js").should > 90
-      File.read("/build/scripts.js").should_match('test.do("Hello, world")')
+      File.read("/build/scripts.js").match('"Hello, world"').should_not == nil
       File.exists?("/build/l1/test.js").should == false
     end
 
@@ -202,8 +202,18 @@ describe "Slinky" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
       @mprod.build
       File.exists?("/build/styles.css").should == true
-      File.size("/build/styles.css").should > 50
-      File.read("/build/styles.css").should_match(/color: red/)
+      File.size("/build/styles.css").should > 25
+      File.read("/build/styles.css").match(/color:red/).should_not == nil
+      File.exists?("/build/l1/test.css").should == false
+    end
+
+    it "should modify css urls to point to correct paths when compiled" do
+      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
+      @mprod.build
+      css = File.read("/build/styles.css")
+      css.include?("url('/l1/asdf.png')").should == true
+      css.include?("url('l1/bg.png')").should == true
+      css.include?("url('l1/l2/l3/hello.png')").should == true
     end
   end
 

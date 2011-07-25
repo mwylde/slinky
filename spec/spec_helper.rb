@@ -46,12 +46,15 @@ eos
       f.write <<eos
 h1
   color: red
+  background-image: url("bg.png")
 eos
     }
 
     File.open("/src/l1/l2/test2.css", "w+"){|f|
       f.write <<eos
-h1 { color: red }
+h2 { color: green; }
+div { background: url('/l1/asdf.png')}
+.something {background: url('l3/hello.png')}
 eos
     }
 
