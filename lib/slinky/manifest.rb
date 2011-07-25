@@ -57,36 +57,34 @@ module Slinky
       end
     end
 
-    def compress_scripts
-      scripts = dependency_list.reject{|x| x.output_path.extname != ".js"}
+    def compress ext, output, compressor
+      scripts = dependency_list.reject{|x| x.output_path.extname != ext}
 
       s = scripts.collect{|s|
-        File.open(s.build_to.to_s, 'rb'){|f| f.read}
+        f = File.open(s.build_to.to_s, 'rb'){|f| f.read}
+        (block_given?) ? (yield s, f) : f
       }.join("\n")
       
-      compressor = YUI::JavaScriptCompressor.new(:munge => true)
-      File.open("#{@build_to}/scripts.js", "w+"){|f|
+      File.open(output, "w+"){|f|
         f.write(compressor.compress(s))
       }
       scripts.collect{|s| FileUtils.rm(s.build_to)}
     end
+    
+    def compress_scripts
+      compressor = YUI::JavaScriptCompressor.new(:munge => true)
+      compress(".js", "#{@build_to}/scripts.js", compressor)
+    end
 
     def compress_styles
-      sheets = dependency_list.reject{|x| x.output_path.extname != ".css"}
+      compressor = YUI::CssCompressor.new()
 
-      s = sheets.collect{|s|
-        css = File.open(s.build_to.to_s, 'rb'){|f| f.read}
+      compress(".css", "#{@build_to}/styles.css", compressor){|s, css|
         css.gsub(CSS_URL_MATCHER){|url|
           p = s.relative_output_path.dirname.to_s + "/#{$1}"
           "url('#{p}')"
         }
-      }.join("\n")
-
-      compressor = YUI::CssCompressor.new()
-      File.open("#{@build_to}/styles.css", "w+"){|f|
-        f.write(compressor.compress(s))
       }
-      sheets.collect{|s| FileUtils.rm(s.build_to)}
     end
 
     def styles_string
