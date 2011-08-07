@@ -37,6 +37,8 @@ RSpec.configure do |config|
 %head
   slinky_scripts
   slinky_styles
+  :plain
+    does this screw it up?
 %body
   h1. hello
 eos

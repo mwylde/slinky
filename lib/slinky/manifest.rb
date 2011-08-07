@@ -50,10 +50,10 @@ module Slinky
     def scripts_string
       if @devel
         dependency_list.reject{|x| x.output_path.extname != ".js"}.collect{|d|
-          %Q\<script type="text/javascript" src="#{d.relative_output_path}" />\
+          %Q\<script type="text/javascript" src="#{d.relative_output_path}"></script>\
         }.join("")
       else
-        '<script type="text/javscript" src="/scripts.js" />'
+        '<script type="text/javscript" src="/scripts.js"></script>'
       end
     end
 
@@ -295,19 +295,19 @@ module Slinky
     # is written to a temp location.
     #
     # @return String the path of the de-directivefied file
-    def handle_directives
+    def handle_directives path, to = nil
       if @directives.size > 0
-        out = File.read(@source)
+        out = File.read(path)
         out.gsub!(REQUIRE_DIRECTIVE, "")
         out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
         out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
-        path = Tempfile.new("slinky").path
-        File.open(path, "w+"){|f|
+        to = to ||  Tempfile.new("slinky").path
+        File.open(to, "w+"){|f|
           f.write(out)
         }
-        path
+        to
       else
-        @source
+        path
       end
     end
 
@@ -334,8 +334,7 @@ module Slinky
     # @return String the path of the processed file, ready for serving
     def process to = nil
       # mangle file appropriately
-      path = handle_directives
-      compile path, to
+      handle_directives (compile @source), to
     end
 
     # Path to which the file will be built
