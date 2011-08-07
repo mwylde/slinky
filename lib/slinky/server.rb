@@ -1,14 +1,11 @@
 module Slinky
-  class Server < EventMachine::Connection
+  module Server
     include EM::HttpServer
 
-    # Creates a new Slinky::Server
-    #
-    # @param String dir The directory from which files will be served
-    def initialize dir = "."
-      super
-      @manifest = Manifest.new(dir)
-    end
+    # Sets the root directory from which files should be served
+    def self.dir= _dir; @dir = _dir; end
+    # Gets the root directory from which files should be served
+    def self.dir; @dir || "."; end
 
     # Splits a uri into its components, returning only the path sans
     # initial forward slash.
@@ -61,6 +58,8 @@ module Slinky
 
     # Method called for every HTTP request made 
     def process_http_request
+      @manifest = Manifest.new(Server.dir)
+
       path = Server.path_for_uri(@http_request_uri)
       file = @manifest.find_by_path(path)
       resp = EventMachine::DelegatedHttpResponse.new(self)

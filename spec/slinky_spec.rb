@@ -1,4 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require 'em-http'
 
 describe "Slinky" do
   context "Runner" do
@@ -223,20 +224,6 @@ describe "Slinky" do
       @resp.stub(:content=){|c| @content = c}
       @resp.stub(:content){ @content }
     end
-    it "should start when passed 'start'" do
-      $stdout.should_receive(:puts).with(/Started static file server on port 5323/)
-      run_for 0.3 do
-        Slinky::Runner.new(["start"]).run
-      end
-    end
-
-    it "should accept a port option" do
-      port = 53453
-      $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
-      run_for 0.3 do
-        Slinky::Runner.new(["start","--port", port.to_s]).run
-      end
-    end
 
     it "path_for_uri should work correctly" do
       Slinky::Server.path_for_uri("http://localhost:124/test/hello/asdf.js?query=string&another").should == "test/hello/asdf.js"
@@ -274,6 +261,33 @@ describe "Slinky" do
       @resp.should_receive(:status=).with(404)
       Slinky::Server.handle_file @resp, mf
       @resp.content.should == "File not found"
+    end
+
+    it "should accept a port option" do
+      port = 53453
+      $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
+      run_for 0.3 do
+        Slinky::Runner.new(["start","--port", port.to_s]).run
+      end
+    end
+
+    it "should serve files for realz" do
+      $stdout.should_receive(:puts).with(/Started static file server on port 43453/)
+      @results = []
+      run_for 3 do
+        Slinky::Runner.new(["start","--port", "43453", "--src-dir", "/src"]).run
+        base = "http://localhost:43453"
+        EM::HttpRequest.new("#{base}/index.html").get().stream do |t|
+          @results[0] = t.include?("hello")
+          EM.stop_event_loop if @results[1]
+        end
+        EM::HttpRequest.new("#{base}/").get().stream do |t|
+          @results[1] = t.include?("hello")
+          EM.stop_event_loop if @results[0]
+        end
+      end
+      (!!@results[0]).should == true
+      (!!@results[1]).should == true
     end
   end
   context "Builder" do

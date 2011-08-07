@@ -92,7 +92,7 @@ module Slinky
     # compiled.
     def needs_update?
       return true if @compiler.to_s.match "SassCompiler"
-      File.new(source).mtime > @last_compiled
+      File.new(source).mtime > @last_compiled rescue true
     end
 
     private

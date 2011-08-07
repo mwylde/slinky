@@ -6,7 +6,8 @@ module Slinky
       @argv = argv
       @options = {
         :build_dir => "build",
-        :port => 5323
+        :port => 5323,
+        :src_dir => "."
       }
 
       parser.parse! @argv
@@ -28,6 +29,7 @@ module Slinky
         opts.on("-v", "--version", "Outputs current version number and exits"){ version }
         opts.on("-o DIR", "--build-dir DIR", "Directory to which the site will be built.", "Use in conjunction with the 'build' command."){|dir| @options[:build_dir] = File.expand_path(dir)}
         opts.on("-p PORT", "--port PORT", "Port to run on (default: #{@options[:port]})"){|p| @options[:port] = p.to_i}
+        opts.on("-s DIR", "--src-dir DIR", "Directory containing project source"){|p| @options[:src_dir] = p}
       end
     end
 
@@ -46,6 +48,7 @@ module Slinky
       Signal.trap('INT') { puts "Slinky fading away ... "; exit(0); }
 
       EM::run {
+        Slinky::Server.dir = @options[:src_dir]
         EM::start_server "0.0.0.0", @options[:port], Slinky::Server
         puts "Started static file server on port #{@options[:port]}"
       }

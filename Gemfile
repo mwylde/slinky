@@ -16,5 +16,6 @@ group :development do
   gem "jeweler", "~> 1.5.2"
   gem 'cover_me', '>= 1.0.0.rc6'
   gem "fakefs"
+  gem "em-http-request"
 #  gem "em-synchrony", ">= 0"
 end

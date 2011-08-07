@@ -197,7 +197,7 @@ module Slinky
       components = path.to_s.split(File::SEPARATOR).reject{|x| x == ""}
       case components.size
       when 0
-        nil
+        self
       when 1
         @files.find{|f| f.matches? components[0]}
       else
