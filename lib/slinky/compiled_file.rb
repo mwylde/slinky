@@ -42,7 +42,7 @@ module Slinky
         File.open(path, "w+") do |f|
           f.write out
         end
-      rescue
+      rescue Exception
         compile_failed $!
         path = nil
       end

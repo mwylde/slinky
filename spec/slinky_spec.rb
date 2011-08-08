@@ -115,6 +115,16 @@ describe "Slinky" do
       build_path.should == nil
     end
 
+    it "shouldn't crash on syntax errors" do
+      File.open("/src/l1/asdf.haml", "w+"){|f|
+        f.write("%h1{:width => 50px}")
+      }
+      $stderr.should_receive(:puts).with(/Failed on/)
+      mf = Slinky::ManifestFile.new("/src/l1/asdf.haml", "/src/build", @mprod)
+      build_path = mf.process
+      build_path.should == nil
+    end
+
     it "should properly determine build directives" do
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
       mf.find_directives.should == {:slinky_scripts => [], :slinky_styles => []}

@@ -297,15 +297,19 @@ module Slinky
     # @return String the path of the de-directivefied file
     def handle_directives path, to = nil
       if @directives.size > 0
-        out = File.read(path)
-        out.gsub!(REQUIRE_DIRECTIVE, "")
-        out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
-        out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
-        to = to ||  Tempfile.new("slinky").path
-        File.open(to, "w+"){|f|
-          f.write(out)
-        }
-        to
+        begin
+          out = File.read(path)
+          out.gsub!(REQUIRE_DIRECTIVE, "")
+          out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
+          out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
+          to = to ||  Tempfile.new("slinky").path
+          File.open(to, "w+"){|f|
+            f.write(out)
+          }
+          to
+        rescue
+          nil
+        end
       else
         path
       end
