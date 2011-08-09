@@ -23,7 +23,11 @@ module Slinky
 
     def initialize dir, options = {}
       @dir = dir
-      @build_to = options[:build_to] || ""
+      @build_to = if d = options[:build_to]
+                    File.absolute_path(d)
+                  else
+                    dir
+                  end
       @manifest_dir = ManifestDir.new dir, @build_to, self
       @devel = (options[:devel].nil?) ? true : options[:devel]
     end
@@ -177,7 +181,7 @@ module Slinky
 
       Dir.glob("#{dir}/*").each do |path|
         # skip the build dir
-        next if Pathname.new(path) == Pathname.new(build_dir)
+        next if Pathname.new(File.absolute_path(path)) == Pathname.new(build_dir)
         if File.directory? path
           build_dir = (@build_dir + File.basename(path)).cleanpath
           @children << ManifestDir.new(path, build_dir, manifest)

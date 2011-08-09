@@ -69,7 +69,7 @@ class A
 File B.coffee:
 
 ```coffeescript
-slinky_require("a.coffee")
+slinky_require("A.coffee")
 alert (new A).hello("world")
 ```
 We can also do this in CSS/SASS/SCSS:

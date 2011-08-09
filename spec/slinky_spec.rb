@@ -192,12 +192,11 @@ describe "Slinky" do
 
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
-      @m = Slinky::Manifest.new("/src", :devel => false, :build_to => "/src/build")
-      @m.build
+      Slinky::Builder.build("/src", "/src/build")
       File.exists?("/src/build/build").should_not == true
-      @m = Slinky::Manifest.new("/src", :devel => false, :build_to => "/src/build")
-      @m.build
-      File.exists?("/src/build/build/").should_not == true
+      File.exists?("/src/build/test.html").should == true
+      Slinky::Builder.build("/src", "/src/build")
+      File.exists?("/src/build/build").should_not == true
     end
 
     it "should combine and compress javascript" do

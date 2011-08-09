@@ -10,6 +10,16 @@ require 'open-uri'
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
+
+module FakeFS
+  class File
+    def self.absolute_path(*args)
+      RealFile.absolute_path(*args)
+    end
+  end
+end
+
+
 module Slinky
   module CoffeeCompiler
     def CoffeeCompiler::compile s, file
@@ -20,7 +30,6 @@ module Slinky
     end
   end
 end
-
 
 RSpec.configure do |config|
   config.before :all do
