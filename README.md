@@ -60,12 +60,14 @@ want to make sure that A comes before B in the concatenation order. We
 can solve this simply using `slinky_require(script)`
 
 File A.coffee:
+
 ```coffeescript
 class A
   hello: (thing) -> "Hello, " + thing
 ```
 
 File B.coffee:
+
 ```coffeescript
 slinky_require("a.coffee")
 alert (new A).hello("world")
