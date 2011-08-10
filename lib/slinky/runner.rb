@@ -13,6 +13,9 @@ module Slinky
       parser.parse! @argv
       @command = @argv.shift
       @arguments = @argv
+
+      config_path = "#{@options[:src_dir]}/slinky.yaml"
+      @config = ConfigReader.from_file(config_path) if File.exist?(config_path)
     end
 
     def version
@@ -49,7 +52,13 @@ module Slinky
 
       EM::run {
         Slinky::Server.dir = @options[:src_dir]
-        EM::start_server "0.0.0.0", @options[:port], Slinky::Server
+        if @config && @config.proxies
+          server = EM::start_server "127.0.0.1", 5324, Slinky::Server
+          slinky_port = EM.get_sockname(server)
+          ProxyServer.run(@config.proxies, @options[:port], 5324)
+        else
+          EM::start_server "0.0.0.0", @options[:port], Slinky::Server
+        end
         puts "Started static file server on port #{@options[:port]}"
       }
     end

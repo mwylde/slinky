@@ -1,6 +1,9 @@
 ROOT = File.expand_path(File.dirname(__FILE__))
 
+require 'uri'
+require 'yaml'
 require 'eventmachine'
+require 'em-proxy'
 require 'evma_httpserver'
 require 'uri'
 require 'tempfile'
@@ -11,8 +14,10 @@ require 'yui/compressor'
 
 require "#{ROOT}/slinky/em-popen3"
 require "#{ROOT}/slinky/compilers"
+require "#{ROOT}/slinky/config_reader"
 require "#{ROOT}/slinky/manifest"
 require "#{ROOT}/slinky/compiled_file"
+require "#{ROOT}/slinky/proxy_server"
 require "#{ROOT}/slinky/server"
 require "#{ROOT}/slinky/runner"
 require "#{ROOT}/slinky/builder"
