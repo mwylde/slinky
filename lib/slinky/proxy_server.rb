@@ -36,7 +36,6 @@ module Slinky
       proxy_servers = process_proxy_servers proxies
       
       Proxy.start(:host => "0.0.0.0", :port => port){|conn|
-        puts "Connecting to slinky server at 127.0.0.1:#{slinky_port}"
         conn.server :slinky, :host => "127.0.0.1", :port => slinky_port
         proxy_servers.each{|p|
           conn.server p, :host => p[0], :port => p[1]
@@ -49,11 +48,12 @@ module Slinky
             server = if proxy
                        new_path = path.gsub(/^#{proxy[0]}/, "")
                        data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
-                       data = ProxyServer.replace_host(data, proxy[1].host)
+                       new_host = proxy[1].select(:host, :port).join(":")
+                       data = ProxyServer.replace_host(data, new_host)
+                       puts [data, [proxy[1].host, proxy[1].port]].inspect
                        [proxy[1].host, proxy[1].port]
                      else :slinky
                      end
-            puts "SENDINGTO: #{[data, [server]].inspect}"
             [data, [server]]
           rescue
             $stderr.puts "Got error: #{$!}".foreground(:red)
@@ -66,6 +66,7 @@ module Slinky
         end
 
         conn.on_finish do |name|
+          unbind
         end
       }
     end
