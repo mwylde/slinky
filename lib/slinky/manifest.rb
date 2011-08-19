@@ -4,9 +4,9 @@ require 'pathname'
 module Slinky
   # extensions of files that can contain build directives
   DIRECTIVE_FILES = %w{js css html haml sass scss coffee}
-  REQUIRE_DIRECTIVE = /^\W*(slinky_require)\((".*"|'.+'|)\)\W*$/
-  SCRIPTS_DIRECTIVE = /^\W*(slinky_scripts)\W*$/
-  STYLES_DIRECTIVE  = /^\W*(slinky_styles)\W*$/
+  REQUIRE_DIRECTIVE = /^[^\n\w]*(slinky_require)\((".*"|'.+'|)\)[^\n\w]*$/
+  SCRIPTS_DIRECTIVE = /^[^\n\w]*(slinky_scripts)[^\n\w]*$/
+  STYLES_DIRECTIVE  = /^[^\n\w]*(slinky_styles)[^\n\w]*$/
   BUILD_DIRECTIVES = Regexp.union(REQUIRE_DIRECTIVE, SCRIPTS_DIRECTIVE, STYLES_DIRECTIVE)
   CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
@@ -57,7 +57,7 @@ module Slinky
           %Q\<script type="text/javascript" src="#{d.relative_output_path}"></script>\
         }.join("")
       else
-        '<script type="text/javscript" src="/scripts.js"></script>'
+        '<script type="text/javascript" src="/scripts.js"></script>'
       end
     end
 
@@ -68,9 +68,9 @@ module Slinky
         f = File.open(s.build_to.to_s, 'rb'){|f| f.read}
         (block_given?) ? (yield s, f) : f
       }.join("\n")
-      
+
       File.open(output, "w+"){|f|
-        f.write(compressor.compress(s))
+        f.write(compressor.compress(s)) 
       }
       scripts.collect{|s| FileUtils.rm(s.build_to)}
     end

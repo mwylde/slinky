@@ -32,3 +32,11 @@ Dir.glob("#{ROOT}/slinky/compilers/*.rb").each{|compiler|
     puts "Failed to load #{compiler}: syntax error"
   end
 }
+
+# Without this monkeypatch data uris in CSS cause compression to fail
+class YUI::Compressor
+  def command
+    @command.insert 1, "-Xss8m"
+    @command.map { |word| Shellwords.escape(word) }.join(" ")
+  end
+end

@@ -46,7 +46,7 @@ describe "Slinky" do
     end
 
     it "should produce the correct scripts string for production" do
-      @mprod.scripts_string.should == '<script type="text/javscript" src="/scripts.js"></script>'
+      @mprod.scripts_string.should == '<script type="text/javascript" src="/scripts.js"></script>'
     end
 
     it "should produce the correct scripts string for devel" do
@@ -239,7 +239,6 @@ describe "Slinky" do
     end
 
     it "should serve files" do
-      @resp.should_receive(:content_type).with(MIME::Types.type_for("/src/l1/test.js").first)
       Slinky::Server.serve_file @resp, "/src/l1/test.js"
       @resp.content.should == File.read("/src/l1/test.js")
     end
@@ -252,14 +251,12 @@ describe "Slinky" do
 
     it "should handle static files" do
       mf = Slinky::ManifestFile.new("/src/l1/l2/test.txt", nil, @mdevel)
-      @resp.should_receive(:content_type).with(MIME::Types.type_for("/src/l1/le/test.txt").first)
       Slinky::Server.handle_file @resp, mf
       @resp.content.should == File.read("/src/l1/l2/test.txt")
     end
 
     it "should handle compiled files" do
       mf = Slinky::ManifestFile.new("/src/l1/test.sass", nil, @mdevel)
-      @resp.should_receive(:content_type).with(MIME::Types.type_for("test.css").first)
       $stdout.should_receive(:puts).with("Compiled /src/l1/test.sass".foreground(:green))
       Slinky::Server.handle_file @resp, mf
       @resp.content.should == Slinky::SassCompiler::compile(File.read("/src/l1/test.sass"), "")

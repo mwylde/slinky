@@ -34,7 +34,6 @@ module Slinky
       if File.exists?(path) && !File.directory?(path)
         size = File.size(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
-        resp.content_type MIME::Types.type_for(path).first
         # File reading code from rack/file.rb
         File.open path do |file|
           resp.content = ""
@@ -50,7 +49,7 @@ module Slinky
       end
     end
 
-    # Returns the proper responce for files that do not exist
+    # Returns the proper response for files that do not exist
     def self.not_found resp
       resp.status = 404
       resp.content = "File not found"
@@ -66,6 +65,7 @@ module Slinky
       if file.is_a? ManifestDir
         file = @manifest.find_by_path(path+"/index.html")
       end
+      resp.content_type MIME::Types.type_for(path).first
       Server.handle_file(resp, file).send_response
     end
   end
