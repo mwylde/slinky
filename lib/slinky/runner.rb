@@ -33,6 +33,7 @@ module Slinky
         opts.on("-o DIR", "--build-dir DIR", "Directory to which the site will be built.", "Use in conjunction with the 'build' command."){|dir| @options[:build_dir] = File.expand_path(dir)}
         opts.on("-p PORT", "--port PORT", "Port to run on (default: #{@options[:port]})"){|p| @options[:port] = p.to_i}
         opts.on("-s DIR", "--src-dir DIR", "Directory containing project source"){|p| @options[:src_dir] = p}
+        opts.on("-n", "--no-proxy", "Don't set up proxy server"){ @options[:no_proxy] = true }
       end
     end
 
@@ -52,9 +53,8 @@ module Slinky
 
       EM::run {
         Slinky::Server.dir = @options[:src_dir]
-        if @config && @config.proxies
+        if @config && @config.proxies && !@options[:no_proxy]
           server = EM::start_server "127.0.0.1", 5324, Slinky::Server
-          slinky_port = EM.get_sockname(server)
           ProxyServer.run(@config.proxies, @options[:port], 5324)
         else
           EM::start_server "0.0.0.0", @options[:port], Slinky::Server

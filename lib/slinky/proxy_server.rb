@@ -34,7 +34,7 @@ module Slinky
     def self.run proxy_hash, port, slinky_port
       proxies = process_proxies proxy_hash
       proxy_servers = process_proxy_servers proxies
-      
+
       Proxy.start(:host => "0.0.0.0", :port => port){|conn|
         conn.server :slinky, :host => "127.0.0.1", :port => slinky_port
         proxy_servers.each{|p|
