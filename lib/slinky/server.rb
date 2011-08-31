@@ -7,6 +7,9 @@ module Slinky
     # Gets the root directory from which files should be served
     def self.dir; @dir || "."; end
 
+    def self.config= _config; @config = _config; end
+    def self.config; @config || {}; end
+
     # Splits a uri into its components, returning only the path sans
     # initial forward slash.
     def self.path_for_uri uri
@@ -57,7 +60,7 @@ module Slinky
 
     # Method called for every HTTP request made 
     def process_http_request
-      @manifest = Manifest.new(Server.dir)
+      @manifest = Manifest.new(Server.dir, Server.config)
 
       path = Server.path_for_uri(@http_request_uri)
       file = @manifest.find_by_path(path)

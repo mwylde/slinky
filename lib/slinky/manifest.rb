@@ -21,7 +21,7 @@ module Slinky
   class Manifest
     attr_accessor :manifest_dir, :dir
 
-    def initialize dir, options = {}
+    def initialize dir, config, options = {}
       @dir = dir
       @build_to = if d = options[:build_to]
                     File.absolute_path(d)
@@ -30,6 +30,7 @@ module Slinky
                   end
       @manifest_dir = ManifestDir.new dir, @build_to, self
       @devel = (options[:devel].nil?) ? true : options[:devel]
+      @config = config
     end
 
     # Returns a list of all files contained in this manifest

@@ -53,6 +53,7 @@ module Slinky
 
       EM::run {
         Slinky::Server.dir = @options[:src_dir]
+        Slinky::Server.config = @config
         if @config && @config.proxies && !@options[:no_proxy]
           server = EM::start_server "127.0.0.1", 5324, Slinky::Server
           ProxyServer.run(@config.proxies, @options[:port], 5324)
