@@ -1,5 +1,5 @@
 ROOT = File.expand_path(File.dirname(__FILE__))
-
+require "bundler/setup"
 require 'uri'
 require 'yaml'
 require 'eventmachine'
