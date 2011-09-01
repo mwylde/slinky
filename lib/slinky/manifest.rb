@@ -28,7 +28,7 @@ module Slinky
                   else
                     dir
                   end
-      @manifest_dir = ManifestDir.new dir, @build_to, self
+      @manifest_dir = ManifestDir.new dir, self, @build_to, self
       @devel = (options[:devel].nil?) ? true : options[:devel]
       @config = config
     end
@@ -111,6 +111,7 @@ module Slinky
     def build_dependency_graph
       graph = []
       files.each{|mf|
+        # next if @config.ignore.any?{|p| mf.in_tree? p}
         mf.directives[:slinky_require].each{|rf|
           required = mf.parent.find_by_path(rf)
           if required
@@ -172,9 +173,10 @@ module Slinky
   end
 
   class ManifestDir
-    attr_accessor :dir, :files, :children
-    def initialize dir, build_dir, manifest
+    attr_accessor :dir, :parent, :files, :children
+    def initialize dir, parent, build_dir, manifest
       @dir = dir
+      @parent = parent
       @files = []
       @children = []
       @build_dir = Pathname.new(build_dir)
@@ -185,7 +187,7 @@ module Slinky
         next if Pathname.new(File.absolute_path(path)) == Pathname.new(build_dir)
         if File.directory? path
           build_dir = (@build_dir + File.basename(path)).cleanpath
-          @children << ManifestDir.new(path, build_dir, manifest)
+          @children << ManifestDir.new(path, self, build_dir, manifest)
         else
            @files << ManifestFile.new(path, @build_dir, manifest, self)
         end
@@ -206,10 +208,14 @@ module Slinky
       when 1
         @files.find{|f| f.matches? components[0]}
       else
-        child = @children.find{|d|
-          Pathname.new(d.dir).basename.to_s == components[0]
-        }
-        child ? child.find_by_path(components[1..-1].join(File::SEPARATOR)) : nil
+        if components[0] == ".."
+          @parent.find_by_path components[1..-1].join(File::SEPARATOR)
+        else
+          child = @children.find{|d|
+            Pathname.new(d.dir).basename.to_s == components[0]
+          }
+          child ? child.find_by_path(components[1..-1].join(File::SEPARATOR)) : nil
+        end
       end
     end
 
@@ -251,6 +257,14 @@ module Slinky
     def matches? s
       name = Pathname.new(@source).basename.to_s
       name == s || output_path.basename.to_s == s
+    end
+
+    # Predicate which determines whether the file is the supplied path
+    # or lies on supplied tree
+    def in_tree? path
+      return true if matches? path
+      abs_path = Pathname.new(path).expand_path
+      Pathname.new(@source).dirname.expand_path.to_s.start_with?(abs_path)
     end
 
     # Returns the path to which this file should be output. This is

@@ -4,6 +4,10 @@ module Slinky
       new File.open(path).read
     end
 
+    def self.empty
+      new "{}"
+    end
+
     def initialize string
       @config = YAML::load(string)
     end
@@ -13,7 +17,7 @@ module Slinky
     end
 
     def ignore
-      @config["ignore"]
+      @config["ignore"] || []
     end
   end
 end

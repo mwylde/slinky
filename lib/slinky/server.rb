@@ -24,7 +24,7 @@ module Slinky
           serve_file resp, path.to_s
         else
           resp.status = 500
-          resp.content = "Error compiling #{mf.source}"
+          resp.content = "Error compiling #{mf.source}\n"
         end
       else
         not_found resp
@@ -55,7 +55,7 @@ module Slinky
     # Returns the proper response for files that do not exist
     def self.not_found resp
       resp.status = 404
-      resp.content = "File not found"
+      resp.content = "File not found\n"
     end
 
     # Method called for every HTTP request made 

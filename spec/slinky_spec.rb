@@ -18,8 +18,8 @@ describe "Slinky" do
 
   context "Manifest" do
     before :each do
-      @mprod = Slinky::Manifest.new("/src", :devel => false, :build_to => "/build")
-      @mdevel = Slinky::Manifest.new("/src")
+      @mprod = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
+      @mdevel = Slinky::Manifest.new("/src", @config)
       @md_prod = @mprod.manifest_dir
       @md_devel = @mdevel.manifest_dir
     end
@@ -43,6 +43,8 @@ describe "Slinky" do
       @mdevel.find_by_path("asdf.haml").should == nil
       @mdevel.find_by_path("l1/l2/test.txt").source.should == "/src/l1/l2/test.txt"
       @mdevel.find_by_path("l1/test.css").source.should == "/src/l1/test.sass"
+      l1 = @mdevel.manifest_dir.children.find{|c| c.dir == "/src/l1"}
+      l1.find_by_path("../test.haml").source.should == "/src/test.haml"
     end
 
     it "should produce the correct scripts string for production" do
@@ -61,7 +63,7 @@ describe "Slinky" do
       File.open("/src/l1/l2/bad.sass", "w+"){|f|
         f.write "require('../test.sass')\ncolor: red;"
       }
-      manifest = Slinky::Manifest.new("/src")
+      manifest = Slinky::Manifest.new("/src", @config)
       @mdevel.styles_string.should == '<link rel="stylesheet" href="l1/test.css" /><link rel="stylesheet" href="l1/l2/test2.css" />'
     end
 
@@ -172,7 +174,7 @@ describe "Slinky" do
 
     it "should fail if a required file isn't in the manifest" do
       FileUtils.rm("/src/l1/test2.js")
-      manifest = Slinky::Manifest.new("/src", :devel => false, :build_to => "/build")
+      manifest = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
       $stderr.should_receive(:puts).with("Could not find file test2.js required by /src/l1/test.js".foreground(:red))
       proc {
         manifest.build_dependency_graph
@@ -185,17 +187,17 @@ describe "Slinky" do
 
     it "should fail if there is a cycle in the dependency graph" do
       File.open("/src/l1/test5.js", "w+"){|f| f.write("slinky_require('test.js')")}
-      manifest = Slinky::Manifest.new("/src", :devel => false, :build_to => "/build")
+      manifest = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
       $stderr.should_receive(:puts).with("Dependencies /src/l1/test2.js -> /src/l1/test.js, /src/l1/test5.js -> /src/l1/test2.js, /src/l1/test.js -> /src/l1/test5.js could not be satisfied".foreground(:red))
       proc { manifest.dependency_list }.should raise_error Slinky::DependencyError
     end
 
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
-      Slinky::Builder.build("/src", "/src/build")
+      Slinky::Builder.build("/src", "/src/build", @config)
       File.exists?("/src/build/build").should_not == true
       File.exists?("/src/build/test.html").should == true
-      Slinky::Builder.build("/src", "/src/build")
+      Slinky::Builder.build("/src", "/src/build", @config)
       File.exists?("/src/build/build").should_not == true
     end
 
@@ -246,7 +248,7 @@ describe "Slinky" do
     it "should serve 404s" do
       @resp.should_receive(:status=).with(404)
       Slinky::Server.serve_file @resp, "/src/asdf/faljshd"
-      @resp.content.should == "File not found"
+      @resp.content.should == "File not found\n"
     end
 
     it "should handle static files" do
@@ -266,7 +268,7 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/src/l1/asdf.txt", nil, @mdevel)
       @resp.should_receive(:status=).with(404)
       Slinky::Server.handle_file @resp, mf
-      @resp.content.should == "File not found"
+      @resp.content.should == "File not found\n"
     end
 
     it "should accept a port option" do
@@ -306,7 +308,7 @@ describe "Slinky" do
     end
     it "should build manifest to build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
-      Slinky::Builder.build("/src", "/build")
+      Slinky::Builder.build("/src", "/build", @config)
       File.exists?("/build").should == true
       File.exists?("/build/scripts.js").should == true
       File.exists?("/build/l1/l2/test.txt").should == true

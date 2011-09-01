@@ -15,7 +15,11 @@ module Slinky
       @arguments = @argv
 
       config_path = "#{@options[:src_dir]}/slinky.yaml"
-      @config = ConfigReader.from_file(config_path) if File.exist?(config_path)
+      @config = if File.exist?(config_path) 
+                  ConfigReader.from_file(config_path)
+                else
+                  ConfigReader.empty
+                end
     end
 
     def version

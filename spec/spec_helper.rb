@@ -35,6 +35,7 @@ RSpec.configure do |config|
   config.before :all do
     FakeFS.activate!
     FileUtils.mkdir("/tmp")
+    @config = Slinky::ConfigReader.empty
   end
   config.before :each do
     FileUtils.rm_rf("/src") rescue nil
