@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{slinky}
-  s.version = "0.4.1"
+  s.version = "0.4.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["mwylde"]
-  s.date = %q{2011-08-19}
+  s.date = %q{2011-09-01}
   s.default_executable = %q{slinky}
   s.description = %q{A static file server for rich javascript apps that automatically compiles SASS, HAML, CoffeeScript and more}
   s.email = %q{mwylde@wesleyan.edu}
@@ -35,8 +35,10 @@ Gem::Specification.new do |s|
     "lib/slinky/compilers/coffee-helper",
     "lib/slinky/compilers/haml-compiler.rb",
     "lib/slinky/compilers/sass-compiler.rb",
+    "lib/slinky/config_reader.rb",
     "lib/slinky/em-popen3.rb",
     "lib/slinky/manifest.rb",
+    "lib/slinky/proxy_server.rb",
     "lib/slinky/runner.rb",
     "lib/slinky/server.rb",
     "slinky.gemspec",
@@ -59,6 +61,7 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<eventmachine>, [">= 0.12.0"])
       s.add_runtime_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+      s.add_runtime_dependency(%q<em-proxy>, [">= 0.1.5"])
       s.add_runtime_dependency(%q<rainbow>, [">= 1.1.1"])
       s.add_runtime_dependency(%q<haml>, [">= 3.0.0"])
       s.add_runtime_dependency(%q<sass>, [">= 3.1.1"])
@@ -75,6 +78,7 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<eventmachine>, [">= 0.12.0"])
       s.add_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+      s.add_dependency(%q<em-proxy>, [">= 0.1.5"])
       s.add_dependency(%q<rainbow>, [">= 1.1.1"])
       s.add_dependency(%q<haml>, [">= 3.0.0"])
       s.add_dependency(%q<sass>, [">= 3.1.1"])
@@ -92,6 +96,7 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<eventmachine>, [">= 0.12.0"])
     s.add_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+    s.add_dependency(%q<em-proxy>, [">= 0.1.5"])
     s.add_dependency(%q<rainbow>, [">= 1.1.1"])
     s.add_dependency(%q<haml>, [">= 3.0.0"])
     s.add_dependency(%q<sass>, [">= 3.1.1"])
