@@ -36,10 +36,16 @@ module Slinky
     # Returns a list of all files contained in this manifest
     #
     # @return [ManifestFile] a list of manifest files
-    def files
-      @files = []
-      files_rec @manifest_dir
-      @files
+    def files include_ignores = true
+      unless @files
+        @files = []
+        files_rec @manifest_dir
+      end
+      if include_ignores
+        @files
+      else
+        @files.reject{|f| @config.ignore.any?{|p| f.in_tree? p}}
+      end
     end    
 
     # Finds the file at the given path in the manifest if one exists,
@@ -110,8 +116,7 @@ module Slinky
     # @return [[ManifestFile, ManifestFile]] the graph
     def build_dependency_graph
       graph = []
-      files.each{|mf|
-        # next if @config.ignore.any?{|p| mf.in_tree? p}
+      files(false).each{|mf|
         mf.directives[:slinky_require].each{|rf|
           required = mf.parent.find_by_path(rf)
           if required
@@ -136,11 +141,11 @@ module Slinky
       # will contain sorted elements
       l = []
       # start nodes, those with no incoming edges
-      s = @files.reject{|mf| mf.directives[:slinky_require]}
+      s = files(false).reject{|mf| mf.directives[:slinky_require]}
       while s.size > 0
         n = s.delete s.first
         l << n
-        @files.each{|m|
+        files(false).each{|m|
           e = graph.find{|e| e[0] == n && e[1] == m}
           next unless e
           graph.delete e
@@ -263,8 +268,10 @@ module Slinky
     # or lies on supplied tree
     def in_tree? path
       return true if matches? path
-      abs_path = Pathname.new(path).expand_path
-      Pathname.new(@source).dirname.expand_path.to_s.start_with?(abs_path)
+      abs_path = Pathname.new(path).expand_path.to_s
+      asdf = Pathname.new(@source).dirname.expand_path.to_s
+      # puts [abs_path, asdf, asdf.start_with?(abs_path), abs_path == asdf].inspect
+      asdf.start_with?(abs_path)
     end
 
     # Returns the path to which this file should be output. This is
