@@ -69,7 +69,7 @@ module Slinky
     end
 
     def command_build
-      Builder.build(@options[:src_dir], @options[:build_dir])
+      Builder.build(@options[:src_dir], @options[:build_dir], @config)
     end
   end
 end
