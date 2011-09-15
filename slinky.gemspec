@@ -8,12 +8,11 @@ Gem::Specification.new do |s|
   s.version = "0.4.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["mwylde"]
-  s.date = %q{2011-09-01}
-  s.default_executable = %q{slinky}
+  s.authors = [%q{mwylde}]
+  s.date = %q{2011-09-15}
   s.description = %q{A static file server for rich javascript apps that automatically compiles SASS, HAML, CoffeeScript and more}
   s.email = %q{mwylde@wesleyan.edu}
-  s.executables = ["slinky"]
+  s.executables = [%q{slinky}]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.md"
@@ -46,9 +45,9 @@ Gem::Specification.new do |s|
     "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/mwylde/slinky}
-  s.licenses = ["MIT"]
-  s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.6.2}
+  s.licenses = [%q{MIT}]
+  s.require_paths = [%q{lib}]
+  s.rubygems_version = %q{1.8.6}
   s.summary = %q{Static file server for javascript apps}
   s.test_files = [
     "spec/slinky_spec.rb",
