@@ -107,7 +107,7 @@ proxy:
 What does this mean? We introduce the list of proxy rules using the
 `proxy` key. Each rule is a key value pair. The key is a url prefix to
 match against. The first rule is equivalent to the regular expression
-`/\/login.*`, and will match paths like `/login/user` and
+`/\/login.*/`, and will match paths like `/login/user` and
 `/login/path/to/file.html`. The value is either a url to pass the
 request on to or a hash containing configuration (one of which must be
 a `to` field). Currently a `lag` field is also supported. This delays
