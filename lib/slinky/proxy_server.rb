@@ -4,9 +4,10 @@ module Slinky
     HOST_MATCHER = /Host: (.+)/
     
     def self.process_proxies proxy_hash
-      proxy_hash.map{|from, to|
+      proxy_hash.map{|from, h|
         begin
-          [from, URI::parse(to)]
+          to, opt = h.is_a?(Hash) ? [h.delete("to"), h] : [h, {}]
+          a = [from, URI::parse(to), opt]
         rescue
           $stderr.puts "Invalid proxy setting: #{from} => #{to}".foreground(:red)
         end
@@ -40,6 +41,8 @@ module Slinky
       proxy_servers = process_proxy_servers proxies
 
       Proxy.start(:host => "0.0.0.0", :port => port){|conn|
+        proxy = nil
+        start_time = nil
         conn.server :slinky, :host => "127.0.0.1", :port => slinky_port
         proxy_servers.each{|p|
           conn.server p, :host => p[0], :port => p[1]
@@ -49,8 +52,9 @@ module Slinky
           begin
             _, path = data.match(ProxyServer::HTTP_MATCHER)[1..2]
             proxy = ProxyServer.find_matcher(proxies, path)
+            start_time = Time.now
             server = if proxy
-                       new_path = self.rewrite_path path, proxy
+                       new_path = ProxyServer.rewrite_path path, proxy
                        data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
                        new_host = proxy[1].select(:host, :port).join(":")
                        data = ProxyServer.replace_host(data, new_host)
@@ -66,7 +70,18 @@ module Slinky
         end
 
         conn.on_response do |server, resp|
-          resp
+          opt = proxy && proxy[2]
+          if opt && opt["lag"]
+            # we want to get as close as possible to opt["lag"], so we
+            # take into account the lag from the backend server
+            so_far = Time.now - start_time
+            time = opt["lag"]/1000.0-so_far
+            EM.add_timer (time > 0 ? time : 0) do
+              conn.send_data resp
+            end
+          else
+            resp
+          end
         end
 
         conn.on_finish do |name|

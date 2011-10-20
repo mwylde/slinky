@@ -275,7 +275,7 @@ describe "Slinky" do
 
     it "should accept a port option" do
       port = 53455
-     # $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
+      $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
       run_for 0.3 do
         Slinky::Runner.new(["start","--port", port.to_s]).run
       end
@@ -320,7 +320,7 @@ describe "Slinky" do
   context "ConfigReader" do
     before :each do
       @config = <<eos
-proxies:
+proxy:
   "/test1": "http://127.0.0.1:8000"
   "/test2": "http://127.0.0.1:7000"
 ignore:
@@ -356,7 +356,7 @@ eos
   context "ProxyServer" do
     before :each do
       @config = <<eos
-proxies:
+proxy:
   "/test1": "http://127.0.0.1:8000"
   "/test2/": "http://127.0.0.1:7000"
 eos
@@ -411,6 +411,21 @@ eos
       data = Slinky::ProxyServer.replace_host(data,
                                               @proxies[0][1].select(:host, :port).join(":"))
       data.should == "GET /something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA HTTP/1.1\r\nHost: 127.0.0.1:8000\nConnection: keep-alive\r\nX-Requested-With: XMLHttpRequest\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.904.0 Safari/535.7\r\nAccept: */*\r\nReferer: http://localhost:5323/\r\nAccept-Encoding: gzip,deflate,sdch\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\nCookie: mp_super_properties=%7B%22all%22%3A%20%7B%22%24initial_referrer%22%3A%20%22http%3A//localhost%3A5323/%22%2C%22%24initial_referring_domain%22%3A%20%22localhost%3A5323%22%7D%2C%22events%22%3A%20%7B%7D%2C%22funnels%22%3A%20%7B%7D%7D\r\n\r\n\n"
+    end
+
+    it "should support proxies with configuration" do
+      @config = <<eos
+proxy:
+  "/test3":
+    to: "http://127.0.0.1:6000"
+    lag: 1000
+eos
+      @cr = Slinky::ConfigReader.new(@config)
+      @proxies = Slinky::ProxyServer.process_proxies(@cr.proxies)
+
+      @proxies[0][0].should == "/test3"
+      @proxies[0][1].to_s.should == "http://127.0.0.1:6000"
+      @proxies[0][2].should == {"lag" => 1000}
     end
   end
 end

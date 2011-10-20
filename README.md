@@ -3,9 +3,11 @@
 Slinky helps you write rich web applications using compiled web
 languages like SASS, HAML and CoffeeScript. The slinky server
 transparently compiles resources as they're requested, leaving you to
-worry about your code, not how to compile it.
+worry about your code, not how to compile it. It will even proxy
+AJAX requests to a backend server so you can easily develop against
+REST APIs.
 
-Once your ready for production, the slinky builder will compile all of
+Once you're ready for production the slinky builder will compile all of
 your sources and concatenate and minify your javascript and css,
 leaving you a directory that's ready to be pushed to your servers.
 
@@ -80,8 +82,65 @@ a
   color: red
 ```
 
-### And coming up next...
+### Configuration
 
-* Support for more languages
-* Built in proxy-server to allow connections to web services
-* More control over behavior
+Slinky can optionally be configured using a yaml file. By default, it
+looks for a file called `slinky.yaml` in the source directory, but you
+can also supply a file name on the command line using `-c`.
+
+There are currently two directives supported:
+
+#### Proxies
+
+Slinky has a built-in proxy server which lets you test ajax requests
+with your actual backend servers. To set it up, your slinky.yaml file
+will look something like this:
+
+```yaml
+proxy:
+  "/login": "http://127.0.0.1:4567/login"
+  "/search":
+    to: "http://127.0.0.1:4567/search"
+    lag: 2000
+```
+
+What does this mean? We introduce the list of proxy rules using the
+`proxy` key. Each rule is a key value pair. The key is a url prefix to
+match against. The first rule is equivalent to the regular expression
+`/\/login.*`, and will match paths like `/login/user` and
+`/login/path/to/file.html`. The value is either a url to pass the
+request on to or a hash containing configuration (one of which must be
+a `to` field). Currently a `lag` field is also supported. This delays
+the request by the specified number of milliseconds in order to
+simulate the latency associated with remote servers.
+
+An example: we have some javascript code which makes an AJAX GET
+request to `/search/widgets?q=foo`. When slinky gets the request it
+will see that it has a matching proxy rule, rewrite the request
+appropriately (changing paths and hosts) and send it on to the backend
+server (in this case, 127.0.0.1:4567). Once it gets a response it will
+wait until 2 seconds has elapsed since slinky itself received the
+request and then send on the response back to the browser.
+
+This is very convenient for developing rich web clients locally. For
+example, you may have some code that shows a loading indicator while
+an AJAX request is outstanding. However, when run locally the request
+returns so quickly that you can't even see the loading indicator. By
+adding in a lag this problem is remedied.
+
+####  Ignores
+
+By default slinky will include every javascript and css file it finds
+into the combined scripts.js and styles.css files. However, it may be
+that for some reason you want to keep some files separate and handle
+them manually. The ignore directive lets you do that, by telling the
+system to skip over any files or directories listed. For example:
+
+```yaml
+ignore:
+  - script/vendor
+  - css/reset.css
+```
+
+This will causes everything in the script/vendor directory to be
+ignored by slinky, as well as the reset.css file.

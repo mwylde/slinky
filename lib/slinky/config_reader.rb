@@ -13,7 +13,7 @@ module Slinky
     end
 
     def proxies
-      @config["proxies"] || {}
+      @config["proxy"] || {}
     end
 
     def ignores

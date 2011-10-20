@@ -14,7 +14,7 @@ module Slinky
       @command = @argv.shift
       @arguments = @argv
 
-      config_path = "#{@options[:src_dir]}/slinky.yaml"
+      config_path = @options[:config] || "#{@options[:src_dir]}/slinky.yaml"
       @config = if File.exist?(config_path) 
                   ConfigReader.from_file(config_path)
                 else
@@ -38,6 +38,7 @@ module Slinky
         opts.on("-p PORT", "--port PORT", "Port to run on (default: #{@options[:port]})"){|p| @options[:port] = p.to_i}
         opts.on("-s DIR", "--src-dir DIR", "Directory containing project source"){|p| @options[:src_dir] = p}
         opts.on("-n", "--no-proxy", "Don't set up proxy server"){ @options[:no_proxy] = true }
+        opts.on("-c FILE", "--config FILE", "Path to configuration file"){|f| @options[:config] = f}
       end
     end
 
@@ -64,7 +65,7 @@ module Slinky
         else
           EM::start_server "0.0.0.0", @options[:port], Slinky::Server
         end
-
+        puts "Started static file server on port #{@options[:port]}"
       }
     end
 
