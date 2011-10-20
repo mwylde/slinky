@@ -58,13 +58,13 @@ module Slinky
       EM::run {
         Slinky::Server.dir = @options[:src_dir]
         Slinky::Server.config = @config
-        if @config && @config.proxies && !@options[:no_proxy]
-          server = EM::start_server "127.0.0.1", 5324, Slinky::Server
+        if @config && !@config.proxies.empty? && !@options[:no_proxy]
+          server = EM::start_server "127.0.0.1", @options[:port]+1, Slinky::Server
           ProxyServer.run(@config.proxies, @options[:port], 5324)
         else
           EM::start_server "0.0.0.0", @options[:port], Slinky::Server
         end
-        puts "Started static file server on port #{@options[:port]}"
+
       }
     end
 

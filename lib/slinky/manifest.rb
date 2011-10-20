@@ -44,7 +44,7 @@ module Slinky
       if include_ignores
         @files
       else
-        @files.reject{|f| @config.ignore.any?{|p| f.in_tree? p}}
+        @files.reject{|f| @config.ignores.any?{|p| f.in_tree? p}}
       end
     end    
 
@@ -64,7 +64,7 @@ module Slinky
           %Q\<script type="text/javascript" src="#{d.relative_output_path}"></script>\
         }.join("")
       else
-        '<script type="text/javascript" src="/scripts.js"></script>'
+        %Q\<script type="text/javascript" src="/scripts.js?#{rand(999999999)}"></script>\
       end
     end
 
@@ -104,7 +104,7 @@ module Slinky
           %Q\<link rel="stylesheet" href="#{d.relative_output_path}" />\
         }.join("")
       else
-        '<link rel="stylesheet" href="/styles.css" />'
+        %Q\<link rel="stylesheet" href="/styles.css?#{rand(999999999)}" />\
       end
     end
 

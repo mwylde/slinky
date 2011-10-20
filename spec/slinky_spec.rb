@@ -48,7 +48,8 @@ describe "Slinky" do
     end
 
     it "should produce the correct scripts string for production" do
-      @mprod.scripts_string.should == '<script type="text/javascript" src="/scripts.js"></script>'
+      @mprod.scripts_string.should match \
+        %r!<script type="text/javascript" src="/scripts.js\?\d+"></script>!
     end
 
     it "should produce the correct scripts string for devel" do
@@ -56,7 +57,8 @@ describe "Slinky" do
     end
 
     it "should produce the correct styles string for production" do
-      @mprod.styles_string.should == '<link rel="stylesheet" href="/styles.css" />'
+      @mprod.styles_string.should match \
+        %r!<link rel="stylesheet" href="/styles.css\?\d+" />!
     end
 
     it "should produce the correct styles string for development" do
@@ -272,8 +274,8 @@ describe "Slinky" do
     end
 
     it "should accept a port option" do
-      port = 53453
-      $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
+      port = 53455
+     # $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
       run_for 0.3 do
         Slinky::Runner.new(["start","--port", port.to_s]).run
       end
@@ -312,6 +314,103 @@ describe "Slinky" do
       File.exists?("/build").should == true
       File.exists?("/build/scripts.js").should == true
       File.exists?("/build/l1/l2/test.txt").should == true
+    end
+  end
+
+  context "ConfigReader" do
+    before :each do
+      @config = <<eos
+proxies:
+  "/test1": "http://127.0.0.1:8000"
+  "/test2": "http://127.0.0.1:7000"
+ignore:
+  - script/vendor
+  - script/jquery.js
+eos
+      File.open("/src/slinky.yaml", "w+"){|f| f.write @config}
+      @proxies = {
+        "/test1" => "http://127.0.0.1:8000",
+        "/test2" => "http://127.0.0.1:7000"
+      }
+      @ignores = ["script/vendor", "script/jquery.js"]
+    end
+
+    it "should be able to read configuration from strings" do
+      cr = Slinky::ConfigReader.new(@config)
+      cr.proxies.should == @proxies
+      cr.ignores.should == @ignores
+    end
+
+    it "should be able to read configuration from files" do
+      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml")
+      cr.proxies.should == @proxies
+      cr.ignores.should == @ignores
+    end
+
+    it "should be able to create the empty config" do
+      Slinky::ConfigReader.empty.proxies.should == {}
+      Slinky::ConfigReader.empty.ignores.should == []
+    end
+  end
+
+  context "ProxyServer" do
+    before :each do
+      @config = <<eos
+proxies:
+  "/test1": "http://127.0.0.1:8000"
+  "/test2/": "http://127.0.0.1:7000"
+eos
+      @cr = Slinky::ConfigReader.new(@config)
+      @proxies = Slinky::ProxyServer.process_proxies(@cr.proxies)
+      @data = <<eos
+GET /test1/something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA HTTP/1.1\r\nHost: 127.0.0.1:8888\nConnection: keep-alive\r\nX-Requested-With: XMLHttpRequest\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.904.0 Safari/535.7\r\nAccept: */*\r\nReferer: http://localhost:5323/\r\nAccept-Encoding: gzip,deflate,sdch\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\nCookie: mp_super_properties=%7B%22all%22%3A%20%7B%22%24initial_referrer%22%3A%20%22http%3A//localhost%3A5323/%22%2C%22%24initial_referring_domain%22%3A%20%22localhost%3A5323%22%7D%2C%22events%22%3A%20%7B%7D%2C%22funnels%22%3A%20%7B%7D%7D\r\n\r\n
+eos
+    end
+
+    it "should properly process proxies" do
+      @proxies.map{|x|
+        [x[0], x[1].to_s]
+      }.should ==
+        [["/test1", URI::parse("http://127.0.0.1:8000").to_s],
+         ["/test2/", URI::parse("http://127.0.0.1:7000").to_s]]
+    end
+
+    it "should properly process proxy servers" do
+      Slinky::ProxyServer.process_proxy_servers(@proxies).should ==
+        [["127.0.0.1", 8000], ["127.0.0.1", 7000]]
+    end
+    
+    it "should find the correct matcher for a request" do
+      p = Slinky::ProxyServer.find_matcher(@proxies, "/test1/this/is/another")
+      p[0].should == "/test1"
+      p[1].to_s.should == "http://127.0.0.1:8000"
+      
+      p = Slinky::ProxyServer.find_matcher(@proxies, "/test2/whatsgoing.html?something=asdf")
+      p[0].should == "/test2/"
+      p[1].to_s.should == "http://127.0.0.1:7000"
+      
+      Slinky::ProxyServer.find_matcher(@proxies, "/asdf/test1/asdf").should == nil
+      Slinky::ProxyServer.find_matcher(@proxies, "/test2x/asdf").should == nil
+    end
+
+    it "should properly parse out the path from a request" do
+      method, path = @data.match(Slinky::ProxyServer::HTTP_MATCHER)[1..2]
+      method.should == "GET"
+      path.should == "/test1/something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA"
+      Slinky::ProxyServer.find_matcher(@proxies, path)[0].should == "/test1"
+    end
+
+    it "should rewrite and replace paths correctly" do
+      path = @data.match(Slinky::ProxyServer::HTTP_MATCHER)[2]
+      p2 = Slinky::ProxyServer.rewrite_path(path, @proxies[0])
+      p2.should == "/something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA"
+
+      data = Slinky::ProxyServer.replace_path(@data, path, p2, @proxies[0][1].path)
+      data.should == "GET /something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA HTTP/1.1\r\nHost: 127.0.0.1:8888\nConnection: keep-alive\r\nX-Requested-With: XMLHttpRequest\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.904.0 Safari/535.7\r\nAccept: */*\r\nReferer: http://localhost:5323/\r\nAccept-Encoding: gzip,deflate,sdch\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\nCookie: mp_super_properties=%7B%22all%22%3A%20%7B%22%24initial_referrer%22%3A%20%22http%3A//localhost%3A5323/%22%2C%22%24initial_referring_domain%22%3A%20%22localhost%3A5323%22%7D%2C%22events%22%3A%20%7B%7D%2C%22funnels%22%3A%20%7B%7D%7D\r\n\r\n\n"
+
+      data = Slinky::ProxyServer.replace_host(data,
+                                              @proxies[0][1].select(:host, :port).join(":"))
+      data.should == "GET /something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA HTTP/1.1\r\nHost: 127.0.0.1:8000\nConnection: keep-alive\r\nX-Requested-With: XMLHttpRequest\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.904.0 Safari/535.7\r\nAccept: */*\r\nReferer: http://localhost:5323/\r\nAccept-Encoding: gzip,deflate,sdch\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\nCookie: mp_super_properties=%7B%22all%22%3A%20%7B%22%24initial_referrer%22%3A%20%22http%3A//localhost%3A5323/%22%2C%22%24initial_referring_domain%22%3A%20%22localhost%3A5323%22%7D%2C%22events%22%3A%20%7B%7D%2C%22funnels%22%3A%20%7B%7D%7D\r\n\r\n\n"
     end
   end
 end

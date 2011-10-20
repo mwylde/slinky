@@ -14,11 +14,15 @@ module Slinky
     end
 
     def self.process_proxy_servers proxies
-      proxies_servers = proxies.map{|p| [p[1].host, p[1].port]}
+      proxies.map{|p| [p[1].host, p[1].port]}
     end
 
     def self.find_matcher proxies, path
       proxies.find{|p| path.start_with?(p[0])}
+    end
+
+    def self.rewrite_path path, proxy
+      path.gsub(/^#{proxy[0]}/, "")      
     end
 
     def self.replace_path http, old_path, new_path, addition
@@ -46,7 +50,7 @@ module Slinky
             _, path = data.match(ProxyServer::HTTP_MATCHER)[1..2]
             proxy = ProxyServer.find_matcher(proxies, path)
             server = if proxy
-                       new_path = path.gsub(/^#{proxy[0]}/, "")
+                       new_path = self.rewrite_path path, proxy
                        data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
                        new_host = proxy[1].select(:host, :port).join(":")
                        data = ProxyServer.replace_host(data, new_host)

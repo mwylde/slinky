@@ -13,10 +13,10 @@ module Slinky
     end
 
     def proxies
-      @config["proxies"]
+      @config["proxies"] || {}
     end
 
-    def ignore
+    def ignores
       @config["ignore"] || []
     end
   end
