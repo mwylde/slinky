@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 require 'pathname'
+require 'digest/md5'
 
 module Slinky
   # extensions of files that can contain build directives
@@ -79,7 +80,7 @@ module Slinky
       File.open(output, "w+"){|f|
         f.write(compressor.compress(s)) 
       }
-      scripts.collect{|s| FileUtils.rm(s.build_to)}
+      #scripts.collect{|s| FileUtils.rm(s.build_to)}
     end
     
     def compress_scripts
@@ -328,7 +329,7 @@ module Slinky
           out.gsub!(REQUIRE_DIRECTIVE, "")
           out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
           out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
-          to = to ||  Tempfile.new("slinky").path
+          to = to || Tempfile.new("slinky").path + ".cache"
           File.open(to, "w+"){|f|
             f.write(out)
           }
@@ -363,8 +364,15 @@ module Slinky
     #
     # @return String the path of the processed file, ready for serving
     def process to = nil
-      # mangle file appropriately
-      handle_directives (compile @source), to
+      # get hash of source file
+      md5 = Digest::MD5.hexdigest(File.read(@source))
+      if @last_path && md5 == @last_md5
+        @last_path
+      else
+        @last_md5 = md5
+        # mangle file appropriately
+        @last_path = handle_directives (compile @source), to
+      end
     end
 
     # Path to which the file will be built

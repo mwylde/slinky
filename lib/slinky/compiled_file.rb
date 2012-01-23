@@ -80,11 +80,11 @@ module Slinky
     # Calls the supplied callback with the path of the compiled file,
     # compiling the source file first if necessary.
     def file &cb
-      if needs_update?
-        compile &cb
-      else
-        cb.call @output_path, nil, nil, nil
-      end
+      #if needs_update?
+      compile &cb
+      #else
+      #  cb.call @output_path, nil, nil, nil
+      #end
     end
 
     # Returns whether the source file has changed since it was last
