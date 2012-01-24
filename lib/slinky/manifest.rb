@@ -5,10 +5,14 @@ require 'digest/md5'
 module Slinky
   # extensions of files that can contain build directives
   DIRECTIVE_FILES = %w{js css html haml sass scss coffee}
+  DEPENDS_DIRECTIVE = /^[^\n\w]*(slinky_depends)\((".*"|'.+'|)\)[^\n\w]*$/
   REQUIRE_DIRECTIVE = /^[^\n\w]*(slinky_require)\((".*"|'.+'|)\)[^\n\w]*$/
   SCRIPTS_DIRECTIVE = /^[^\n\w]*(slinky_scripts)[^\n\w]*$/
   STYLES_DIRECTIVE  = /^[^\n\w]*(slinky_styles)[^\n\w]*$/
-  BUILD_DIRECTIVES = Regexp.union(REQUIRE_DIRECTIVE, SCRIPTS_DIRECTIVE, STYLES_DIRECTIVE)
+  BUILD_DIRECTIVES = Regexp.union(DEPENDS_DIRECTIVE,
+                                  REQUIRE_DIRECTIVE,
+                                  SCRIPTS_DIRECTIVE,
+                                  STYLES_DIRECTIVE)
   CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
   # Raised when a compilation fails for any reason
@@ -237,7 +241,7 @@ module Slinky
 
   class ManifestFile
     attr_accessor :source, :build_path
-    attr_reader :last_built, :directives, :parent, :manifest
+    attr_reader :last_built, :directives, :parent, :manifest, :updated
 
     def initialize source, build_path, manifest, parent = nil, options = {:devel => false}
       @parent = parent
@@ -326,6 +330,7 @@ module Slinky
       if @directives.size > 0
         begin
           out = File.read(path)
+          out.gsub!(DEPENDS_DIRECTIVE, "")
           out.gsub!(REQUIRE_DIRECTIVE, "")
           out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
           out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
@@ -358,18 +363,36 @@ module Slinky
       path ? Pathname.new(path) : nil
     end
 
+    # Gets the md5 hash of the source file
+    def md5
+      Digest::MD5.hexdigest(File.read(@source))
+    end
+    
     # Gets manifest file ready for serving or building by handling the
     # directives and compiling the file if neccesary.
     # @param String path to which the file should be compiled
     #
     # @return String the path of the processed file, ready for serving
     def process to = nil
+      return if @processing # prevent infinite recursion
+      # process each file on which we're dependent, watching out for 
+      # infinite loops
+      start_time = Time.now
+      depends = @directives[:slinky_depends].map{|f|
+        parent.find_by_path(f)
+      } if @directives[:slinky_depends]
+      depends ||= []
+      @processing = true
+      depends.each{|f| f.process}
+      @processing = false
+
       # get hash of source file
-      md5 = Digest::MD5.hexdigest(File.read(@source))
-      if @last_path && md5 == @last_md5
+      hash = md5
+      if @last_path && hash == @last_md5 && depends.all?{|f| f.updated < start_time}
         @last_path
       else
-        @last_md5 = md5
+        @last_md5 = hash
+        @updated = Time.now
         # mangle file appropriately
         @last_path = handle_directives (compile @source), to
       end
