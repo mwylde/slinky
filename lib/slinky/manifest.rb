@@ -379,11 +379,13 @@ module Slinky
       # infinite loops
       start_time = Time.now
       depends = @directives[:slinky_depends].map{|f|
-        parent.find_by_path(f)
-      } if @directives[:slinky_depends]
+        p = parent.find_by_path(f)
+        $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p
+        p
+      }.compact if @directives[:slinky_depends]
       depends ||= []
       @processing = true
-      depends.each{|f| f.process}
+      depends.each{|f| f.process }
       @processing = false
 
       # get hash of source file
