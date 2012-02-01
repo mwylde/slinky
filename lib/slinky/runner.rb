@@ -64,7 +64,7 @@ module Slinky
  
         if @config && !@config.proxies.empty? && !@options[:no_proxy]
           server = EM::start_server "127.0.0.1", @options[:port]+1, Slinky::Server
-          ProxyServer.run(@config.proxies, @options[:port], 5324)
+          ProxyServer.run(@config.proxies, @options[:port], @options[:port]+1)
         else
           EM::start_server "0.0.0.0", @options[:port], Slinky::Server
         end
