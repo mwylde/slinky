@@ -64,9 +64,17 @@ module Slinky
     # Method called for every HTTP request made 
     def process_http_request
       manifest = Server.manifest
-      path = Server.path_for_uri(@http_request_uri)
-      file = manifest.find_by_path(path)
       resp = EventMachine::DelegatedHttpResponse.new(self)
+
+      begin
+        path = Server.path_for_uri(@http_request_uri)
+      rescue
+        resp.status = 500
+        resp.content = "Invalid request"
+        return
+      end
+
+      file = manifest.find_by_path(path)
       if file.is_a? ManifestDir
         file = manifest.find_by_path(path+"/index.html")
       end
