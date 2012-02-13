@@ -88,7 +88,7 @@ module Slinky
     end
     
     def compress_scripts
-      compressor = YUI::JavaScriptCompressor.new(:munge => true)
+      compressor = YUI::JavaScriptCompressor.new(:munge => false)
       compress(".js", "#{@build_to}/scripts.js", compressor)
     end
 
