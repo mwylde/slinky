@@ -59,8 +59,8 @@ module Slinky
     # @param String path the path of the file relative to the manifest
     #
     # @return ManifestFile the manifest file at that path if one exists
-    def find_by_path path
-      @manifest_dir.find_by_path path
+    def find_by_path path, allow_multiple = false
+      @manifest_dir.find_by_path path, allow_multiple
     end
     
     def scripts_string
@@ -123,9 +123,11 @@ module Slinky
       graph = []
       files(false).each{|mf|
         mf.directives[:slinky_require].each{|rf|
-          required = mf.parent.find_by_path(rf)
-          if required
-            graph << [required, mf]
+          required = mf.parent.find_by_path(rf, true)
+          if required.size > 0
+            required.each{|x|
+              graph << [x, mf]
+            }
           else
             error = "Could not find file #{rf} required by #{mf.source}"
             $stderr.puts error.foreground(:red)
@@ -208,15 +210,17 @@ module Slinky
     # otherwise nil.
     #
     # @param String path the path of the file relative to the directory
+    # @param Boolean allow_multiple if enabled, can return multiple paths
+    #   according to glob rules
     #
-    # @return ManifestFile the manifest file at that path if one exists
-    def find_by_path path
+    # @return [ManifestFile] the manifest file at that path if one exists
+    def find_by_path path, allow_multiple = false
       components = path.to_s.split(File::SEPARATOR).reject{|x| x == ""}
       case components.size
       when 0
-        self
+        [self]
       when 1
-        @files.find{|f| f.matches? components[0]}
+        @files.find_all{|f| f.matches? components[0], allow_multiple}
       else
         if components[0] == ".."
           @parent.find_by_path components[1..-1].join(File::SEPARATOR)
@@ -224,7 +228,8 @@ module Slinky
           child = @children.find{|d|
             Pathname.new(d.dir).basename.to_s == components[0]
           }
-          child ? child.find_by_path(components[1..-1].join(File::SEPARATOR)) : nil
+          child ? child.find_by_path(components[1..-1].join(File::SEPARATOR),
+                                     allow_multiple) : []
         end
       end
     end
@@ -262,11 +267,21 @@ module Slinky
     # `mf.matches? "hello.sass"` and `mf.matches? "hello.css"` should
     # both return true.
     #
-    # @param [String] a filename
-    # @return [Bool] True if the filename matches, false otherwise
-    def matches? s
+    # @param String a filename
+    # @param Bool match_glob if true, matches according to glob rules
+    # @return Bool True if the filename matches, false otherwise
+    def matches? s, match_glob = false
       name = Pathname.new(@source).basename.to_s
-      name == s || output_path.basename.to_s == s
+      output = output_path.basename.to_s
+      # check for stars that are not escaped
+      r = /(?<!\\)\*/
+      if match_glob && s.match(r)
+        a = s.split(r)
+        r2 = a.reduce{|a, x| /#{a}.*#{x}/}
+        name.match(r2) || output.match(r2)
+      else
+        name == s || output == s
+      end
     end
 
     # Predicate which determines whether the file is the supplied path
@@ -379,10 +394,10 @@ module Slinky
       # infinite loops
       start_time = Time.now
       depends = @directives[:slinky_depends].map{|f|
-        p = parent.find_by_path(f)
-        $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p
+        p = parent.find_by_path(f, true)
+        $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p.size > 0
         p
-      }.compact if @directives[:slinky_depends]
+      }.flatten.compact if @directives[:slinky_depends]
       depends ||= []
       @processing = true
       depends.each{|f| f.process }

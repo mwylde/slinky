@@ -74,9 +74,9 @@ module Slinky
         return
       end
 
-      file = manifest.find_by_path(path)
+      file = manifest.find_by_path(path).first
       if file.is_a? ManifestDir
-        file = manifest.find_by_path(path+"/index.html")
+        file = manifest.find_by_path(path+"/index.html").first
       end
       resp.content_type MIME::Types.type_for(path).first
       Server.handle_file(resp, file).send_response
