@@ -252,6 +252,17 @@ describe "Slinky" do
       f.directives.should == {:slinky_require=>["test2.js", "l2/test3.js", "test5.js"]}
     end
 
+    it "should detect new files" do
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
+      f = manifest.find_by_path("l1/cache.js").first
+      f.should_not == nil
+      FileUtils.mkdir("/src/l1/hello")
+      File.open("/src/l1/hello/asdf.sass", "w+"){|f| f.write("hello")}
+      f = manifest.find_by_path("l1/hello/asdf.sass")
+      f.should_not == nil
+    end
+
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
       Slinky::Builder.build("/src", "/src/build", @config)

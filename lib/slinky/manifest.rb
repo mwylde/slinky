@@ -201,7 +201,7 @@ module Slinky
           build_dir = (@build_dir + File.basename(path)).cleanpath
           @children << ManifestDir.new(path, self, build_dir, manifest)
         else
-           @files << ManifestFile.new(path, @build_dir, manifest, self)
+          @files << ManifestFile.new(path, @build_dir, manifest, self)
         end
       end
     end
@@ -220,7 +220,19 @@ module Slinky
       when 0
         [self]
       when 1
-        @files.find_all{|f| f.matches? components[0], allow_multiple}
+        files = @files.find_all{|f| f.matches? components[0], allow_multiple}
+        if files.size == 0
+          path = Pathname.new([@dir, components[0]].join(File::SEPARATOR))
+          Dir.glob(path.sub_ext(".*").to_s).each do |path|
+            if !@files.find{|f| f.matches? File.basename(path)}
+              mf = ManifestFile.new(path, @build_dir, @manifest, self)
+              @files << mf
+            end
+          end
+          @files.find_all{|f| f.matches? components[0], allow_multiple}
+        else
+          files
+        end
       else
         if components[0] == ".."
           @parent.find_by_path components[1..-1].join(File::SEPARATOR)
@@ -228,8 +240,16 @@ module Slinky
           child = @children.find{|d|
             Pathname.new(d.dir).basename.to_s == components[0]
           }
-          child ? child.find_by_path(components[1..-1].join(File::SEPARATOR),
-                                     allow_multiple) : []
+          if child
+            child.find_by_path(components[1..-1].join(File::SEPARATOR),
+                               allow_multiple)
+          else
+            path = [@dir, components[0]].join(File::SEPARATOR)
+            if Dir.exists?(path)
+              build_dir = (@build_dir + File.basename(path)).cleanpath
+              @children << ManifestDir.new(path, self, build_dir, @manifest)
+            end
+          end
         end
       end
     end
