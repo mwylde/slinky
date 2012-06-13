@@ -241,7 +241,17 @@ describe "Slinky" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/cache.coffee/)
       f.process      
     end
-    
+
+    it "should handle new directives" do
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test.js").first
+      f.process
+      f.directives.should == {:slinky_require=>["test2.js", "l2/test3.js"]}
+      File.open("/src/l1/test.js", "a"){|f| f.write("slinky_require('test5.js')\n")}
+      f.process
+      f.directives.should == {:slinky_require=>["test2.js", "l2/test3.js", "test5.js"]}
+    end
+
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
       Slinky::Builder.build("/src", "/src/build", @config)

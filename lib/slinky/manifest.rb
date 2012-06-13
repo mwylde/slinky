@@ -387,6 +387,11 @@ module Slinky
     def process to = nil
       return if @processing # prevent infinite recursion
       start_time = Time.now
+      hash = md5
+      if hash != @last_md5
+        @directives = find_directives
+      end
+      
       depends = @directives[:slinky_depends].map{|f|
         p = parent.find_by_path(f, true)
         $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p.size > 0
@@ -400,7 +405,6 @@ module Slinky
       @processing = false
 
       # get hash of source file
-      hash = md5
       if @last_path && hash == @last_md5 && depends.all?{|f| f.updated < start_time}
         @last_path
       else
