@@ -76,15 +76,17 @@ module Slinky
     def compress ext, output, compressor
       scripts = dependency_list.reject{|x| x.output_path.extname != ext}
 
-      s = scripts.collect{|s|
-        f = File.open(s.build_to.to_s, 'rb'){|f| f.read}
-        (block_given?) ? (yield s, f) : f
-      }.join("\n")
+      if scripts.size > 0
+        s = scripts.collect{|s|
+          f = File.open(s.build_to.to_s, 'rb'){|f| f.read}
+          (block_given?) ? (yield s, f) : f
+        }.join("\n")
 
-      File.open(output, "w+"){|f|
-        f.write(compressor.compress(s)) 
-      }
-      scripts.collect{|s| FileUtils.rm(s.build_to)}
+        File.open(output, "w+"){|f|
+          f.write(compressor.compress(s)) 
+        }
+        scripts.collect{|s| FileUtils.rm(s.build_to)}
+      end
     end
     
     def compress_scripts
