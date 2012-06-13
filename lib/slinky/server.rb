@@ -10,6 +10,9 @@ module Slinky
     def self.config= _config; @config = _config; end
     def self.config; @config || {}; end
 
+    def self.manifest= _manifest; @manifest = _manifest; end
+    def self.manifest; @manifest; end
+
     # Splits a uri into its components, returning only the path sans
     # initial forward slash.
     def self.path_for_uri uri
@@ -60,13 +63,20 @@ module Slinky
 
     # Method called for every HTTP request made 
     def process_http_request
-      @manifest = Manifest.new(Server.dir, Server.config)
-
-      path = Server.path_for_uri(@http_request_uri)
-      file = @manifest.find_by_path(path)
+      manifest = Server.manifest
       resp = EventMachine::DelegatedHttpResponse.new(self)
+
+      begin
+        path = Server.path_for_uri(@http_request_uri)
+      rescue
+        resp.status = 500
+        resp.content = "Invalid request"
+        return
+      end
+
+      file = manifest.find_by_path(path).first
       if file.is_a? ManifestDir
-        file = @manifest.find_by_path(path+"/index.html")
+        file = manifest.find_by_path(path+"/index.html").first
       end
       resp.content_type MIME::Types.type_for(path).first
       Server.handle_file(resp, file).send_response

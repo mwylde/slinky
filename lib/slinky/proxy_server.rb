@@ -58,7 +58,6 @@ module Slinky
                        data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
                        new_host = proxy[1].select(:host, :port).join(":")
                        data = ProxyServer.replace_host(data, new_host)
-                       puts [data, [proxy[1].host, proxy[1].port]].inspect
                        [proxy[1].host, proxy[1].port]
                      else :slinky
                      end

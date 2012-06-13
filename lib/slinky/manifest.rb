@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 require 'pathname'
+require 'digest/md5'
 
 module Slinky
   # extensions of files that can contain build directives
   DIRECTIVE_FILES = %w{js css html haml sass scss coffee}
+  DEPENDS_DIRECTIVE = /^[^\n\w]*(slinky_depends)\((".*"|'.+'|)\)[^\n\w]*$/
   REQUIRE_DIRECTIVE = /^[^\n\w]*(slinky_require)\((".*"|'.+'|)\)[^\n\w]*$/
   SCRIPTS_DIRECTIVE = /^[^\n\w]*(slinky_scripts)[^\n\w]*$/
   STYLES_DIRECTIVE  = /^[^\n\w]*(slinky_styles)[^\n\w]*$/
-  BUILD_DIRECTIVES = Regexp.union(REQUIRE_DIRECTIVE, SCRIPTS_DIRECTIVE, STYLES_DIRECTIVE)
+  BUILD_DIRECTIVES = Regexp.union(DEPENDS_DIRECTIVE,
+                                  REQUIRE_DIRECTIVE,
+                                  SCRIPTS_DIRECTIVE,
+                                  STYLES_DIRECTIVE)
   CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
   # Raised when a compilation fails for any reason
@@ -54,8 +59,8 @@ module Slinky
     # @param String path the path of the file relative to the manifest
     #
     # @return ManifestFile the manifest file at that path if one exists
-    def find_by_path path
-      @manifest_dir.find_by_path path
+    def find_by_path path, allow_multiple = false
+      @manifest_dir.find_by_path path, allow_multiple
     end
     
     def scripts_string
@@ -83,7 +88,7 @@ module Slinky
     end
     
     def compress_scripts
-      compressor = YUI::JavaScriptCompressor.new(:munge => true)
+      compressor = YUI::JavaScriptCompressor.new(:munge => false)
       compress(".js", "#{@build_to}/scripts.js", compressor)
     end
 
@@ -118,9 +123,11 @@ module Slinky
       graph = []
       files(false).each{|mf|
         mf.directives[:slinky_require].each{|rf|
-          required = mf.parent.find_by_path(rf)
-          if required
-            graph << [required, mf]
+          required = mf.parent.find_by_path(rf, true)
+          if required.size > 0
+            required.each{|x|
+              graph << [x, mf]
+            }
           else
             error = "Could not find file #{rf} required by #{mf.source}"
             $stderr.puts error.foreground(:red)
@@ -194,7 +201,7 @@ module Slinky
           build_dir = (@build_dir + File.basename(path)).cleanpath
           @children << ManifestDir.new(path, self, build_dir, manifest)
         else
-           @files << ManifestFile.new(path, @build_dir, manifest, self)
+          @files << ManifestFile.new(path, @build_dir, manifest, self)
         end
       end
     end
@@ -203,15 +210,29 @@ module Slinky
     # otherwise nil.
     #
     # @param String path the path of the file relative to the directory
+    # @param Boolean allow_multiple if enabled, can return multiple paths
+    #   according to glob rules
     #
-    # @return ManifestFile the manifest file at that path if one exists
-    def find_by_path path
+    # @return [ManifestFile] the manifest file at that path if one exists
+    def find_by_path path, allow_multiple = false
       components = path.to_s.split(File::SEPARATOR).reject{|x| x == ""}
       case components.size
       when 0
-        self
+        [self]
       when 1
-        @files.find{|f| f.matches? components[0]}
+        files = @files.find_all{|f| f.matches? components[0], allow_multiple}
+        if files.size == 0
+          path = Pathname.new([@dir, components[0]].join(File::SEPARATOR))
+          Dir.glob(path.sub_ext(".*").to_s).each do |path|
+            if !@files.find{|f| f.matches? File.basename(path)}
+              mf = ManifestFile.new(path, @build_dir, @manifest, self)
+              @files << mf
+            end
+          end
+          @files.find_all{|f| f.matches? components[0], allow_multiple}
+        else
+          files
+        end
       else
         if components[0] == ".."
           @parent.find_by_path components[1..-1].join(File::SEPARATOR)
@@ -219,14 +240,23 @@ module Slinky
           child = @children.find{|d|
             Pathname.new(d.dir).basename.to_s == components[0]
           }
-          child ? child.find_by_path(components[1..-1].join(File::SEPARATOR)) : nil
+          if child
+            child.find_by_path(components[1..-1].join(File::SEPARATOR),
+                               allow_multiple)
+          else
+            path = [@dir, components[0]].join(File::SEPARATOR)
+            if Dir.exists?(path)
+              build_dir = (@build_dir + File.basename(path)).cleanpath
+              @children << ManifestDir.new(path, self, build_dir, @manifest)
+            end
+          end
         end
       end
     end
 
     def build
-      if !@build_dir.exist?
-        @build_dir.mkdir
+      unless Dir.exists?(@build_dir.to_s)
+        FileUtils.mkdir(@build_dir.to_s)
       end
       (@files + @children).each{|m|
         m.build
@@ -236,7 +266,7 @@ module Slinky
 
   class ManifestFile
     attr_accessor :source, :build_path
-    attr_reader :last_built, :directives, :parent, :manifest
+    attr_reader :last_built, :directives, :parent, :manifest, :updated
 
     def initialize source, build_path, manifest, parent = nil, options = {:devel => false}
       @parent = parent
@@ -257,11 +287,21 @@ module Slinky
     # `mf.matches? "hello.sass"` and `mf.matches? "hello.css"` should
     # both return true.
     #
-    # @param [String] a filename
-    # @return [Bool] True if the filename matches, false otherwise
-    def matches? s
+    # @param String a filename
+    # @param Bool match_glob if true, matches according to glob rules
+    # @return Bool True if the filename matches, false otherwise
+    def matches? s, match_glob = false
       name = Pathname.new(@source).basename.to_s
-      name == s || output_path.basename.to_s == s
+      output = output_path.basename.to_s
+      # check for stars that are not escaped
+      r = /(?<!\\)\*/
+      if match_glob && s.match(r)
+        a = s.split(r)
+        r2 = a.reduce{|a, x| /#{a}.*#{x}/}
+        name.match(r2) || output.match(r2)
+      else
+        name == s || output == s
+      end
     end
 
     # Predicate which determines whether the file is the supplied path
@@ -323,19 +363,16 @@ module Slinky
     # @return String the path of the de-directivefied file
     def handle_directives path, to = nil
       if @directives.size > 0
-        begin
-          out = File.read(path)
-          out.gsub!(REQUIRE_DIRECTIVE, "")
-          out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
-          out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
-          to = to ||  Tempfile.new("slinky").path
-          File.open(to, "w+"){|f|
-            f.write(out)
-          }
-          to
-        rescue
-          nil
-        end
+        out = File.read(path)
+        out.gsub!(DEPENDS_DIRECTIVE, "")
+        out.gsub!(REQUIRE_DIRECTIVE, "")
+        out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
+        out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
+        to = to || Tempfile.new("slinky").path + ".cache"
+        File.open(to, "w+"){|f|
+          f.write(out)
+        }
+        to
       else
         path
       end
@@ -357,14 +394,45 @@ module Slinky
       path ? Pathname.new(path) : nil
     end
 
+    # Gets the md5 hash of the source file
+    def md5
+      Digest::MD5.hexdigest(File.read(@source)) rescue nil
+    end
+    
     # Gets manifest file ready for serving or building by handling the
     # directives and compiling the file if neccesary.
     # @param String path to which the file should be compiled
     #
     # @return String the path of the processed file, ready for serving
     def process to = nil
-      # mangle file appropriately
-      handle_directives (compile @source), to
+      return if @processing # prevent infinite recursion
+      start_time = Time.now
+      hash = md5
+      if hash != @last_md5
+        @directives = find_directives
+      end
+      
+      depends = @directives[:slinky_depends].map{|f|
+        p = parent.find_by_path(f, true)
+        $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p.size > 0
+        p
+      }.flatten.compact if @directives[:slinky_depends]
+      depends ||= []
+      @processing = true
+      # process each file on which we're dependent, watching out for 
+      # infinite loops
+      depends.each{|f| f.process }
+      @processing = false
+
+      # get hash of source file
+      if @last_path && hash == @last_md5 && depends.all?{|f| f.updated < start_time}
+        @last_path
+      else
+        @last_md5 = hash
+        @updated = Time.now
+        # mangle file appropriately
+        @last_path = handle_directives (compile @source), to
+      end
     end
 
     # Path to which the file will be built
@@ -379,8 +447,12 @@ module Slinky
         FileUtils.mkdir_p(@build_path)
       end
       to = build_to
-      path = process to
-      
+      begin 
+        path = process to
+      rescue
+        raise BuildFailedError
+      end
+
       if !path
         raise BuildFailedError
       elsif path != to

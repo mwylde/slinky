@@ -39,12 +39,12 @@ describe "Slinky" do
     end
 
     it "should find files in the manifest by path" do
-      @mdevel.find_by_path("test.haml").source.should == "/src/test.haml"
-      @mdevel.find_by_path("asdf.haml").should == nil
-      @mdevel.find_by_path("l1/l2/test.txt").source.should == "/src/l1/l2/test.txt"
-      @mdevel.find_by_path("l1/test.css").source.should == "/src/l1/test.sass"
+      @mdevel.find_by_path("test.haml").first.source.should == "/src/test.haml"
+      @mdevel.find_by_path("asdf.haml").first.should == nil
+      @mdevel.find_by_path("l1/l2/test.txt").first.source.should == "/src/l1/l2/test.txt"
+      @mdevel.find_by_path("l1/test.css").first.source.should == "/src/l1/test.sass"
       l1 = @mdevel.manifest_dir.children.find{|c| c.dir == "/src/l1"}
-      l1.find_by_path("../test.haml").source.should == "/src/test.haml"
+      l1.find_by_path("../test.haml").first.source.should == "/src/test.haml"
     end
 
     it "should produce the correct scripts string for production" do
@@ -98,6 +98,7 @@ describe "Slinky" do
     it "should compile files that need it" do
       $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
+      FileUtils.mkdir("/src/build")
       build_path = mf.process mf.build_to
       build_path.to_s.split(".")[-1].should == "html"
       File.read("/src/test.haml").match("<head>").should == nil
@@ -107,6 +108,7 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
       build_path = mf.process "/src/build/test.html"
       File.read("/src/build/test.html").match("<head>").should_not == nil
+      FileUtils.rm_rf("/src/build") rescue nil
     end
 
     it "should report errors for bad files" do
@@ -194,6 +196,73 @@ describe "Slinky" do
       proc { manifest.dependency_list }.should raise_error Slinky::DependencyError
     end
 
+    it "should handle depends directives" do
+      File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends('test.sass')")}
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test5.js").first
+      f.should_not == nil
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test5.coffee/)
+      f.process
+    end
+
+    it "should handle depends directives with glob patterns" do
+      File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends('*.sass')")}
+      File.open("/src/l1/test2.sass", "w+"){|f| f.write("body\n\tcolor: red")}
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test5.js").first
+      f.should_not == nil
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test2.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test5.coffee/)
+      f.process
+    end
+
+    it "should handle depends directives with infinite loops" do
+      File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends('*.sass')")}
+      File.open("/src/l1/test2.sass", "w+"){|f| f.write("/* slinky_depends('*.coffee')")}
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test5.js").first
+      f.should_not == nil
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test2.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test5.coffee/)
+      f.process
+    end
+
+    it "should cache files" do
+      File.open("/src/l1/cache.coffee", "w+"){|f| f.write("() -> 'hello, world!'\n")}
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/cache.js").first
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/cache.coffee/)
+      f.process
+      f.process
+      File.open("/src/l1/cache.coffee", "a"){|f| f.write("() -> 'goodbye, world!'\n")}
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/cache.coffee/)
+      f.process      
+    end
+
+    it "should handle new directives" do
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test.js").first
+      f.process
+      f.directives.should == {:slinky_require=>["test2.js", "l2/test3.js"]}
+      File.open("/src/l1/test.js", "a"){|f| f.write("slinky_require('test5.js')\n")}
+      f.process
+      f.directives.should == {:slinky_require=>["test2.js", "l2/test3.js", "test5.js"]}
+    end
+
+    it "should detect new files" do
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
+      f = manifest.find_by_path("l1/cache.js").first
+      f.should_not == nil
+      FileUtils.mkdir("/src/l1/hello")
+      File.open("/src/l1/hello/asdf.sass", "w+"){|f| f.write("hello")}
+      f = manifest.find_by_path("l1/hello/asdf.sass")
+      f.should_not == nil
+    end
+
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
       Slinky::Builder.build("/src", "/src/build", @config)
@@ -204,6 +273,7 @@ describe "Slinky" do
     end
 
     it "should combine and compress javascript" do
+      FileUtils.rm_rf("/build") rescue nil
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
       @mprod.build
       File.exists?("/build/scripts.js").should == true
@@ -281,29 +351,41 @@ describe "Slinky" do
       end
     end
 
-    # it "should serve files for realz" do
-    #   $stdout.should_receive(:puts).with(/Started static file server on port 43453/)
-    #   @results = []
-    #   run_for 3 do
-    #     Slinky::Runner.new(["start","--port", "43453", "--src-dir", "/src"]).run
-    #     base = "http://localhost:43453"
-    #     multi = EventMachine::MultiRequest.new
-
-    #     # add multiple requests to the multi-handler
-    #     multi.add(EventMachine::HttpRequest.new("#{base}/index.html").get)
-    #     multi.add(EventMachine::HttpRequest.new(base).get)
-    #     multi.callback do
-    #       multi.responses[:succeeded].size.should == 2
-    #       multi.responses[:succeeded].each{|r|
-    #         $stderr.puts r.response
-    #         r.response.include?("hello").should == true
-    #       }
-    #       multi.responses[:failed].size.should == 0
-    #       EM.stop_event_loop
-    #     end
-    #   end
-    # end
+    it "should serve files for realz" do
+      $stdout.should_receive(:puts).with(/Started static file server on port 43453/)
+      @results = []
+      File.open("/src/index.haml", "w+"){|f|
+        f.write <<eos
+!!5
+%head
+  slinky_scripts
+  slinky_styles
+%body
+  h1. index
+eos
+      }
+      run_for 3 do
+        Slinky::Runner.new(["start","--port", "43453", "--src-dir", "/src"]).run
+        base = "http://localhost:43453"
+        multi = EventMachine::MultiRequest.new
+        $stdout.should_receive(:puts).with(/Compiled \/src\/index.haml/)
+        
+        # add multiple requests to the multi-handler
+        multi.add(:index, EventMachine::HttpRequest.new("#{base}/index.html").get)
+        multi.add(:base, EventMachine::HttpRequest.new(base).get)
+        multi.callback do
+          rs = [multi.responses[:callback][:index], multi.responses[:callback][:base]]
+          rs.compact.size.should == 2
+          rs.each{|r|
+            r.response.include?("index").should == true
+          }
+          multi.responses[:errback].size.should == 0
+          EM.stop_event_loop
+        end
+      end
+    end
   end
+
   context "Builder" do
     before :each do
       @compilation_subs = {".sass" => ".css", ".coffee" => ".js", ".haml" => ".html"}
