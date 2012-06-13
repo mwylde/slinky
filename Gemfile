@@ -11,12 +11,12 @@ gem "mime-types", ">= 1.16"
 gem "yui-compressor", ">= 0.9.6"
 
 group :development do
-  gem "rspec", "~> 2.3.0"
+  gem "rspec", "~> 2.10.0"
   gem "yard", "~> 0.6.0"
   gem "bundler", "~> 1.1.0"
   gem "jeweler", "~> 1.8.0"
   gem 'cover_me', '>= 1.0.0.rc6'
-  gem "fakefs"
+  gem "fakefs", '~> 0.4.0'
   gem "em-http-request"
 #  gem "em-synchrony", ">= 0"
 end

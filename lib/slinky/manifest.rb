@@ -84,7 +84,7 @@ module Slinky
       File.open(output, "w+"){|f|
         f.write(compressor.compress(s)) 
       }
-      #scripts.collect{|s| FileUtils.rm(s.build_to)}
+      scripts.collect{|s| FileUtils.rm(s.build_to)}
     end
     
     def compress_scripts
@@ -235,8 +235,8 @@ module Slinky
     end
 
     def build
-      if !@build_dir.exist?
-        @build_dir.mkdir
+      unless Dir.exists?(@build_dir.to_s)
+        FileUtils.mkdir(@build_dir.to_s)
       end
       (@files + @children).each{|m|
         m.build
@@ -343,20 +343,16 @@ module Slinky
     # @return String the path of the de-directivefied file
     def handle_directives path, to = nil
       if @directives.size > 0
-        begin
-          out = File.read(path)
-          out.gsub!(DEPENDS_DIRECTIVE, "")
-          out.gsub!(REQUIRE_DIRECTIVE, "")
-          out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
-          out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
-          to = to || Tempfile.new("slinky").path + ".cache"
-          File.open(to, "w+"){|f|
-            f.write(out)
-          }
-          to
-        rescue
-          nil
-        end
+        out = File.read(path)
+        out.gsub!(DEPENDS_DIRECTIVE, "")
+        out.gsub!(REQUIRE_DIRECTIVE, "")
+        out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
+        out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
+        to = to || Tempfile.new("slinky").path + ".cache"
+        File.open(to, "w+"){|f|
+          f.write(out)
+        }
+        to
       else
         path
       end
@@ -380,7 +376,7 @@ module Slinky
 
     # Gets the md5 hash of the source file
     def md5
-      Digest::MD5.hexdigest(File.read(@source))
+      Digest::MD5.hexdigest(File.read(@source)) rescue nil
     end
     
     # Gets manifest file ready for serving or building by handling the
@@ -390,8 +386,6 @@ module Slinky
     # @return String the path of the processed file, ready for serving
     def process to = nil
       return if @processing # prevent infinite recursion
-      # process each file on which we're dependent, watching out for 
-      # infinite loops
       start_time = Time.now
       depends = @directives[:slinky_depends].map{|f|
         p = parent.find_by_path(f, true)
@@ -400,6 +394,8 @@ module Slinky
       }.flatten.compact if @directives[:slinky_depends]
       depends ||= []
       @processing = true
+      # process each file on which we're dependent, watching out for 
+      # infinite loops
       depends.each{|f| f.process }
       @processing = false
 
@@ -427,8 +423,12 @@ module Slinky
         FileUtils.mkdir_p(@build_path)
       end
       to = build_to
-      path = process to
-      
+      begin 
+        path = process to
+      rescue
+        raise BuildFailedError
+      end
+
       if !path
         raise BuildFailedError
       elsif path != to

@@ -39,12 +39,12 @@ describe "Slinky" do
     end
 
     it "should find files in the manifest by path" do
-      @mdevel.find_by_path("test.haml").source.should == "/src/test.haml"
-      @mdevel.find_by_path("asdf.haml").should == nil
-      @mdevel.find_by_path("l1/l2/test.txt").source.should == "/src/l1/l2/test.txt"
-      @mdevel.find_by_path("l1/test.css").source.should == "/src/l1/test.sass"
+      @mdevel.find_by_path("test.haml").first.source.should == "/src/test.haml"
+      @mdevel.find_by_path("asdf.haml").first.should == nil
+      @mdevel.find_by_path("l1/l2/test.txt").first.source.should == "/src/l1/l2/test.txt"
+      @mdevel.find_by_path("l1/test.css").first.source.should == "/src/l1/test.sass"
       l1 = @mdevel.manifest_dir.children.find{|c| c.dir == "/src/l1"}
-      l1.find_by_path("../test.haml").source.should == "/src/test.haml"
+      l1.find_by_path("../test.haml").first.source.should == "/src/test.haml"
     end
 
     it "should produce the correct scripts string for production" do
@@ -98,6 +98,7 @@ describe "Slinky" do
     it "should compile files that need it" do
       $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
+      FileUtils.mkdir("/src/build")
       build_path = mf.process mf.build_to
       build_path.to_s.split(".")[-1].should == "html"
       File.read("/src/test.haml").match("<head>").should == nil
@@ -107,6 +108,7 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
       build_path = mf.process "/src/build/test.html"
       File.read("/src/build/test.html").match("<head>").should_not == nil
+      FileUtils.rm_rf("/src/build") rescue nil
     end
 
     it "should report errors for bad files" do
@@ -204,6 +206,7 @@ describe "Slinky" do
     end
 
     it "should combine and compress javascript" do
+      FileUtils.rm_rf("/build") rescue nil
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
       @mprod.build
       File.exists?("/build/scripts.js").should == true
