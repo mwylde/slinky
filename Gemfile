@@ -2,7 +2,7 @@ source "http://rubygems.org"
 
 gem "eventmachine", ">= 0.12.0"
 gem "eventmachine_httpserver", ">= 0.2.0"
-gem "em-proxy", ">= 0.1.5"
+gem "em-proxy", ">= 0.1.6"
 gem "rainbow", ">= 1.1.3"
 gem "haml", ">= 3.0.0"
 gem "sass", ">= 3.1.1"
@@ -17,6 +17,6 @@ group :development do
   gem "jeweler", "~> 1.8.0"
   gem 'cover_me', '>= 1.0.0.rc6'
   gem "fakefs", '~> 0.4.0'
-  gem "em-http-request"
+  gem "em-http-request", '~> 1.0.0'
 #  gem "em-synchrony", ">= 0"
 end
