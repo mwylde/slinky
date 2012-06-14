@@ -1,4 +1,4 @@
-#Slinky
+#Slinky 
 
 Slinky helps you write rich web applications using compiled web
 languages like SASS, HAML and CoffeeScript. The slinky server
@@ -10,6 +10,8 @@ REST APIs.
 Once you're ready for production the slinky builder will compile all of
 your sources and concatenate and minify your javascript and css,
 leaving you a directory that's ready to be pushed to your servers.
+
+[![Build Status](https://secure.travis-ci.org/mwylde/slinky.png)](http://travis-ci.org/mwylde/slinky)
 
 ## Quickstart
 
