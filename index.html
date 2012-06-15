@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Slinky : Compiling static file + proxy server for rich client apps" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Slinky</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/mwylde/slinky">View on GitHub</a>
+
+          <h1 id="project_title">Slinky</h1>
+          <h2 id="project_tagline">Compiling static file + proxy server for rich client apps</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/mwylde/slinky/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/mwylde/slinky/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>Slinky</h1>
+
+<p>Slinky helps you write rich web applications using compiled web
+languages like SASS, HAML and CoffeeScript. The slinky server
+transparently compiles resources as they're requested, leaving you to
+worry about your code, not how to compile it. It will even proxy
+AJAX requests to a backend server so you can easily develop against
+REST APIs.</p>
+
+<p>Once you're ready for production the slinky builder will compile all of
+your sources and concatenate and minify your javascript and css,
+leaving you a directory that's ready to be pushed to your servers.</p>
+
+<h2>Quickstart</h2>
+
+<pre><code>$ gem install slinky
+$ cd ~/my/awesome/project
+$ slinky start
+[hardcore web development action]
+$ slinky build
+$ scp -r build/ myserver.com/var/www/project
+</code></pre>
+
+<h2>But tell me more!</h2>
+
+<p>Slinky currently supports three languages for compilation, SASS/SCSS,
+HAML and CoffeeScript, but it's simple to add support for others (and
+please submit a pull request when you do!). Slinky also has a few
+tricks of its own for managing the complexity of modern web
+development.</p>
+
+<h3>Script &amp; style management</h3>
+
+<p>Slinky can manage all of your javascript and css files if you want it
+to, serving them up individually during development and concatenating
+and minifying them for production. To support this, Slinky recognizes
+<code>slinky_scripts</code> in your HTML/Haml files. For example, when Slinky
+sees this:</p>
+
+<div class="highlight">
+<pre><span class="nn">!!!5</span>
+<span class="nt">%html</span>
+  <span class="nt">%head</span>
+    slinky_scripts
+    slinky_styles
+  <span class="nt">%body</span>
+    <span class="nt">%h1</span> Hello, world!
+</pre>
+</div>
+
+
+<p>it will compile the HAML to HTML and replace slinky_styles with the
+appropriate HTML.</p>
+
+<h3>Specifying order</h3>
+
+<p>But what if your scripts or styles depend on being included in the
+page in a particular order? For this, we need the <code>slinky_require</code>
+directive.</p>
+
+<p>For example, consider the case of two coffeescript files, A.coffee and
+B.coffee. A includes a class definition that B depends upon, so we
+want to make sure that A comes before B in the concatenation order. We
+can solve this simply using <code>slinky_require(script)</code></p>
+
+<p>File A.coffee:</p>
+
+<div class="highlight">
+<pre><span class="k">class</span> <span class="nx">A</span>
+  <span class="nv">hello: </span><span class="nf">(thing) -&gt;</span> <span class="s">"Hello, "</span> <span class="o">+</span> <span class="nx">thing</span>
+</pre>
+</div>
+
+
+<p>File B.coffee:</p>
+
+<div class="highlight">
+<pre><span class="nx">slinky_require</span><span class="p">(</span><span class="s">"A.coffee"</span><span class="p">)</span>
+<span class="nx">alert</span> <span class="p">(</span><span class="k">new</span> <span class="nx">A</span><span class="p">).</span><span class="nx">hello</span><span class="p">(</span><span class="s">"world"</span><span class="p">)</span>
+</pre>
+</div>
+
+
+<p>We can also do this in CSS/SASS/SCSS:</p>
+
+<div class="highlight">
+<pre><span class="cm">/* slinky_require("reset.css")</span>
+<span class="nt">a</span>
+  <span class="na">color</span><span class="o">:</span> <span class="nb">red</span>
+</pre>
+</div>
+
+
+<h3>Specifing dependencies</h3>
+
+<p>As HAML and SASS scripts can include external content as part of their
+build process, it may be that you would like to specify that files are
+to be recompiled whenever other files change. For example, you may use
+mustache templates defined each in their own file, but have set up
+your HAML file to include them all into the HTML. Thus when one of the
+mustache files changes, you would like the HAML file to be recompiled
+so that the templates can be updated also.</p>
+
+<p>These relationships are specified as "dependencies," and like requirements
+they are incdicated through a special <code>slinky_depends("file")</code> directive in 
+your source files. For our template example, the index.haml files might look 
+like this:</p>
+
+<div class="highlight">
+<pre>slinky_depends("scripts/templates/*.mustache")
+<span class="nn">!!!5</span>
+
+<span class="nt">%html</span>
+  <span class="nt">%head</span>
+    <span class="nt">%title</span> My App
+    slinky_styles
+    slinky_scripts
+    <span class="p">-</span> <span class="no">Dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"./scripts/templates/*.mustache"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
+      <span class="p">-</span> <span class="nb">name</span> <span class="o">=</span> <span class="no">File</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span><span class="o">[</span><span class="mi">0</span><span class="o">.</span><span class="n">.</span><span class="o">-</span><span class="mi">2</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+      <span class="nt">%script</span><span class="p">{</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="nb">name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">"text/x-handlebars-template"</span><span class="p">}=</span> <span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+  <span class="nt">%body</span>
+</pre>
+</div>
+
+
+<h2>Configuration</h2>
+
+<p>Slinky can optionally be configured using a yaml file. By default, it
+looks for a file called <code>slinky.yaml</code> in the source directory, but you
+can also supply a file name on the command line using <code>-c</code>.</p>
+
+<p>There are currently two directives supported:</p>
+
+<h3>Proxies</h3>
+
+<p>Slinky has a built-in proxy server which lets you test ajax requests
+with your actual backend servers. To set it up, your slinky.yaml file
+will look something like this:</p>
+
+<div class="highlight">
+<pre><span class="l-Scalar-Plain">proxy</span><span class="p-Indicator">:</span>
+  <span class="s">"/login"</span><span class="p-Indicator">:</span> <span class="s">"http://127.0.0.1:4567/login"</span>
+  <span class="s">"/search"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">to</span><span class="p-Indicator">:</span> <span class="s">"http://127.0.0.1:4567/search"</span>
+    <span class="l-Scalar-Plain">lag</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">2000</span>
+</pre>
+</div>
+
+
+<p>What does this mean? We introduce the list of proxy rules using the
+<code>proxy</code> key. Each rule is a key value pair. The key is a url prefix to
+match against. The first rule is equivalent to the regular expression
+<code>/\/login.*/</code>, and will match paths like <code>/login/user</code> and
+<code>/login/path/to/file.html</code>. The value is either a url to pass the
+request on to or a hash containing configuration (one of which must be
+a <code>to</code> field). Currently a <code>lag</code> field is also supported. This delays
+the request by the specified number of milliseconds in order to
+simulate the latency associated with remote servers.</p>
+
+<p>An example: we have some javascript code which makes an AJAX GET
+request to <code>/search/widgets?q=foo</code>. When slinky gets the request it
+will see that it has a matching proxy rule, rewrite the request
+appropriately (changing paths and hosts) and send it on to the backend
+server (in this case, 127.0.0.1:4567). Once it gets a response it will
+wait until 2 seconds has elapsed since slinky itself received the
+request and then send on the response back to the browser.</p>
+
+<p>This is very convenient for developing rich web clients locally. For
+example, you may have some code that shows a loading indicator while
+an AJAX request is outstanding. However, when run locally the request
+returns so quickly that you can't even see the loading indicator. By
+adding in a lag this problem is remedied.</p>
+
+<h3>Ignores</h3>
+
+<p>By default slinky will include every javascript and css file it finds
+into the combined scripts.js and styles.css files. However, it may be
+that for some reason you want to keep some files separate and handle
+them manually. The ignore directive lets you do that, by telling the
+system to skip over any files or directories listed. For example:</p>
+
+<div class="highlight">
+<pre><span class="l-Scalar-Plain">ignore</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">script/vendor</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">css/reset.css</span>
+</pre>
+</div>
+
+
+<p>This will causes everything in the script/vendor directory to be
+ignored by slinky, as well as the reset.css file.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Slinky maintained by <a href="https://github.com/mwylde">mwylde</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-78795-10");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
