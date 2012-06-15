@@ -84,7 +84,37 @@ a
   color: red
 ```
 
-### Configuration
+### Specifing dependencies
+
+As HAML and SASS scripts can include external content as part of their
+build process, it may be that you would like to specify that files are
+to be recompiled whenever other files change. For example, you may use
+mustache templates defined each in their own file, but have set up
+your HAML file to include them all into the HTML. Thus when one of the
+mustache files changes, you would like the HAML file to be recompiled
+so that the templates can be updated also.
+
+These relationships are specified as "dependencies," and like requirements
+they are incdicated through a special `slinky_depends("file")` directive in 
+your source files. For our template example, the index.haml files might look 
+like this:
+
+```haml
+slinky_depends("scripts/templates/*.mustache")
+!!!5
+
+%html
+  %head
+    %title My App
+    slinky_styles
+    slinky_scripts
+    - Dir.glob("./scripts/templates/*.mustache") do |f|
+      - name = File.basename(f).split(".")[0..-2].join(".")
+      %script{:id => name, :type => "text/x-handlebars-template"}= File.read(f)
+  %body
+```
+
+## Configuration
 
 Slinky can optionally be configured using a yaml file. By default, it
 looks for a file called `slinky.yaml` in the source directory, but you
@@ -92,7 +122,7 @@ can also supply a file name on the command line using `-c`.
 
 There are currently two directives supported:
 
-#### Proxies
+### Proxies
 
 Slinky has a built-in proxy server which lets you test ajax requests
 with your actual backend servers. To set it up, your slinky.yaml file
@@ -130,7 +160,7 @@ an AJAX request is outstanding. However, when run locally the request
 returns so quickly that you can't even see the loading indicator. By
 adding in a lag this problem is remedied.
 
-####  Ignores
+###  Ignores
 
 By default slinky will include every javascript and css file it finds
 into the combined scripts.js and styles.css files. However, it may be
