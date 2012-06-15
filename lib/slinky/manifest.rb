@@ -51,7 +51,28 @@ module Slinky
       else
         @files.reject{|f| @config.ignores.any?{|p| f.in_tree? p}}
       end
-    end    
+    end
+
+    # Adds a file to the manifest, updating the dependency graph
+    def add_by_path path
+      if path[0] == '/'
+        path = Pathname.new(path).relative_path_from(Pathname.new(@dir).expand_path).to_s
+      end
+      md = find_by_path(File.dirname(path)).first
+      mf = md.add_file(File.basename(path))
+      invalidate_cache
+      files.each{|f|
+        if f.directives.include?(:slinky_scripts) || f.directives.include?(:slinky_styles)
+          f.invalidate
+          f.process
+        end
+      }
+    end
+
+    # Removes a file from the manifest
+    def remove_by_path
+      
+    end
 
     # Finds the file at the given path in the manifest if one exists,
     # otherwise nil.
@@ -184,6 +205,11 @@ module Slinky
         files_rec c
       end
     end
+
+    def invalidate_cache
+      @files = nil
+      @dependency_graph = nil
+    end
   end
 
   class ManifestDir
@@ -200,10 +226,9 @@ module Slinky
         # skip the build dir
         next if Pathname.new(File.absolute_path(path)) == Pathname.new(build_dir)
         if File.directory? path
-          build_dir = (@build_dir + File.basename(path)).cleanpath
-          @children << ManifestDir.new(path, self, build_dir, manifest)
+          add_child(path)
         else
-          @files << ManifestFile.new(path, @build_dir, manifest, self)
+          add_file(path)
         end
       end
     end
@@ -222,18 +247,17 @@ module Slinky
       when 0
         [self]
       when 1
-        files = @files.find_all{|f| f.matches? components[0], allow_multiple}
-        if files.size == 0
-          path = Pathname.new([@dir, components[0]].join(File::SEPARATOR))
-          Dir.glob(path.sub_ext(".*").to_s).each do |path|
-            if !@files.find{|f| f.matches? File.basename(path)}
-              mf = ManifestFile.new(path, @build_dir, @manifest, self)
-              @files << mf
-            end
+        path = [@dir, components[0]].join(File::SEPARATOR)
+        if (Dir.exists?(path) rescue false)
+          c = @children.find{|d|
+            Pathname.new(d.dir).cleanpath == Pathname.new(path).cleanpath
+          }
+          unless c
+            c = add_child(path)
           end
-          @files.find_all{|f| f.matches? components[0], allow_multiple}
+          [c]
         else
-          files
+          @files.find_all{|f| f.matches? components[0], allow_multiple}
         end
       else
         if components[0] == ".."
@@ -246,13 +270,32 @@ module Slinky
             child.find_by_path(components[1..-1].join(File::SEPARATOR),
                                allow_multiple)
           else
-            path = [@dir, components[0]].join(File::SEPARATOR)
-            if Dir.exists?(path)
-              build_dir = (@build_dir + File.basename(path)).cleanpath
-              @children << ManifestDir.new(path, self, build_dir, @manifest)
-            end
+            []
           end
         end
+      end
+    end
+
+    # Adds a child directory
+    def add_child path
+      if Dir.exists? path
+        build_dir = (@build_dir + File.basename(path)).cleanpath
+        md = ManifestDir.new(path, self, build_dir, @manifest)
+        @children << md
+        md
+      end
+    end
+    
+    # Adds a file on the filesystem to the manifest
+    #
+    # @param String path The path of the file
+    def add_file path
+      file = File.basename(path)
+      full_path = [@dir, file].join(File::SEPARATOR)
+      if File.exists? full_path
+        mf = ManifestFile.new(full_path, @build_dir, @manifest, self)
+        @files << mf
+        mf
       end
     end
 
@@ -263,6 +306,10 @@ module Slinky
       (@files + @children).each{|m|
         m.build
       }
+    end
+
+    def to_s
+      "<ManifestDir:'#{@dir}'>"
     end
   end
 
@@ -281,6 +328,11 @@ module Slinky
       @build_path = build_path
       @manifest = manifest
       @devel = true if options[:devel]
+    end
+
+    def invalidate
+      @last_built = Time.new(0)
+      @last_md5 = nil
     end
 
     # Predicate which determines whether the supplied name is the same
@@ -355,7 +407,7 @@ module Slinky
         end
       end
 
-      directives
+      @directives = directives
     end
 
     # If there are any build directives for this file, the file is
@@ -400,7 +452,7 @@ module Slinky
     def md5
       Digest::MD5.hexdigest(File.read(@source)) rescue nil
     end
-    
+
     # Gets manifest file ready for serving or building by handling the
     # directives and compiling the file if neccesary.
     # @param String path to which the file should be compiled
@@ -411,9 +463,9 @@ module Slinky
       start_time = Time.now
       hash = md5
       if hash != @last_md5
-        @directives = find_directives
+        find_directives
       end
-      
+
       depends = @directives[:slinky_depends].map{|f|
         p = parent.find_by_path(f, true)
         $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p.size > 0
@@ -462,6 +514,10 @@ module Slinky
         @last_built = Time.now
       end
       to
+    end
+
+    def to_s
+      "<Slinky::ManifestFile '#{@source}'>"
     end
   end
 end

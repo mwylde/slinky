@@ -253,10 +253,13 @@ describe "Slinky" do
     end
 
     it "should detect new files" do
+      $stdout.should_receive(:puts).with(/Compiled \/src\/test.haml/)
       manifest = Slinky::Manifest.new("/src", @config, :devel => true)
       File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
+      manifest.add_by_path("/src/l1/cache.coffee")
       f = manifest.find_by_path("l1/cache.js").first
       f.should_not == nil
+      manifest.scripts_string.match("cache.js").should_not == nil
       FileUtils.mkdir("/src/l1/hello")
       File.open("/src/l1/hello/asdf.sass", "w+"){|f| f.write("hello")}
       f = manifest.find_by_path("l1/hello/asdf.sass")

@@ -30,7 +30,6 @@ module FakeFS
   end
 end
 
-
 module Slinky
   module CoffeeCompiler
     def CoffeeCompiler::compile s, file
@@ -39,6 +38,11 @@ module Slinky
       FakeFS.activate!
       o
     end
+  end
+
+  # No way to make this work with FakeFS, so just disabled it
+  class Listener
+    def run; end
   end
 end
 

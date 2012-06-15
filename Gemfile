@@ -9,6 +9,7 @@ gem "sass", ">= 3.1.1"
 gem "coffee-script", ">= 2.2.0"
 gem "mime-types", ">= 1.16"
 gem "yui-compressor", ">= 0.9.6"
+gem "listen", ">= 0.4.5"
 
 group :development do
   gem "rspec", "~> 2.10.0"

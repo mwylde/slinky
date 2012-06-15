@@ -10,6 +10,7 @@ require 'rainbow'
 require 'optparse'
 require 'mime/types'
 require 'yui/compressor'
+require 'listen'
 
 require "#{ROOT}/slinky/em-popen3"
 require "#{ROOT}/slinky/compilers"
@@ -20,6 +21,7 @@ require "#{ROOT}/slinky/proxy_server"
 require "#{ROOT}/slinky/server"
 require "#{ROOT}/slinky/runner"
 require "#{ROOT}/slinky/builder"
+require "#{ROOT}/slinky/listener"
 
 # load compilers
 Dir.glob("#{ROOT}/slinky/compilers/*.rb").each{|compiler|
