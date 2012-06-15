@@ -256,7 +256,7 @@ describe "Slinky" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/test.haml/)
       manifest = Slinky::Manifest.new("/src", @config, :devel => true)
       File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
-      manifest.add_by_path("/src/l1/cache.coffee")
+      manifest.add_all_by_path(["/src/l1/cache.coffee"])
       f = manifest.find_by_path("l1/cache.js").first
       f.should_not == nil
       manifest.scripts_string.match("cache.js").should_not == nil
@@ -264,6 +264,22 @@ describe "Slinky" do
       File.open("/src/l1/hello/asdf.sass", "w+"){|f| f.write("hello")}
       f = manifest.find_by_path("l1/hello/asdf.sass")
       f.should_not == nil
+    end
+
+    it "should handle deletion of files" do
+      File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
+      $stdout.should_receive(:puts).with(/Compiled \/src\/test.haml/)
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/cache.coffee").first
+      f.should_not == nil
+      manifest.scripts_string.match("l1/cache.js").should_not == nil
+      
+      FileUtils.rm("/src/l1/cache.coffee")
+      File.exists?("/src/l1/cache.coffee").should == false
+      manifest.remove_all_by_path(["/src/l1/cache.coffee"])
+      f = manifest.find_by_path("l1/cache.coffee").first
+      f.should == nil
+      manifest.scripts_string.match("l1/cache.js").should == nil      
     end
 
     it "should ignore the build directory" do

@@ -54,24 +54,19 @@ module Slinky
     end
 
     # Adds a file to the manifest, updating the dependency graph
-    def add_by_path path
-      if path[0] == '/'
-        path = Pathname.new(path).relative_path_from(Pathname.new(@dir).expand_path).to_s
+    def add_all_by_path paths
+      manifest_update paths do |path|
+        md = find_by_path(File.dirname(path)).first
+        mf = md.add_file(File.basename(path))
       end
-      md = find_by_path(File.dirname(path)).first
-      mf = md.add_file(File.basename(path))
-      invalidate_cache
-      files.each{|f|
-        if f.directives.include?(:slinky_scripts) || f.directives.include?(:slinky_styles)
-          f.invalidate
-          f.process
-        end
-      }
     end
 
     # Removes a file from the manifest
-    def remove_by_path
-      
+    def remove_all_by_path paths
+      manifest_update paths do |path|
+        mf = find_by_path(path).first()
+        mf.parent.remove_file(mf)
+      end
     end
 
     # Finds the file at the given path in the manifest if one exists,
@@ -210,6 +205,22 @@ module Slinky
       @files = nil
       @dependency_graph = nil
     end
+
+    def manifest_update paths
+      paths.each{|path|
+        if path[0] == '/'
+          path = Pathname.new(path).relative_path_from(Pathname.new(@dir).expand_path).to_s
+        end
+        yield path
+      }
+      invalidate_cache
+      files.each{|f|
+        if f.directives.include?(:slinky_scripts) || f.directives.include?(:slinky_styles)
+          f.invalidate
+          f.process
+        end
+      }
+    end
   end
 
   class ManifestDir
@@ -299,6 +310,13 @@ module Slinky
       end
     end
 
+    # Removes a file from the manifest
+    #
+    # @param ManifestFile mf The file to be deleted
+    def remove_file mf
+      @files.delete(mf)
+    end
+    
     def build
       unless Dir.exists?(@build_dir.to_s)
         FileUtils.mkdir(@build_dir.to_s)

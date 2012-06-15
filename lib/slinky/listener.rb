@@ -22,13 +22,14 @@ module Slinky
     
     def handle_add files
       EM.next_tick {
-        files.each{|f|
-          @manifest.add_by_path f
-        }
+        @manifest.add_all_by_path files
       }
     end
     
     def handle_rem files
+      EM.next_tick {
+        @manifest.remove_all_by_path files
+      }
     end
   end
 end
