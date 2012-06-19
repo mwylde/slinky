@@ -434,7 +434,7 @@ module Slinky
     #
     # @return String the path of the de-directivefied file
     def handle_directives path, to = nil
-      if @directives.size > 0
+      if path && @directives.size > 0
         out = File.read(path)
         out.gsub!(DEPENDS_DIRECTIVE, "")
         out.gsub!(REQUIRE_DIRECTIVE, "")
