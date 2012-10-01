@@ -366,7 +366,7 @@ describe "Slinky" do
       port = 53455
       $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
       run_for 0.3 do
-        Slinky::Runner.new(["start","--port", port.to_s]).run
+        Slinky::Runner.new(["start","--port", port.to_s, "--no-livereload"]).run
       end
     end
 
@@ -384,7 +384,7 @@ describe "Slinky" do
 eos
       }
       run_for 3 do
-        Slinky::Runner.new(["start","--port", "43453", "--src-dir", "/src"]).run
+        Slinky::Runner.new(["start","--port", "43453", "--src-dir", "/src", "--no-livereload"]).run
         base = "http://localhost:43453"
         multi = EventMachine::MultiRequest.new
         $stdout.should_receive(:puts).with(/Compiled \/src\/index.haml/)
