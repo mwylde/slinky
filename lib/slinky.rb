@@ -3,6 +3,7 @@ require 'uri'
 require 'yaml'
 require 'eventmachine'
 require 'em-proxy'
+require 'em-websocket'
 require 'evma_httpserver'
 require 'uri'
 require 'tempfile'
@@ -22,6 +23,7 @@ require "#{ROOT}/slinky/server"
 require "#{ROOT}/slinky/runner"
 require "#{ROOT}/slinky/builder"
 require "#{ROOT}/slinky/listener"
+require "#{ROOT}/slinky/live_reload"
 
 # load compilers
 Dir.glob("#{ROOT}/slinky/compilers/*.rb").each{|compiler|

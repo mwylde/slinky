@@ -19,5 +19,9 @@ module Slinky
     def ignores
       @config["ignore"] || []
     end
+
+    def [](x)
+      @config[x]
+    end
   end
 end

@@ -2,6 +2,7 @@ source "http://rubygems.org"
 
 gem "eventmachine", ">= 0.12.0"
 gem "eventmachine_httpserver", ">= 0.2.0"
+gem "em-websocket", "~> 0.3.8"
 gem "em-proxy", ">= 0.1.6"
 gem "rainbow", ">= 1.1.3"
 gem "haml", ">= 3.0.0"

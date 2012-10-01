@@ -38,6 +38,7 @@ module Slinky
         opts.on("-p PORT", "--port PORT", "Port to run on (default: #{@options[:port]})"){|p| @options[:port] = p.to_i}
         opts.on("-s DIR", "--src-dir DIR", "Directory containing project source"){|p| @options[:src_dir] = p}
         opts.on("-n", "--no-proxy", "Don't set up proxy server"){ @options[:no_proxy] = true }
+        opts.on("-r", "--no-livereload", "Don't start a livereload server"){ @options[:no_livereload] = true }        
         opts.on("-c FILE", "--config FILE", "Path to configuration file"){|f| @options[:config] = f}
       end
     end
@@ -70,7 +71,13 @@ module Slinky
           EM::start_server "0.0.0.0", @options[:port], Slinky::Server
         end
 
-        Listener.new(manifest).run
+        if !@options[:no_livereload]
+          port = (@config && @config[:livereload_port]) || 35729
+          livereload = LiveReload.new("0.0.0.0", port)
+          livereload.run
+        end
+
+        Listener.new(manifest, livereload).run
         puts "Started static file server on port #{@options[:port]}"
       }
     end
