@@ -306,7 +306,7 @@ describe "Slinky" do
       @mprod.build
       File.exists?("/build/styles.css").should == true
       File.size("/build/styles.css").should > 25
-      File.read("/build/styles.css").match(/color:red/).should_not == nil
+      File.read("/build/styles.css").match(/color:\s*red/).should_not == nil
       File.exists?("/build/l1/test.css").should == false
     end
 
