@@ -65,7 +65,11 @@ module Slinky
     def remove_all_by_path paths
       manifest_update paths do |path|
         mf = find_by_path(path).first()
-        mf.parent.remove_file(mf)
+        begin
+          mf.parent.remove_file(mf)
+        rescue
+          puts "Failed to remove <#{path}>"
+        end
       end
     end
 
@@ -99,7 +103,8 @@ module Slinky
         }.join("\n")
 
         File.open(output, "w+"){|f|
-          f.write(compressor.compress(s)) 
+          # f.write(compressor.compress(s))
+          f.write(s)
         }
         scripts.collect{|s| FileUtils.rm(s.build_to)}
       end

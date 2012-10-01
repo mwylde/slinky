@@ -7,7 +7,6 @@ module Slinky
     end
 
     def run
-      
       listener = Listen.to(@manifest.dir)
       listener.change do |mod, add, rem|
         handle_mod(mod) if mod.size > 0
@@ -22,13 +21,19 @@ module Slinky
     
     def handle_add files
       EM.next_tick {
-        @manifest.add_all_by_path files
+        begin
+          @manifest.add_all_by_path files
+        rescue
+        end
       }
     end
     
     def handle_rem files
       EM.next_tick {
-        @manifest.remove_all_by_path files
+        begin
+          @manifest.remove_all_by_path files
+        rescue
+        end
       }
     end
   end
