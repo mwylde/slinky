@@ -36,6 +36,7 @@ module Slinky
       @manifest_dir = ManifestDir.new dir, self, @build_to, self
       @devel = (options[:devel].nil?) ? true : options[:devel]
       @config = config
+      @no_minify = options[:no_minify]
     end
 
     # Returns a list of all files contained in this manifest
@@ -103,8 +104,11 @@ module Slinky
         }.join("\n")
 
         File.open(output, "w+"){|f|
-          # f.write(compressor.compress(s))
-          f.write(s)
+          unless @no_minify
+            f.write(compressor.compress(s))
+          else
+            f.write(s)
+          end
         }
         scripts.collect{|s| FileUtils.rm(s.build_to)}
       end

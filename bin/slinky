@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
-require 'slinky'
+#require 'slinky'
+require_relative '../lib/slinky'
+
 
 Slinky::Runner.new(ARGV).run

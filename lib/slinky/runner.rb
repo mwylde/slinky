@@ -40,6 +40,7 @@ module Slinky
         opts.on("-n", "--no-proxy", "Don't set up proxy server"){ @options[:no_proxy] = true }
         opts.on("-r", "--no-livereload", "Don't start a livereload server"){ @options[:no_livereload] = true }        
         opts.on("-c FILE", "--config FILE", "Path to configuration file"){|f| @options[:config] = f}
+        opts.on("-m", "--dont-minify", "Don't minify js/css"){ @options[:no_minify] = true }
       end
     end
 
@@ -83,7 +84,7 @@ module Slinky
     end
 
     def command_build
-      Builder.build(@options[:src_dir], @options[:build_dir], @config)
+      Builder.build(@options, @config)
     end
   end
 end
