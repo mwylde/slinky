@@ -31,6 +31,22 @@ please submit a pull request when you do!). Slinky also has a few
 tricks of its own for managing the complexity of modern web
 development.
 
+### LiveReload/Guard support
+
+The typical edit-save-reload cycle of web development can be
+tedious, especially when trying to get your CSS *just* right. What if
+you could reduce that to just edit-save?
+[LiveReload](http://livereload.com/) allows just that. Slinky includes
+built-in support for LiveReload service. All you need to do is run a
+browser extension (available
+[here](http://go.livereload.com/extensions)
+for Safari, Chrome and Firefox) or include a little script
+(http://go.livereload.com/mobile). In addition to reloading your app
+whenever a source file changes, LiveReload supports hot reloading of
+CSS, letting you tweak your styles with ease. If don't want the
+LiveReload server running, disabling it is a simple `--no-livereload`
+away.
+
 ### Script & style management
 
 Slinky can manage all of your javascript and css files if you want it
@@ -50,7 +66,8 @@ sees this:
 ```
 
 it will compile the HAML to HTML and replace slinky_styles with the
-appropriate HTML.
+appropriate HTML. You can also disable minification with the
+`--dont-minify` option.
 
 ### Specifying order
 
