@@ -11,26 +11,30 @@ module Slinky
 
     def run
       EventMachine.run do
-        EventMachine.start_server(@host,
-                                  @port,
-                                  EventMachine::WebSocket::Connection, {}) do |ws|
-          ws.onopen do
-            begin
-              $stdout.puts "Browser connected to livereload server"
-              ws.send "!!ver:1.6"
-              @websockets << ws
-            rescue
-              $stderr.puts $!.to_s.foreground(:red)
+        begin
+          EventMachine.start_server(@host,
+                                    @port,
+                                    EventMachine::WebSocket::Connection, {}) do |ws|
+            ws.onopen do
+              begin
+                $stdout.puts "Browser connected to livereload server"
+                ws.send "!!ver:1.6"
+                @websockets << ws
+              rescue
+                $stderr.puts $!.to_s.foreground(:red)
+              end
+            end
+
+            ws.onclose do
+              @websockets.delete ws
+              $stdout.puts "Browser disconnected"
             end
           end
-
-          ws.onclose do
-            @websockets.delete ws
-            $stdout.puts "Browser disconnected"
-          end
+          $stdout.puts "Started live-reload server on port #{@port}"
+        rescue
+          puts "Unable to start livereload server on port #{@port}".foreground(:red)
         end
       end
-      $stdout.puts "Started live-reload server on port #{@port}"
     end
 
     def reload_browser(paths = [])

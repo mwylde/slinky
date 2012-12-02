@@ -284,10 +284,11 @@ describe "Slinky" do
 
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
-      Slinky::Builder.build("/src", "/src/build", @config)
+      options = {:src_dir => "/src", :build_dir => "/src/build"}      
+      Slinky::Builder.build(options, @config)
       File.exists?("/src/build/build").should_not == true
       File.exists?("/src/build/test.html").should == true
-      Slinky::Builder.build("/src", "/src/build", @config)
+      Slinky::Builder.build(options, @config)
       File.exists?("/src/build/build").should_not == true
     end
 
@@ -411,7 +412,8 @@ eos
     end
     it "should build manifest to build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
-      Slinky::Builder.build("/src", "/build", @config)
+      options = {:src_dir => "/src", :build_dir => "/build"}
+      Slinky::Builder.build(options, @config)
       File.exists?("/build").should == true
       File.exists?("/build/scripts.js").should == true
       File.exists?("/build/l1/l2/test.txt").should == true

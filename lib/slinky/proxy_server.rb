@@ -44,9 +44,6 @@ module Slinky
         proxy = nil
         start_time = nil
         conn.server :slinky, :host => "127.0.0.1", :port => slinky_port
-        proxy_servers.each{|p|
-          conn.server p, :host => p[0], :port => p[1]
-        }
 
         conn.on_data do |data|
           begin
@@ -58,6 +55,8 @@ module Slinky
                        data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
                        new_host = proxy[1].select(:host, :port).join(":")
                        data = ProxyServer.replace_host(data, new_host)
+                       conn.server [proxy[1].host, proxy[1].port],
+                         :host => proxy[1].host, :port => proxy[1].port
                        [proxy[1].host, proxy[1].port]
                      else :slinky
                      end
