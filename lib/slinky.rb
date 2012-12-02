@@ -1,4 +1,3 @@
-ROOT = File.expand_path(File.dirname(__FILE__))
 require 'uri'
 require 'yaml'
 require 'eventmachine'
@@ -13,20 +12,21 @@ require 'mime/types'
 require 'yui/compressor'
 require 'listen'
 
-require "#{ROOT}/slinky/em-popen3"
-require "#{ROOT}/slinky/compilers"
-require "#{ROOT}/slinky/config_reader"
-require "#{ROOT}/slinky/manifest"
-require "#{ROOT}/slinky/compiled_file"
-require "#{ROOT}/slinky/proxy_server"
-require "#{ROOT}/slinky/server"
-require "#{ROOT}/slinky/runner"
-require "#{ROOT}/slinky/builder"
-require "#{ROOT}/slinky/listener"
-require "#{ROOT}/slinky/live_reload"
+require "slinky/em-popen3"
+require "slinky/compilers"
+require "slinky/config_reader"
+require "slinky/manifest"
+require "slinky/compiled_file"
+require "slinky/proxy_server"
+require "slinky/server"
+require "slinky/runner"
+require "slinky/builder"
+require "slinky/listener"
+require "slinky/live_reload"
 
 # load compilers
-Dir.glob("#{ROOT}/slinky/compilers/*.rb").each{|compiler|
+root = File.expand_path(File.dirname(__FILE__))
+Dir.glob("#{root}/slinky/compilers/*.rb").each{|compiler|
   begin
     require compiler
   rescue
