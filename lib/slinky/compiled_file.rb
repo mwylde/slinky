@@ -10,7 +10,7 @@ module Slinky
     def initialize source, compiler, output_ext
       @source = source
       @compiler = compiler
-      @last_compiled = Time.new(0)
+      @last_compiled = Time.at(0)
       @output_ext = output_ext
     end
 

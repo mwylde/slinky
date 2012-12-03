@@ -15,7 +15,7 @@ module Slinky
 
         EM.next_tick {
           files = (mod + add + rem).map{|path|
-            mpath = Pathname.new(path)
+            mpath = Pathname.new(path)\
               .relative_path_from(Pathname.new(@manifest.dir).expand_path).to_s
             mf = @manifest.find_by_path(mpath, false).first
             if mf

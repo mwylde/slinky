@@ -29,7 +29,7 @@ module Slinky
     def initialize dir, config, options = {}
       @dir = dir
       @build_to = if d = options[:build_to]
-                    File.absolute_path(d)
+                    File.expand_path(d)
                   else
                     dir
                   end
@@ -244,7 +244,7 @@ module Slinky
 
       Dir.glob("#{dir}/*").each do |path|
         # skip the build dir
-        next if Pathname.new(File.absolute_path(path)) == Pathname.new(build_dir)
+        next if File.expand_path(path) == Pathname.new(build_dir)
         if File.directory? path
           add_child(path)
         else
@@ -347,7 +347,7 @@ module Slinky
     def initialize source, build_path, manifest, parent = nil, options = {:devel => false}
       @parent = parent
       @source = source
-      @last_built = Time.new(0)
+      @last_built = Time.at(0)
 
       @cfile = Compilers.cfile_for_file(@source)
 
@@ -358,7 +358,7 @@ module Slinky
     end
 
     def invalidate
-      @last_built = Time.new(0)
+      @last_built = Time.at(0)
       @last_md5 = nil
     end
 
@@ -375,9 +375,18 @@ module Slinky
       name = Pathname.new(@source).basename.to_s
       output = output_path.basename.to_s
       # check for stars that are not escaped
-      r = /(?<!\\)\*/
-      if match_glob && s.match(r)
-        a = s.split(r)
+      a = [""]
+      last = ""
+      s.each_char {|c|
+        if c != "*" || last == "\\"
+          a[-1] << c
+        else
+          a << ""
+        end
+        last = c
+      }
+        
+      if match_glob && a.size > 1
         r2 = a.reduce{|a, x| /#{a}.*#{x}/}
         name.match(r2) || output.match(r2)
       else
@@ -402,7 +411,8 @@ module Slinky
     # @return Pathname the output path
     def output_path
       if @cfile
-        Pathname.new(@source).sub_ext ".#{@cfile.output_ext}"
+        ext = /\.[^.]*$/
+        Pathname.new(@source.gsub(ext, ".#{@cfile.output_ext}"))
       else
         Pathname.new(@source)
       end
