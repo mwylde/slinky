@@ -1,58 +1,78 @@
-#Slinky 
+# Slinky 
 
-Slinky helps you write rich web applications using compiled web
-languages like SASS, HAML and CoffeeScript. The slinky server
-transparently compiles resources as they're requested, leaving you to
-worry about your code, not how to compile it. It will even proxy
-AJAX requests to a backend server so you can easily develop against
-REST APIs.
-
-Once you're ready for production the slinky builder will compile all of
-your sources and concatenate and minify your javascript and css,
-leaving you a directory that's ready to be pushed to your servers.
+If you write single-page rich client apps, Slinky is here to
+make your life easier. For development, it provides a static file
+server that transparently handles compiled languages like CoffeeScript
+and SASS while supporting advanced features like dependency management,
+proxying and automatic browser reloads. And once you're ready to
+deploy, Slinky will compile, concatenate, and minify your sources,
+leaving you ready to push to production.
 
 [![Build Status](https://secure.travis-ci.org/mwylde/slinky.png)](http://travis-ci.org/mwylde/slinky)
 
-## Quickstart
+What can slinky do for you?
+
+#### Slinky Server
+
+* Transparently compiles sources for a variety of languages
+* Supports the [LiveReload](http://livereload.com) protocol, for
+  instant browser updates
+* Allows proxying to backend servers, so you can develop your client
+  and server code separately
+* Includes support for HTML5 [pushState](https://developer.mozilla.org/en-US/docs/DOM/Manipulating_the_browser_history) based apps
+
+#### Slinky Builder
+
+* Keeps track of the proper include order of your scripts and styles
+* Compiles, minifies and concatenates JavaScript and CSS
+
+Slinky is not a framework, and it does not want to control your source
+code. Its goal is to help you when you want it&mdash;and get out of the way
+when you don't. It endeavors to be sufficiently flexible to support a
+wide variety of development styles.
+
+## Quick start
 
 ```
 $ gem install slinky
-$ cd ~/my/awesome/project
+$ cd ~/my/awesome/project/src
 $ slinky start
 [hardcore web development action]
-$ slinky build
-$ scp -r build/ myserver.com/var/www/project
+$ slinky build -o ../pub
+$ scp -r ../pub/ myserver.com:/var/www/project
 ````
-## But tell me more!
 
-Slinky currently supports three languages for compilation, SASS/SCSS,
-HAML and CoffeeScript, but it's simple to add support for others (and
-please submit a pull request when you do!). Slinky also has a few
-tricks of its own for managing the complexity of modern web
-development.
+## The details
+
+1. [LiveReload/Guard support](#livereloadguard-support)
+2. [Script & style management](#script--style-management)
+3. [Specifying order](#specifying-order)
+4. [Dependencies](#dependencies)
+5. [Configuration](#configuration)
+6. [PushState](#pushstate)
+7. [Proxies](#proxies)
+8. [Ignores](#ignores)
 
 ### LiveReload/Guard support
 
-The typical edit-save-reload cycle of web development can be
-tedious, especially when trying to get your CSS *just* right. What if
-you could reduce that to just edit-save?
-[LiveReload](http://livereload.com/) allows just that. Slinky includes
-built-in support for LiveReload service. All you need to do is run a
-browser extension (available
-[here](http://go.livereload.com/extensions)
-for Safari, Chrome and Firefox) or include a little script
-(http://go.livereload.com/mobile). In addition to reloading your app
-whenever a source file changes, LiveReload supports hot reloading of
-CSS, letting you tweak your styles with ease. If don't want the
-LiveReload server running, disabling it is a simple `--no-livereload`
-away.
+The typical edit-save-reload cycle of web development can be tedious,
+especially when trying to get your CSS *just* right. What if you could
+reduce that to just edit-save? [LiveReload](http://livereload.com/)
+allows just that. Slinky includes built-in support for LiveReload
+service. All you need to do is run a browser extension (available
+[here](http://go.livereload.com/extensions) for Safari, Chrome and
+Firefox) or include a little script (http://go.livereload.com/mobile).
+In addition to reloading your app whenever a source file changes,
+LiveReload supports hot reloading of CSS, letting you tweak your
+styles with ease. If don't want the LiveReload server running,
+disabling it is a simple `--no-livereload` away.
 
 ### Script & style management
 
 Slinky can manage all of your javascript and css files if you want it
 to, serving them up individually during development and concatenating
 and minifying them for production. To support this, Slinky recognizes
-`slinky_scripts` in your HTML/Haml files. For example, when Slinky
+`slinky_scripts` in your HTML/HAML files. For example, when Slinky
 sees this:
 
 ```haml
@@ -67,18 +87,18 @@ sees this:
 
 it will compile the HAML to HTML and replace slinky_styles with the
 appropriate HTML. You can also disable minification with the
-`--dont-minify` option.
+`--dont-minify` option or the `dont_minify: true` configuration
+option.
 
 ### Specifying order
 
-But what if your scripts or styles depend on being included in the
-page in a particular order? For this, we need the `slinky_require`
+Often scripts and styles depend on being included in the page
+in a particular order. For this, we need the `slinky_require`
 directive.
 
 For example, consider the case of two coffeescript files, A.coffee and
 B.coffee. A includes a class definition that B depends upon, so we
-want to make sure that A comes before B in the concatenation order. We
-can solve this simply using `slinky_require(script)`
+want to make sure that A comes before B in the concatenation order.
 
 File A.coffee:
 
@@ -93,7 +113,7 @@ File B.coffee:
 slinky_require("A.coffee")
 alert (new A).hello("world")
 ```
-We can also do this in CSS/SASS/SCSS:
+We can also do this in CSS/SASS/SC SS:
 
 ```sass
 /* slinky_require("reset.css")
@@ -101,15 +121,15 @@ a
   color: red
 ```
 
-### Specifing dependencies
+### Dependencies
 
 As HAML and SASS scripts can include external content as part of their
-build process, it may be that you would like to specify that files are
-to be recompiled whenever other files change. For example, you may use
-mustache templates defined each in their own file, but have set up
-your HAML file to include them all into the HTML. Thus when one of the
-mustache files changes, you would like the HAML file to be recompiled
-so that the templates can be updated also.
+build process, you may want certain files to be recompiled whenever
+other files change. For example, you may use mustache templates
+defined each in their own file, but have set up your HAML file to
+include them all into the HTML. Thus when one of the mustache files
+changes, you would like the HAML file to be recompiled so that the
+templates will also be updated.
 
 These relationships are specified as "dependencies," and like requirements
 they are incdicated through a special `slinky_depends("file")` directive in 
@@ -137,13 +157,70 @@ Slinky can optionally be configured using a yaml file. By default, it
 looks for a file called `slinky.yaml` in the source directory, but you
 can also supply a file name on the command line using `-c`.
 
-There are currently two directives supported:
+Most of what can be specified on the command line is also available in
+the configuration file. Here's a fully-decked out config:
+
+```yaml
+pushstate:
+  "/app1": "/index.html"
+  "/app2": "/index2.html"
+proxy:
+  "/test1": "http://127.0.0.1:8000"
+  "/test2": "http://127.0.0.1:7000"
+ignore:
+  - script/vendor
+  - script/jquery.js
+port: 5555
+src_dir: "src/"
+build_dir: "build/"
+no_proxy: true
+no_livereload: true
+livereload_port: 5556
+dont_minify: true
+```
+
+Most are self explanatory, but a few of the options merit further
+attention:
+
+### PushState
+
+[PushState](https://developer.mozilla.org/en-US/docs/DOM/Manipulating_the_browser_history)
+is a new Javascript API that gives web apps more control over the
+browser's history, making possible single-page javascript applications
+that retain the advantages of their multi-page peers without resorting
+to hacks like hash urls. The essential idea is this: when a user
+navigates to a conceptually different "page" in the app, the URL
+should be updated to reflect that so that behaviors such as
+deep-linking and history navigation work properly. 
+
+For this to work, however, the server must be able to return the
+content of your main HTML page for arbitrary paths, as otherwise when
+a user tries to reload a pushstate-enabled web app they would receive
+a 404. Slinky supports multiple pushState paths using the pushstate
+configuration option:
+
+```yaml
+pushstate:
+  "/":     "/index.html"
+  "/app1": "/app1/index.haml"
+  "/app2": "/app2.haml"
+```
+
+Here, the key of the hash is a URL prefix, while the value is the file
+that should actually be displayed for non-existent requests that begin
+with the key. In the case of conflicting rules, the more specific one
+wins. For this config, instead of returning a 404 for a path like
+`/this/file/does/not/exist`, Slinky will send the content of
+`/index.html`, leaving your JavaScript free to render the proper view for
+that content. Similarly, a request for `/app1/photo/1/edit`, assuming
+such file does not exist, will return `/app1/index.haml`.
 
 ### Proxies
 
 Slinky has a built-in proxy server which lets you test ajax requests
-with your actual backend servers. To set it up, your slinky.yaml file
-will look something like this:
+with your actual backend servers without violating the same-origin
+policy. To set it up, your slinky.yaml file will look something like
+this:
 
 ```yaml
 proxy:
@@ -164,18 +241,12 @@ the request by the specified number of milliseconds in order to
 simulate the latency associated with remote servers.
 
 An example: we have some javascript code which makes an AJAX GET
-request to `/search/widgets?q=foo`. When slinky gets the request it
-will see that it has a matching proxy rule, rewrite the request
-appropriately (changing paths and hosts) and send it on to the backend
+request to `/search/widgets?q=foo`. When Slinky gets the request it
+will see that it has a matching proxy rule, rewrites the request
+appropriately (changing paths and hosts) and sends it on to the backend
 server (in this case, 127.0.0.1:4567). Once it gets a response it will
 wait until 2 seconds has elapsed since slinky itself received the
-request and then send on the response back to the browser.
-
-This is very convenient for developing rich web clients locally. For
-example, you may have some code that shows a loading indicator while
-an AJAX request is outstanding. However, when run locally the request
-returns so quickly that you can't even see the loading indicator. By
-adding in a lag this problem is remedied.
+request and finally returns the response back to the browser.
 
 ###  Ignores
 
