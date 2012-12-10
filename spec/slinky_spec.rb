@@ -326,6 +326,7 @@ describe "Slinky" do
       @resp = double("EventMachine::DelegatedHttpResponse")
       @resp.stub(:content=){|c| @content = c}
       @resp.stub(:content){ @content }
+      @mdevel = Slinky::Manifest.new("/src", @config)      
     end
 
     it "path_for_uri should work correctly" do
@@ -361,6 +362,33 @@ describe "Slinky" do
       @resp.should_receive(:status=).with(404)
       Slinky::Server.handle_file @resp, mf
       @resp.content.should == "File not found\n"
+    end
+
+    it "should handle pushstate properly" do
+      config = <<eos
+pushstate_index: "/test.html"
+eos
+      File.open("/src/slinky.yaml", "w+"){|f| f.write config}      
+      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml") 
+      Slinky::Server.config = cr
+      Slinky::Server.manifest = @mdevel
+      $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
+      @resp.should_receive(:content_type).with("text/html").at_least(:once)
+      Slinky::Server.process_path @resp, "/this/doesnt/exist.html"
+      @resp.content.include?("html").should == true
+    end
+
+    it "should not enter an infinite loop with a non-existant pushstate index" do
+      config = <<eos
+pushstate_index: "/notreal.html"
+eos
+      File.open("/src/slinky.yaml", "w+"){|f| f.write config}      
+      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml") 
+      Slinky::Server.config = cr
+      Slinky::Server.manifest = @mdevel
+      @resp.should_receive(:status=).with(404)
+      @resp.should_receive(:content_type).with("text/html").at_least(:once)      
+      Slinky::Server.process_path @resp, "/this/doesnt/exist.html"
     end
 
     it "should accept a port option" do
@@ -429,6 +457,14 @@ proxy:
 ignore:
   - script/vendor
   - script/jquery.js
+port: 5555
+src_dir: "src/"
+build_dir: "build/"
+no_proxy: true
+no_livereload: true
+livereload_port: 5556
+dont_minify: true
+pushstate_index: "/index.html"
 eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write @config}
       @proxies = {
@@ -448,6 +484,14 @@ eos
       cr = Slinky::ConfigReader.from_file("/src/slinky.yaml")
       cr.proxies.should == @proxies
       cr.ignores.should == @ignores
+      cr.port.should == 5555
+      cr.src_dir.should == "src/"
+      cr.build_dir.should == "build/"
+      cr.no_proxy.should == true
+      cr.no_livereload.should == true
+      cr.livereload_port.should == 5556
+      cr.dont_minify.should == true
+      cr.pushstate_index.should == "/index.html"
     end
 
     it "should be able to create the empty config" do
@@ -530,5 +574,6 @@ eos
       @proxies[0][1].to_s.should == "http://127.0.0.1:6000"
       @proxies[0][2].should == {"lag" => 1000}
     end
+    
   end
 end

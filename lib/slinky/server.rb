@@ -8,7 +8,7 @@ module Slinky
     def self.dir; @dir || "."; end
 
     def self.config= _config; @config = _config; end
-    def self.config; @config || {}; end
+    def self.config; @config || ConfigReader.empty; end
 
     def self.manifest= _manifest; @manifest = _manifest; end
     def self.manifest; @manifest; end
@@ -21,7 +21,7 @@ module Slinky
     end
 
     # Takes a manifest file and produces a response for it
-    def self.handle_file resp, mf
+    def self.handle_file resp, mf, pushstate = false
       if mf
         if path = mf.process
           serve_file resp, path.to_s
@@ -29,6 +29,9 @@ module Slinky
           resp.status = 500
           resp.content = "Error compiling #{mf.source}\n"
         end
+      elsif !pushstate && p = config.pushstate_index
+        path = p[0] == "/" ? p[1..-1] : p
+        self.process_path(resp, path, true)
       else
         not_found resp
       end
@@ -61,9 +64,18 @@ module Slinky
       resp.content = "File not found\n"
     end
 
+    def self.process_path resp, path, pushstate = false
+      file = manifest.find_by_path(path).first
+      if file.is_a? ManifestDir
+        file = manifest.find_by_path(path+"/index.html").first
+      end
+
+      resp.content_type MIME::Types.type_for(path).first
+      handle_file(resp, file, pushstate)
+    end
+
     # Method called for every HTTP request made 
     def process_http_request
-      manifest = Server.manifest
       resp = EventMachine::DelegatedHttpResponse.new(self)
 
       begin
@@ -74,12 +86,7 @@ module Slinky
         return
       end
 
-      file = manifest.find_by_path(path).first
-      if file.is_a? ManifestDir
-        file = manifest.find_by_path(path+"/index.html").first
-      end
-      resp.content_type MIME::Types.type_for(path).first
-      Server.handle_file(resp, file).send_response
+      Server.process_path(resp, path).send_response
     end
   end
 end

@@ -4,11 +4,7 @@ module Slinky
         
     def initialize argv
       @argv = argv
-      @options = {
-        :build_dir => "build",
-        :port => 5323,
-        :src_dir => "."
-      }
+      @options = {}
 
       parser.parse! @argv
       @command = @argv.shift
@@ -59,27 +55,32 @@ module Slinky
       Signal.trap('INT') { puts "Slinky fading away ... "; exit(0); }
 
       EM::run {
+        @config ||= Config.empty
+
         Slinky::Server.dir = @options[:src_dir]
         Slinky::Server.config = @config
         manifest = Manifest.new(Slinky::Server.dir,
                                 Slinky::Server.config)
         Slinky::Server.manifest = manifest
 
-        if @config && !@config.proxies.empty? && !@options[:no_proxy]
-          server = EM::start_server "127.0.0.1", @options[:port]+1, Slinky::Server
-          ProxyServer.run(@config.proxies, @options[:port], @options[:port]+1)
+        port = @options[:port] || @config.port
+
+        should_proxy = !(@config.no_proxy || @options[:no_proxy])
+
+        if !@config.proxies.empty? && should_proxy
+          server = EM::start_server "127.0.0.1", port+1, Slinky::Server
+          ProxyServer.run(@config.proxies, port, port+1)
         else
-          EM::start_server "0.0.0.0", @options[:port], Slinky::Server
+          EM::start_server "0.0.0.0", port, Slinky::Server
         end
 
-        if !@options[:no_livereload]
-          port = (@config && @config[:livereload_port]) || 35729
-          livereload = LiveReload.new("0.0.0.0", port)
+        if !@config.no_livereload && !@options[:no_livereload]
+          livereload = LiveReload.new("0.0.0.0", @config[:livereload_port])
           livereload.run
         end
 
         Listener.new(manifest, livereload).run
-        puts "Started static file server on port #{@options[:port]}"
+        puts "Started static file server on port #{port}"
       }
     end
 

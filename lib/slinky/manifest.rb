@@ -36,7 +36,7 @@ module Slinky
       @manifest_dir = ManifestDir.new dir, self, @build_to, self
       @devel = (options[:devel].nil?) ? true : options[:devel]
       @config = config
-      @no_minify = options[:no_minify]
+      @no_minify = options[:no_minify] || config.dont_minify
     end
 
     # Returns a list of all files contained in this manifest
