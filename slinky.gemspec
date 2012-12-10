@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "slinky"
-  s.version = "0.6.1"
+  s.version = "0.7.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Micah Wylde"]
-  s.date = "2012-06-19"
+  s.date = "2012-12-10"
   s.description = "A static file server for rich web apps that automatically compiles SASS, HAML, CoffeeScript and more"
   s.email = "micah@micahw.com"
   s.executables = ["slinky"]
@@ -34,10 +34,12 @@ Gem::Specification.new do |s|
     "lib/slinky/compilers/coffee-compiler.rb",
     "lib/slinky/compilers/coffee-helper",
     "lib/slinky/compilers/haml-compiler.rb",
+    "lib/slinky/compilers/less-compiler.rb",
     "lib/slinky/compilers/sass-compiler.rb",
     "lib/slinky/config_reader.rb",
     "lib/slinky/em-popen3.rb",
     "lib/slinky/listener.rb",
+    "lib/slinky/live_reload.rb",
     "lib/slinky/manifest.rb",
     "lib/slinky/proxy_server.rb",
     "lib/slinky/runner.rb",
@@ -49,7 +51,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://mwylde.github.com/slinky/"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.10"
+  s.rubygems_version = "1.8.24"
   s.summary = "Static file server for javascript apps"
 
   if s.respond_to? :specification_version then
@@ -58,14 +60,15 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<eventmachine>, [">= 0.12.0"])
       s.add_runtime_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+      s.add_runtime_dependency(%q<em-websocket>, ["~> 0.3.8"])
       s.add_runtime_dependency(%q<em-proxy>, [">= 0.1.6"])
       s.add_runtime_dependency(%q<rainbow>, [">= 1.1.3"])
-      s.add_runtime_dependency(%q<haml>, [">= 3.0.0"])
-      s.add_runtime_dependency(%q<sass>, [">= 3.1.1"])
-      s.add_runtime_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_runtime_dependency(%q<mime-types>, [">= 1.16"])
       s.add_runtime_dependency(%q<yui-compressor>, [">= 0.9.6"])
       s.add_runtime_dependency(%q<listen>, [">= 0.4.5"])
+      s.add_runtime_dependency(%q<haml>, [">= 3.0.0"])
+      s.add_runtime_dependency(%q<sass>, [">= 3.1.1"])
+      s.add_runtime_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.10.0"])
       s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
       s.add_development_dependency(%q<bundler>, ["~> 1.1.0"])
@@ -76,14 +79,15 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<eventmachine>, [">= 0.12.0"])
       s.add_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+      s.add_dependency(%q<em-websocket>, ["~> 0.3.8"])
       s.add_dependency(%q<em-proxy>, [">= 0.1.6"])
       s.add_dependency(%q<rainbow>, [">= 1.1.3"])
-      s.add_dependency(%q<haml>, [">= 3.0.0"])
-      s.add_dependency(%q<sass>, [">= 3.1.1"])
-      s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_dependency(%q<mime-types>, [">= 1.16"])
       s.add_dependency(%q<yui-compressor>, [">= 0.9.6"])
       s.add_dependency(%q<listen>, [">= 0.4.5"])
+      s.add_dependency(%q<haml>, [">= 3.0.0"])
+      s.add_dependency(%q<sass>, [">= 3.1.1"])
+      s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_dependency(%q<rspec>, ["~> 2.10.0"])
       s.add_dependency(%q<yard>, ["~> 0.6.0"])
       s.add_dependency(%q<bundler>, ["~> 1.1.0"])
@@ -95,14 +99,15 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<eventmachine>, [">= 0.12.0"])
     s.add_dependency(%q<eventmachine_httpserver>, [">= 0.2.0"])
+    s.add_dependency(%q<em-websocket>, ["~> 0.3.8"])
     s.add_dependency(%q<em-proxy>, [">= 0.1.6"])
     s.add_dependency(%q<rainbow>, [">= 1.1.3"])
-    s.add_dependency(%q<haml>, [">= 3.0.0"])
-    s.add_dependency(%q<sass>, [">= 3.1.1"])
-    s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
     s.add_dependency(%q<mime-types>, [">= 1.16"])
     s.add_dependency(%q<yui-compressor>, [">= 0.9.6"])
     s.add_dependency(%q<listen>, [">= 0.4.5"])
+    s.add_dependency(%q<haml>, [">= 3.0.0"])
+    s.add_dependency(%q<sass>, [">= 3.1.1"])
+    s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
     s.add_dependency(%q<rspec>, ["~> 2.10.0"])
     s.add_dependency(%q<yard>, ["~> 0.6.0"])
     s.add_dependency(%q<bundler>, ["~> 1.1.0"])

@@ -11,6 +11,7 @@ require 'optparse'
 require 'mime/types'
 require 'yui/compressor'
 require 'listen'
+require 'multi_json'
 
 require "slinky/em-popen3"
 require "slinky/compilers"

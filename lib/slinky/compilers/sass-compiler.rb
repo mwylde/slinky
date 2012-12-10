@@ -1,5 +1,3 @@
-require 'sass'
-
 module Slinky
   module SassCompiler
     Compilers.register_compiler self,

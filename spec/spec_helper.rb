@@ -31,12 +31,26 @@ module FakeFS
 end
 
 module Slinky
+  # The coffee script compiler doesn't work under FakeFS
   module CoffeeCompiler
     def CoffeeCompiler::compile s, file
       FakeFS.deactivate!
       o = CoffeeScript::compile(s)
       FakeFS.activate!
       o
+    end
+  end
+
+  # This is necessary because require doesn't work with FakeFS
+  class Compilers
+    class << self
+      alias :get_old_cfile :get_cfile
+      def get_cfile *args
+        FakeFS.deactivate!
+        cfile = get_old_cfile *args
+        FakeFS.activate!
+        cfile
+      end
     end
   end
 

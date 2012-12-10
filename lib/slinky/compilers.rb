@@ -27,8 +27,8 @@ module Slinky
         end
       end
 
-      def get_cfile source, compiler, output_ext
-        if has_dependencies compiler, output_ext
+      def get_cfile source, compiler, input_ext, output_ext
+        if has_dependencies compiler, input_ext
           CompiledFile.new source, compiler[:klass], output_ext
         end
       end
@@ -44,7 +44,7 @@ module Slinky
               @checked_dependencies.add(d)
               true
             rescue Gem::LoadError
-              $stderr.puts (DEPENDENCY_NOT_MET % [d[0], d[1], ext, d[0], d[1]]).foreground(:red)
+              $stderr.puts (DEPENDENCY_NOT_MET % [d[0], d[1], ext, d[1], d[0]]).foreground(:red)
               false
             end
           end
@@ -76,7 +76,7 @@ module Slinky
           compilers[extension].each do |c|
             c[:inputs].each do |i|
               if files_by_ext[i]
-                cfile = get_cfile(files_by_ext[i], c, extension)
+                cfile = get_cfile(files_by_ext[i], c, ext, extension)
                 break
               end
             end
@@ -94,7 +94,7 @@ module Slinky
         _, file, ext = path.match(EXTENSION_REGEX).to_a
 
         if ext && ext != "" && compiler = @compilers_by_input[ext]
-          get_cfile(path, compiler, compiler[:outputs].first)
+          get_cfile(path, compiler, ext, compiler[:outputs].first)
         else
           nil
         end

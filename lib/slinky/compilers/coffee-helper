@@ -1,3 +1,0 @@
-#!/bin/bash
-
-coffee --compile --print $1 > $2
