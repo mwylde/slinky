@@ -20,20 +20,47 @@ module Slinky
       path[1..-1] #get rid of the leading /
     end
 
-    # Takes a manifest file and produces a response for it
-    def self.handle_file resp, mf, pushstate = false
-      if mf
-        if path = mf.process
-          serve_file resp, path.to_s
-        else
-          resp.status = 500
-          resp.content = "Error compiling #{mf.source}\n"
-        end
-      elsif !pushstate && p = config.pushstate_index
+    # Method called for every HTTP request made 
+    def process_http_request
+      resp = EventMachine::DelegatedHttpResponse.new(self)
+
+      begin
+        path = Server.path_for_uri(@http_request_uri)
+      rescue
+        resp.status = 500
+        resp.content = "Invalid request"
+        return
+      end
+
+      Server.process_path(resp, path).send_response
+    end
+
+    def self.process_path resp, path, pushstate = false
+      file = manifest.find_by_path(path).first
+      if file.is_a? ManifestDir
+        file = manifest.find_by_path(path+"/index.html").first
+      end
+
+      resp.content_type MIME::Types.type_for(path).first
+
+      if file
+        handle_file(resp, file)
+      elsif !pushstate && p = config.pushstate_for_path(path)
         path = p[0] == "/" ? p[1..-1] : p
         self.process_path(resp, path, true)
       else
         not_found resp
+      end
+      resp
+    end
+
+    # Takes a manifest file and produces a response for it
+    def self.handle_file resp, mf
+      if path = mf.process
+        serve_file resp, path.to_s
+      else
+        resp.status = 500
+        resp.content = "Error compiling #{mf.source}\n"
       end
       resp
     end
@@ -62,31 +89,6 @@ module Slinky
     def self.not_found resp
       resp.status = 404
       resp.content = "File not found\n"
-    end
-
-    def self.process_path resp, path, pushstate = false
-      file = manifest.find_by_path(path).first
-      if file.is_a? ManifestDir
-        file = manifest.find_by_path(path+"/index.html").first
-      end
-
-      resp.content_type MIME::Types.type_for(path).first
-      handle_file(resp, file, pushstate)
-    end
-
-    # Method called for every HTTP request made 
-    def process_http_request
-      resp = EventMachine::DelegatedHttpResponse.new(self)
-
-      begin
-        path = Server.path_for_uri(@http_request_uri)
-      rescue
-        resp.status = 500
-        resp.content = "Invalid request"
-        return
-      end
-
-      Server.process_path(resp, path).send_response
     end
   end
 end

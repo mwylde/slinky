@@ -48,8 +48,17 @@ module Slinky
       @config["dont_minify"] || false
     end
 
-    def pushstate_index
-      @config["pushstate_index"]
+    def pushstates
+      @config["pushstate"]
+    end
+
+    def pushstate_for_path path
+      if pushstates && pushstates.is_a?(Hash)
+        p = pushstates.sort_by{|from, to| -from.count("/")}.find{|a|
+          path.start_with? a[0]
+        }
+        p[1] if p
+      end
     end
 
     def [](x)

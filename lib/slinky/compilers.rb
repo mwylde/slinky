@@ -1,3 +1,5 @@
+require 'set'
+
 module Slinky
   EXTENSION_REGEX = /(.+)\.(\w+)/
   
@@ -5,6 +7,12 @@ module Slinky
     @compilers = []
     @compilers_by_ext = {}
     @compilers_by_input = {}
+    @checked_dependencies = Set.new
+
+    DEPENDENCY_NOT_MET = "Missing dependency %s (version %s), which is\n" +
+      "necessary to compile %s files\n\n" +
+      "Running the following should rectify this problem:\n" +
+      "  $ gem install --version '%s' %s"
 
     class << self
       def register_compiler klass, options
@@ -19,6 +27,30 @@ module Slinky
         end
       end
 
+      def get_cfile source, compiler, output_ext
+        if has_dependencies compiler, output_ext
+          CompiledFile.new source, compiler[:klass], output_ext
+        end
+      end
+
+      def has_dependencies compiler, ext
+        (compiler[:dependencies] || []).all? {|d|
+          if @checked_dependencies.include?(d)
+            true
+          else
+            begin
+              gem(d[0], d[1])
+              require d[0]
+              @checked_dependencies.add(d)
+              true
+            rescue Gem::LoadError
+              $stderr.puts (DEPENDENCY_NOT_MET % [d[0], d[1], ext, d[0], d[1]]).foreground(:red)
+              false
+            end
+          end
+        }
+      end
+      
       # Produces a CompiledFile for an input file if the file needs to
       # be compiled, or nil otherwise. Note that path is the path of
       # the compiled file, so script.js not script.coffee.
@@ -44,7 +76,7 @@ module Slinky
           compilers[extension].each do |c|
             c[:inputs].each do |i|
               if files_by_ext[i]
-                cfile = CompiledFile.new files_by_ext[i], c[:klass], extension
+                cfile = get_cfile(files_by_ext[i], c, extension)
                 break
               end
             end
@@ -62,7 +94,7 @@ module Slinky
         _, file, ext = path.match(EXTENSION_REGEX).to_a
 
         if ext && ext != "" && compiler = @compilers_by_input[ext]
-          CompiledFile.new path, compiler[:klass], compiler[:outputs].first
+          get_cfile(path, compiler, compiler[:outputs].first)
         else
           nil
         end

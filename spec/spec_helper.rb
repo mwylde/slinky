@@ -44,6 +44,13 @@ module Slinky
   class Listener
     def run; end
   end
+
+  module FakeCompiler
+    Compilers.register_compiler self,
+    :inputs => ["fake"],
+    :outputs =>["real"],
+    :dependencies => [["nonexistant_gem", ">= 9.9.9"]]
+  end
 end
 
 RSpec.configure do |config|

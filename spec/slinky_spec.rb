@@ -111,6 +111,13 @@ describe "Slinky" do
       FileUtils.rm_rf("/src/build") rescue nil
     end
 
+    it "should give the proper error message for compilers with unmet dependencies" do
+      File.open("/src/test.fake", "w+"){|f| f.write("hello, fake data")}
+      $stderr.should_receive(:puts).with(/Missing dependency/)
+      mf = Slinky::ManifestFile.new("/src/test.fake", "/src/build", @mprod)
+      build_path = mf.process
+    end
+
     it "should report errors for bad files" do
       File.open("/src/l1/l2/bad.sass", "w+"){|f|
         f.write "color: red;"
@@ -364,9 +371,10 @@ describe "Slinky" do
       @resp.content.should == "File not found\n"
     end
 
-    it "should handle pushstate properly" do
+    it "should handle a global pushstate" do
       config = <<eos
-pushstate_index: "/test.html"
+pushstate:
+  "/": "/test.html"
 eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write config}      
       cr = Slinky::ConfigReader.from_file("/src/slinky.yaml") 
@@ -380,7 +388,8 @@ eos
 
     it "should not enter an infinite loop with a non-existant pushstate index" do
       config = <<eos
-pushstate_index: "/notreal.html"
+pushstate:
+  "/": "/notreal.html"
 eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write config}      
       cr = Slinky::ConfigReader.from_file("/src/slinky.yaml") 
@@ -389,6 +398,23 @@ eos
       @resp.should_receive(:status=).with(404)
       @resp.should_receive(:content_type).with("text/html").at_least(:once)      
       Slinky::Server.process_path @resp, "/this/doesnt/exist.html"
+    end
+
+    it "should choose the more specific pushstate path when conflicts are present" do
+      config = <<eos
+pushstate:
+  "/": "/index.html"
+  "/hello": "/test.html"
+eos
+      File.open("/src/slinky.yaml", "w+"){|f| f.write config}
+      File.open("/src/index.html", "w+"){|f| f.write("goodbye")}
+      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml")
+      Slinky::Server.config = cr
+      manifest = Slinky::Manifest.new("/src", cr)
+      Slinky::Server.manifest = manifest
+      @resp.should_receive(:content_type).with("text/html").at_least(:once)
+      Slinky::Server.process_path @resp, "/hello/doesnt/exist.html"
+      @resp.content.include?("goodbye").should == true
     end
 
     it "should accept a port option" do
@@ -464,7 +490,9 @@ no_proxy: true
 no_livereload: true
 livereload_port: 5556
 dont_minify: true
-pushstate_index: "/index.html"
+pushstate:
+  "/app1": "/index.html"
+  "/app2": "/index2.html"
 eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write @config}
       @proxies = {
@@ -472,6 +500,10 @@ eos
         "/test2" => "http://127.0.0.1:7000"
       }
       @ignores = ["script/vendor", "script/jquery.js"]
+      @pushstates = {
+        "/app1" => "/index.html",
+        "/app2" => "/index2.html"
+      }
     end
 
     it "should be able to read configuration from strings" do
@@ -491,7 +523,7 @@ eos
       cr.no_livereload.should == true
       cr.livereload_port.should == 5556
       cr.dont_minify.should == true
-      cr.pushstate_index.should == "/index.html"
+      cr.pushstates.should == @pushstates
     end
 
     it "should be able to create the empty config" do
