@@ -382,7 +382,7 @@ eos
       Slinky::Server.manifest = @mdevel
       $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
       @resp.should_receive(:content_type).with("text/html").at_least(:once)
-      Slinky::Server.process_path @resp, "/this/doesnt/exist.html"
+      Slinky::Server.process_path @resp, "this/doesnt/exist.html"
       @resp.content.include?("html").should == true
     end
 
@@ -397,7 +397,7 @@ eos
       Slinky::Server.manifest = @mdevel
       @resp.should_receive(:status=).with(404)
       @resp.should_receive(:content_type).with("text/html").at_least(:once)      
-      Slinky::Server.process_path @resp, "/this/doesnt/exist.html"
+      Slinky::Server.process_path @resp, "this/doesnt/exist.html"
     end
 
     it "should choose the more specific pushstate path when conflicts are present" do
@@ -413,7 +413,7 @@ eos
       manifest = Slinky::Manifest.new("/src", cr)
       Slinky::Server.manifest = manifest
       @resp.should_receive(:content_type).with("text/html").at_least(:once)
-      Slinky::Server.process_path @resp, "/hello/doesnt/exist.html"
+      Slinky::Server.process_path @resp, "hello/doesnt/exist.html"
       @resp.content.include?("goodbye").should == true
     end
 

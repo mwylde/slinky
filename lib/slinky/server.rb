@@ -45,7 +45,7 @@ module Slinky
 
       if file
         handle_file(resp, file)
-      elsif !pushstate && p = config.pushstate_for_path(path)
+      elsif !pushstate && p = config.pushstate_for_path("/" + path)
         path = p[0] == "/" ? p[1..-1] : p
         self.process_path(resp, path, true)
       else

@@ -10,7 +10,7 @@ module Slinky
       @command = @argv.shift
       @arguments = @argv
 
-      config_path = @options[:config] || "#{@options[:src_dir]}/slinky.yaml"
+      config_path = @options[:config] || "#{@options[:src_dir] || "."}/slinky.yaml"
       @config = if File.exist?(config_path) 
                   ConfigReader.from_file(config_path)
                 else
@@ -66,16 +66,16 @@ module Slinky
         port = @options[:port] || @config.port
 
         should_proxy = !(@config.no_proxy || @options[:no_proxy])
-
         if !@config.proxies.empty? && should_proxy
           server = EM::start_server "127.0.0.1", port+1, Slinky::Server
           ProxyServer.run(@config.proxies, port, port+1)
         else
-          EM::start_server "0.0.0.0", port, Slinky::Server
+          EM::start_server "127.0.0.1", port, Slinky::Server
         end
 
         if !@config.no_livereload && !@options[:no_livereload]
-          livereload = LiveReload.new("0.0.0.0", @config[:livereload_port])
+          lr_port = @options[:livereload_port] || @config.livereload_port
+          livereload = LiveReload.new("127.0.0.1", lr_port)
           livereload.run
         end
 
