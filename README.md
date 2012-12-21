@@ -14,7 +14,8 @@ What can slinky do for you?
 
 #### Slinky Server
 
-* Transparently compiles sources for a variety of languages
+* Transparently compiles sources for a variety of languages (currently
+  supported: CoffeeScript, ClojureScript, SASS/SCSS, LESS, HAML)
 * Supports the [LiveReload](http://livereload.com) protocol, for
   instant browser updates
 * Allows proxying to backend servers, so you can develop your client
