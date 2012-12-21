@@ -53,7 +53,7 @@ describe "Slinky" do
     end
 
     it "should produce the correct scripts string for devel" do
-      @mdevel.scripts_string.should == '<script type="text/javascript" src="l1/test5.js"></script><script type="text/javascript" src="l1/l2/test6.js"></script><script type="text/javascript" src="l1/test2.js"></script><script type="text/javascript" src="l1/l2/test3.js"></script><script type="text/javascript" src="l1/test.js"></script>'
+      @mdevel.scripts_string.should == '<script type="text/javascript" src="/l1/test5.js"></script><script type="text/javascript" src="/l1/l2/test6.js"></script><script type="text/javascript" src="/l1/test2.js"></script><script type="text/javascript" src="/l1/l2/test3.js"></script><script type="text/javascript" src="/l1/test.js"></script>'
     end
 
     it "should produce the correct styles string for production" do
@@ -66,7 +66,7 @@ describe "Slinky" do
         f.write "require('../test.sass')\ncolor: red;"
       }
       manifest = Slinky::Manifest.new("/src", @config)
-      @mdevel.styles_string.should == '<link rel="stylesheet" href="l1/test.css" /><link rel="stylesheet" href="l1/l2/test2.css" />'
+      @mdevel.styles_string.should == '<link rel="stylesheet" href="/l1/test.css" /><link rel="stylesheet" href="/l1/l2/test2.css" />'
     end
 
     it "should allow the creation of ManifestFiles" do
@@ -323,8 +323,8 @@ describe "Slinky" do
       @mprod.build
       css = File.read("/build/styles.css")
       css.include?("url('/l1/asdf.png')").should == true
-      css.include?("url('l1/bg.png')").should == true
-      css.include?("url('l1/l2/l3/hello.png')").should == true
+      css.include?("url('/l1/bg.png')").should == true
+      css.include?("url('/l1/l2/l3/hello.png')").should == true
     end
   end
 
