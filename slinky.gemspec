@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Micah Wylde"]
-  s.date = "2012-12-10"
+  s.date = "2012-12-21"
   s.description = "A static file server for rich web apps that automatically compiles SASS, HAML, CoffeeScript and more"
   s.email = "micah@micahw.com"
   s.executables = ["slinky"]
@@ -31,8 +31,8 @@ Gem::Specification.new do |s|
     "lib/slinky/builder.rb",
     "lib/slinky/compiled_file.rb",
     "lib/slinky/compilers.rb",
+    "lib/slinky/compilers/clojurescript-compiler.rb",
     "lib/slinky/compilers/coffee-compiler.rb",
-    "lib/slinky/compilers/coffee-helper",
     "lib/slinky/compilers/haml-compiler.rb",
     "lib/slinky/compilers/less-compiler.rb",
     "lib/slinky/compilers/sass-compiler.rb",
@@ -71,9 +71,8 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.10.0"])
       s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
-      s.add_development_dependency(%q<bundler>, ["~> 1.1.0"])
+      s.add_development_dependency(%q<bundler>, [">= 1.1.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.8.0"])
-      s.add_development_dependency(%q<cover_me>, [">= 1.0.0.rc6"])
       s.add_development_dependency(%q<fakefs>, ["~> 0.4.0"])
       s.add_development_dependency(%q<em-http-request>, ["~> 1.0.0"])
     else
@@ -90,9 +89,8 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
       s.add_dependency(%q<rspec>, ["~> 2.10.0"])
       s.add_dependency(%q<yard>, ["~> 0.6.0"])
-      s.add_dependency(%q<bundler>, ["~> 1.1.0"])
+      s.add_dependency(%q<bundler>, [">= 1.1.0"])
       s.add_dependency(%q<jeweler>, ["~> 1.8.0"])
-      s.add_dependency(%q<cover_me>, [">= 1.0.0.rc6"])
       s.add_dependency(%q<fakefs>, ["~> 0.4.0"])
       s.add_dependency(%q<em-http-request>, ["~> 1.0.0"])
     end
@@ -110,9 +108,8 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<coffee-script>, [">= 2.2.0"])
     s.add_dependency(%q<rspec>, ["~> 2.10.0"])
     s.add_dependency(%q<yard>, ["~> 0.6.0"])
-    s.add_dependency(%q<bundler>, ["~> 1.1.0"])
+    s.add_dependency(%q<bundler>, [">= 1.1.0"])
     s.add_dependency(%q<jeweler>, ["~> 1.8.0"])
-    s.add_dependency(%q<cover_me>, [">= 1.0.0.rc6"])
     s.add_dependency(%q<fakefs>, ["~> 0.4.0"])
     s.add_dependency(%q<em-http-request>, ["~> 1.0.0"])
   end
