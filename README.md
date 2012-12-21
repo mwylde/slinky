@@ -10,19 +10,17 @@ leaving you ready to push to production.
 
 [![Build Status](https://secure.travis-ci.org/mwylde/slinky.png)](http://travis-ci.org/mwylde/slinky)
 
-What can slinky do for you?
+#### What can slinky do for you?
 
-#### Slinky Server
+##### Slinky Server
 
-* Transparently compiles sources for a variety of languages (currently
-  supported: CoffeeScript, ClojureScript, SASS/SCSS, LESS, HAML)
+* Transparently compiles sources for a variety of languages
 * Supports the [LiveReload](http://livereload.com) protocol, for
   instant browser updates
-* Allows proxying to backend servers, so you can develop your client
-  and server code separately
+* Includes a customizable proxy, so your dev environment can mirror production
 * Includes support for HTML5 [pushState](https://developer.mozilla.org/en-US/docs/DOM/Manipulating_the_browser_history) based apps
 
-#### Slinky Builder
+##### Slinky Builder
 
 * Keeps track of the proper include order of your scripts and styles
 * Compiles, minifies and concatenates JavaScript and CSS
@@ -45,14 +43,36 @@ $ scp -r ../pub/ myserver.com:/var/www/project
 
 ## The details
 
-1. [LiveReload/Guard support](#livereloadguard-support)
-2. [Script & style management](#script--style-management)
-3. [Specifying order](#specifying-order)
-4. [Dependencies](#dependencies)
-5. [Configuration](#configuration)
-6. [PushState](#pushstate)
-7. [Proxies](#proxies)
-8. [Ignores](#ignores)
+1. [Transparent compilation](#transparent-compilation)
+2. [LiveReload/Guard support](#livereloadguard-support)
+3. [Script & style management](#script--style-management)
+4. [Specifying order](#specifying-order)
+5. [Dependencies](#dependencies)
+6. [Configuration](#configuration)
+7. [PushState](#pushstate)
+8. [Proxies](#proxies)
+9. [Ignores](#ignores)
+
+### Transparent compilation
+
+The Slinky server will transparently compile various front-end languages
+for you, providing a smooth transition from development to production.
+What does this mean? When Slinky sees a request for a file that doesn't
+exist (say, "/scripts/core.js") it will look for a file that can be compiled
+into that ("/scripts/core.coffee"), compile it, then return the result. This
+allows you to write code without concern for which files are "native"
+and which need compilation.
+
+Currently supported languages include:
+
+* CoffeeScript
+* HAML
+* SASS/SCSS
+* LESS
+* ClojureScript (experimental)
+
+Adding support for new languages is simple, and pull requests are welcome.
+
 
 ### LiveReload/Guard support
 
