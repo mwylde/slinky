@@ -44,7 +44,7 @@ module Slinky
               @checked_dependencies.add(d)
               true
             rescue Gem::LoadError
-              $stderr.puts (DEPENDENCY_NOT_MET % [d[0], d[1], ext, d[1], d[0]]).foreground(:red)
+              $stderr.puts((DEPENDENCY_NOT_MET % [d[0], d[1], ext, d[1], d[0]]).foreground(:red))
               false
             end
           end

@@ -244,7 +244,7 @@ module Slinky
 
       Dir.glob("#{dir}/*").each do |path|
         # skip the build dir
-        next if File.expand_path(path) == Pathname.new(build_dir)
+        next if Pathname.new(File.expand_path(path)) == Pathname.new(build_dir)
         if File.directory? path
           add_child(path)
         else
@@ -268,7 +268,7 @@ module Slinky
         [self]
       when 1
         path = [@dir, components[0]].join(File::SEPARATOR)
-        if (Dir.exists?(path) rescue false)
+        if (File.directory?(path) rescue false)
           c = @children.find{|d|
             Pathname.new(d.dir).cleanpath == Pathname.new(path).cleanpath
           }
@@ -298,7 +298,7 @@ module Slinky
 
     # Adds a child directory
     def add_child path
-      if Dir.exists? path
+      if File.directory? path
         build_dir = (@build_dir + File.basename(path)).cleanpath
         md = ManifestDir.new(path, self, build_dir, @manifest)
         @children << md
@@ -327,7 +327,7 @@ module Slinky
     end
     
     def build
-      unless Dir.exists?(@build_dir.to_s)
+      unless File.directory?(@build_dir.to_s)
         FileUtils.mkdir(@build_dir.to_s)
       end
       (@files + @children).each{|m|
@@ -385,7 +385,7 @@ module Slinky
         end
         last = c
       }
-        
+
       if match_glob && a.size > 1
         r2 = a.reduce{|a, x| /#{a}.*#{x}/}
         name.match(r2) || output.match(r2)
@@ -522,7 +522,7 @@ module Slinky
         @last_md5 = hash
         @updated = Time.now
         # mangle file appropriately
-        @last_path = handle_directives (compile @source), to
+        @last_path = handle_directives((compile @source), to)
       end
     end
 

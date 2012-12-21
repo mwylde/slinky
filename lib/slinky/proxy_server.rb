@@ -74,7 +74,7 @@ module Slinky
             # take into account the lag from the backend server
             so_far = Time.now - start_time
             time = opt["lag"]/1000.0-so_far
-            EM.add_timer (time > 0 ? time : 0) do
+            EM.add_timer(time > 0 ? time : 0) do
               conn.send_data resp
             end
           else

@@ -296,7 +296,7 @@ describe "Slinky" do
       File.exists?("/src/build/build").should_not == true
       File.exists?("/src/build/test.html").should == true
       Slinky::Builder.build(options, @config)
-      File.exists?("/src/build/build").should_not == true
+      File.exists?("/src/build/build").should == false
     end
 
     it "should combine and compress javascript" do
