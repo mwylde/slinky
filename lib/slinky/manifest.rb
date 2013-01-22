@@ -87,10 +87,10 @@ module Slinky
     def scripts_string
       if @devel
         dependency_list.reject{|x| x.output_path.extname != ".js"}.collect{|d|
-          %Q\<script type="text/javascript" src="/#{d.relative_output_path}"></script>\
+          %Q\<script type="text/javascript" src="#{@config.base_path}/#{d.relative_output_path}"></script>\
         }.join("")
       else
-        %Q\<script type="text/javascript" src="/scripts.js?#{rand(999999999)}"></script>\
+        %Q\<script type="text/javascript" src="#{@config.base_path}/scripts.js?#{rand(999999999)}"></script>\
       end
     end
 
@@ -124,7 +124,7 @@ module Slinky
 
       compress(".css", "#{@build_to}/styles.css", compressor){|s, css|
         css.gsub(CSS_URL_MATCHER){|url|
-          p = s.relative_output_path.dirname.to_s + "/#{$1}"
+          p = @config.base_path + s.relative_output_path.dirname.to_s + "/#{$1}"
           "url('/#{p}')"
         }
       }
@@ -133,10 +133,10 @@ module Slinky
     def styles_string
       if @devel
         dependency_list.reject{|x| x.output_path.extname != ".css"}.collect{|d|
-          %Q\<link rel="stylesheet" href="/#{d.relative_output_path}" />\
+          %Q\<link rel="stylesheet" href="#{@config.base_path}/#{d.relative_output_path}" />\
         }.join("")
       else
-        %Q\<link rel="stylesheet" href="/styles.css?#{rand(999999999)}" />\
+        %Q\<link rel="stylesheet" href="#{@config.base_path}/styles.css?#{rand(999999999)}" />\
       end
     end
 

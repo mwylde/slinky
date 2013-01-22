@@ -61,6 +61,10 @@ module Slinky
       end
     end
 
+    def base_path
+      @config["base_path"] || ""
+    end
+
     def [](x)
       @config[x]
     end
