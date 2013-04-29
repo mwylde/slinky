@@ -44,7 +44,13 @@ module Slinky
       resp.content_type MIME::Types.type_for(path).first
 
       if file
-        handle_file(resp, file)
+        if file.source.end_with?(path)
+          # They're requesting the source file and we should just
+          # return it
+          serve_file(resp, file.source)
+        else
+          handle_file(resp, file)
+        end
       elsif !pushstate && p = config.pushstate_for_path("/" + path)
         path = p[0] == "/" ? p[1..-1] : p
         self.process_path(resp, path, true)

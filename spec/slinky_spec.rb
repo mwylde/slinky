@@ -345,6 +345,11 @@ describe "Slinky" do
       @resp.content.should == File.read("/src/l1/test.js")
     end
 
+    it "should serve source files" do
+      Slinky::Server.serve_file @resp, "/src/l1/l2/test3.coffee"
+      @resp.content.should == File.read("/src/l1/l2/test3.coffee")
+    end
+
     it "should serve 404s" do
       @resp.should_receive(:status=).with(404)
       Slinky::Server.serve_file @resp, "/src/asdf/faljshd"
