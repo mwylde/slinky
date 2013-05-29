@@ -11,7 +11,7 @@ gem "yui-compressor", "~> 0.9.6"
 gem "listen", "~> 0.4.5"
 
 # compilation support gems
-gem "haml", ">= 3.0.0"
+gem "haml", ">= 3.1.0"
 gem "sass", ">= 3.1.1"
 gem "coffee-script", ">= 2.2.0"
 
