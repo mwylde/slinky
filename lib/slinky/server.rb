@@ -62,9 +62,13 @@ module Slinky
 
     # Takes a manifest file and produces a response for it
     def self.handle_file resp, mf
-      if path = mf.process
-        serve_file resp, path.to_s
-      else
+      begin
+        if path = mf.process
+          serve_file resp, path.to_s
+        else
+          raise Exception.new
+        end
+      rescue
         resp.status = 500
         resp.content = "Error compiling #{mf.source}\n"
       end
