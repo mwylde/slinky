@@ -3,7 +3,6 @@ module Slinky
     COMMANDS = %w{start build}
         
     def initialize argv
-      puts "Hello: test"
       # While slinky largely works in Ruby 1.8, the tests don't run
       # properly and using 1.9 is highly recommended.
       if RUBY_VERSION.start_with?("1.8")

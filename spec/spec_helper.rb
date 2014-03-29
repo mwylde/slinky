@@ -1,5 +1,7 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
+
+require 'bundler/setup'
 require 'rspec'
 require 'slinky'
 require 'fakefs/safe'
@@ -9,26 +11,6 @@ require 'open-uri'
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
-
-
-module FakeFS
-  class File
-    def self.absolute_path(*args)
-      RealFile.absolute_path(*args)
-    end
-  end
-
-  # Neccessary to fix a problem between FakeFS and Tempfile
-  class Dir
-    def self.mkdir(string, integer = 0)
-      parent = string.split('/')
-      parent.pop
-      raise Errno::ENOENT, "No such file or directory - #{string}" unless parent.join == "" || parent.join == "." || FileSystem.find(parent.join('/'))
-      raise Errno::EEXIST, "File exists - #{string}" if File.exists?(string)
-      FileUtils.mkdir_p(string)
-    end
-  end
-end
 
 module Slinky
   # The coffee script compiler doesn't work under FakeFS
@@ -74,6 +56,7 @@ RSpec.configure do |config|
     @config = Slinky::ConfigReader.empty
   end
   config.before :each do
+    FakeFS.activate!
     FileUtils.rm_rf("/src") rescue nil
     FileUtils.mkdir("/src")
     FileUtils.mkdir_p("/src/l1/l2/l3")
