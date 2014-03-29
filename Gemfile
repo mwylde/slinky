@@ -8,7 +8,7 @@ gem "em-proxy", "~> 0.1.6"
 gem "rainbow", "~> 1.1.3"
 gem "mime-types", "~> 1.16"
 gem "yui-compressor", "~> 0.9.6"
-gem "listen", "~> 0.4.5"
+gem "listen", "~> 2.4.0"
 
 # compilation support gems
 gem "haml", "~> 3.1.0"

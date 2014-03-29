@@ -8,8 +8,7 @@ module Slinky
     end
 
     def run
-      listener = Listen.to(@manifest.dir)
-      listener.change do |mod, add, rem|
+      listener = Listen.to(@manifest.dir) do |mod, add, rem|
         handle_mod(mod) if mod.size > 0
         handle_add(add) if add.size > 0
 
@@ -29,7 +28,8 @@ module Slinky
 
         handle_rem(rem) if rem.size > 0        
       end
-      listener.start(false)
+      listener.start
+      listener
     end
 
     def handle_mod files
