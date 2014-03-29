@@ -38,7 +38,8 @@ module Slinky
     def self.process_path resp, path, pushstate = false
       file = manifest.find_by_path(path).first
       if file.is_a? ManifestDir
-        file = manifest.find_by_path(path+"/index.html").first
+        file = manifest.find_by_path(path + "/index.html").first
+        path += "/index.html"
       end
 
       resp.content_type MIME::Types.type_for(path).first

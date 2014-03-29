@@ -440,7 +440,7 @@ eos
   slinky_scripts
   slinky_styles
 %body
-  h1. index
+  %h1 index
 eos
       }
       run_for 3 do
@@ -456,7 +456,7 @@ eos
           rs = [multi.responses[:callback][:index], multi.responses[:callback][:base]]
           rs.compact.size.should == 2
           rs.each{|r|
-            r.response.include?("index").should == true
+            r.response.include?("<h1>index</h1>").should == true
           }
           multi.responses[:errback].size.should == 0
           EM.stop_event_loop
