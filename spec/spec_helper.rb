@@ -36,6 +36,24 @@ module Slinky
     end
   end
 
+  # Compressors don't work under FakeFS
+  class FakeCompressor
+    def compress s
+      s
+    end
+  end
+  
+  class Manifest
+    alias :old_compress :compress
+    def compress ext, output, compressor
+      if block_given?
+        old_compress ext, output, FakeCompressor.new, &Proc.new
+      else
+        old_compress ext, output, FakeCompressor.new
+      end
+    end
+  end
+  
   # No way to make this work with FakeFS, so just disabled it
   class Listener
     def run; end
