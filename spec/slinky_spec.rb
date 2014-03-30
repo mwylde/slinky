@@ -430,6 +430,14 @@ eos
       end
     end
 
+    it "should not crash for syntax errors" do
+      File.open("/src/bad_file.haml", "w+"){|f| f.write("%head{") }
+      mf = Slinky::ManifestFile.new("/src/bad_file.haml", nil, @mdevel)
+      $stderr.should_receive(:puts).with(/Failed on/)
+      @resp.should_receive(:status=).with(500)
+      Slinky::Server.handle_file @resp, mf
+    end
+
     it "should serve files for realz" do
       $stdout.should_receive(:puts).with(/Started static file server on port 43453/)
       @results = []

@@ -67,7 +67,7 @@ module Slinky
         if path = mf.process
           serve_file resp, path.to_s
         else
-          raise Exception.new
+          raise StandardError.new
         end
       rescue
         resp.status = 500
