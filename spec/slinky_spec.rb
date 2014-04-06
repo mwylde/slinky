@@ -175,6 +175,15 @@ describe "Slinky" do
       mf.matches?("test.sass").should == true
     end
 
+    it "should should properly determine if in tree" do
+      mf = Slinky::ManifestFile.new("/src/l1/l2/test.txt", "/src/build/l1/l2", @mprod)
+      mf.in_tree?("/l1").should == true
+      mf.in_tree?("/l1/l2").should == true
+      mf.in_tree?("/l1/l2/test.txt").should == true
+      mf.in_tree?("/l1/l3").should == false
+      mf.in_tree?("test.txt").should == false
+    end
+    
     it "should correctly build the dependency graph" do
       @mprod.build_dependency_graph.collect{|x| x.collect{|y| y.source}}.sort.should ==
         [["/src/l1/test2.js", "/src/l1/test.js"],
@@ -325,6 +334,64 @@ describe "Slinky" do
       css.include?("url('/l1/asdf.png')").should == true
       css.include?("url('/l1/bg.png')").should == true
       css.include?("url('/l1/l2/l3/hello.png')").should == true
+    end
+
+    it "should properly filter out ignores in files list" do
+      config = Slinky::ConfigReader.new("ignore:\n  - /l1/test2.js")
+      config.ignores.should == ["/l1/test2.js"]
+      mdevel = Slinky::Manifest.new("/src", config)
+      mfiles = mdevel.files(false).map{|x| x.source}.sort
+      files = (@files - ["l1/test2.js"]).map{|x| "/src/" + x}.sort
+      mfiles.should == files
+      # double check
+      mfiles.include?("/src/l1/test2.js").should == false
+    end
+
+    it "should properly filter out directory ignores in files list" do
+      config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2")
+      config.ignores.should == ["/l1/l2"]
+      mdevel = Slinky::Manifest.new("/src", config)
+      mfiles = mdevel.files(false).map{|x| x.source}.sort
+      files = (@files.reject{|x| x.start_with?("l1/l2")}).map{|x| "/src/" + x}.sort
+      mfiles.should == files
+    end
+    
+    it "should properly handle ignores for scripts" do
+      File.open("/src/l1/l2/ignore.js", "w+"){|f| f.write("IGNORE!!!")}
+      config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2/ignore.js")
+      config.ignores.should == ["/l1/l2/ignore.js"]
+
+      mdevel = Slinky::Manifest.new("/src", config)
+      mdevel.scripts_string.scan(/src=\"(.+?)\"/).flatten.
+        include?("/l1/l2/ignore.js").should == false
+
+      mprod = Slinky::Manifest.new("/src", config, :devel => false,
+                                   :build_to => "/build")
+
+      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times      
+      mprod.build
+
+      File.read("/build/scripts.js").include?("IGNORE!!!").should == false
+      File.exists?("/build/l1/l2/ignore.js").should == true
+    end
+
+    it "should properly handle ignores for styles" do
+      File.open("/src/l1/l2/ignore.css", "w+"){|f| f.write("IGNORE!!!")}
+      config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2/ignore.css")
+      config.ignores.should == ["/l1/l2/ignore.css"]
+
+      mdevel = Slinky::Manifest.new("/src", config)
+      mdevel.styles_string.scan(/href=\"(.+?)\"/).flatten.
+        include?("/l1/l2/ignore.css").should == false
+
+      mprod = Slinky::Manifest.new("/src", config, :devel => false,
+                                   :build_to => "/build")
+
+      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times      
+      mprod.build
+
+      File.read("/build/styles.css").include?("IGNORE!!!").should == false
+      File.exists?("/build/l1/l2/ignore.css").should == true
     end
   end
 

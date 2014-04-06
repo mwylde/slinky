@@ -86,7 +86,7 @@ module Slinky
 
     def scripts_string
       if @devel
-        dependency_list.reject{|x| x.output_path.extname != ".js"}.collect{|d|
+        dependency_list.reject{|x| x.output_path.extname != ".js" }.collect{|d|
           %Q\<script type="text/javascript" src="/#{d.relative_output_path}"></script>\
         }.join("")
       else
@@ -397,11 +397,10 @@ module Slinky
     # Predicate which determines whether the file is the supplied path
     # or lies on supplied tree
     def in_tree? path
-      return true if matches? path
-      abs_path = Pathname.new(path).expand_path.to_s
-      asdf = Pathname.new(@source).dirname.expand_path.to_s
-      # puts [abs_path, asdf, asdf.start_with?(abs_path), abs_path == asdf].inspect
-      asdf.start_with?(abs_path)
+      full_path = @manifest.dir + path
+      abs_path = Pathname.new(full_path).expand_path.to_s
+      dir = Pathname.new(@source).dirname.expand_path.to_s
+      dir.start_with?(abs_path) || full_path == @source
     end
 
     # Returns the path to which this file should be output. This is
@@ -418,6 +417,11 @@ module Slinky
       end
     end
 
+    # returns the source path relative to the manifest directory
+    def relative_source_path
+      Pathname.new(@source).relative_path_from Pathname.new(@manifest.dir)
+    end
+    
     # Returns the output path relative to the manifest directory
     def relative_output_path
       output_path.relative_path_from Pathname.new(@manifest.dir)
