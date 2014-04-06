@@ -22,4 +22,5 @@ group :development do
   gem "jeweler", "~> 1.8"
   gem "fakefs", '~> 0.5', :require => "fakefs/safe"
   gem "em-http-request", '~> 1.0'
+  gem 'simplecov'  
 end
