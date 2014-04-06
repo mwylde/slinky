@@ -338,7 +338,7 @@ describe "Slinky" do
 
     it "should properly filter out ignores in files list" do
       config = Slinky::ConfigReader.new("ignore:\n  - /l1/test2.js")
-      config.ignores.should == ["/l1/test2.js"]
+      config.ignore.should == ["/l1/test2.js"]
       mdevel = Slinky::Manifest.new("/src", config)
       mfiles = mdevel.files(false).map{|x| x.source}.sort
       files = (@files - ["l1/test2.js"]).map{|x| "/src/" + x}.sort
@@ -349,7 +349,7 @@ describe "Slinky" do
 
     it "should properly filter out relative ignores in files list" do
       config = Slinky::ConfigReader.new("ignore:\n  - l1/test2.js")
-      config.ignores.should == ["l1/test2.js"]
+      config.ignore.should == ["l1/test2.js"]
       mdevel = Slinky::Manifest.new("/src", config)
       mfiles = mdevel.files(false).map{|x| x.source}.sort
       files = (@files - ["l1/test2.js"]).map{|x| "/src/" + x}.sort
@@ -357,20 +357,20 @@ describe "Slinky" do
       # double check
       mfiles.include?("/src/l1/test2.js").should == false
     end
-    
+
     it "should properly filter out directory ignores in files list" do
       config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2")
-      config.ignores.should == ["/l1/l2"]
+      config.ignore.should == ["/l1/l2"]
       mdevel = Slinky::Manifest.new("/src", config)
       mfiles = mdevel.files(false).map{|x| x.source}.sort
       files = (@files.reject{|x| x.start_with?("l1/l2")}).map{|x| "/src/" + x}.sort
       mfiles.should == files
     end
-    
+
     it "should properly handle ignores for scripts" do
       File.open("/src/l1/l2/ignore.js", "w+"){|f| f.write("IGNORE!!!")}
       config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2/ignore.js")
-      config.ignores.should == ["/l1/l2/ignore.js"]
+      config.ignore.should == ["/l1/l2/ignore.js"]
 
       mdevel = Slinky::Manifest.new("/src", config)
       mdevel.scripts_string.scan(/src=\"(.+?)\"/).flatten.
@@ -389,7 +389,7 @@ describe "Slinky" do
     it "should properly handle ignores for styles" do
       File.open("/src/l1/l2/ignore.css", "w+"){|f| f.write("IGNORE!!!")}
       config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2/ignore.css")
-      config.ignores.should == ["/l1/l2/ignore.css"]
+      config.ignore.should == ["/l1/l2/ignore.css"]
 
       mdevel = Slinky::Manifest.new("/src", config)
       mdevel.styles_string.scan(/href=\"(.+?)\"/).flatten.
@@ -599,14 +599,14 @@ eos
 
     it "should be able to read configuration from strings" do
       cr = Slinky::ConfigReader.new(@config)
-      cr.proxies.should == @proxies
-      cr.ignores.should == @ignores
+      cr.proxy.should == @proxies
+      cr.ignore.should == @ignores
     end
 
     it "should be able to read configuration from files" do
       cr = Slinky::ConfigReader.from_file("/src/slinky.yaml")
-      cr.proxies.should == @proxies
-      cr.ignores.should == @ignores
+      cr.proxy.should == @proxies
+      cr.ignore.should == @ignores
       cr.port.should == 5555
       cr.src_dir.should == "src/"
       cr.build_dir.should == "build/"
@@ -614,12 +614,21 @@ eos
       cr.no_livereload.should == true
       cr.livereload_port.should == 5556
       cr.dont_minify.should == true
-      cr.pushstates.should == @pushstates
+      cr.pushstate.should == @pushstates
     end
 
     it "should be able to create the empty config" do
-      Slinky::ConfigReader.empty.proxies.should == {}
-      Slinky::ConfigReader.empty.ignores.should == []
+      Slinky::ConfigReader.empty.proxy.should == {}
+      Slinky::ConfigReader.empty.ignore.should == []
+    end
+
+    it "should error on invalid configuration" do
+      config = <<eos
+invalid:
+  -script/vendor
+eos
+      proc { Slinky::ConfigReader.new(config) }
+        .should raise_error Slinky::InvalidConfigError
     end
   end
 
@@ -631,7 +640,7 @@ proxy:
   "/test2/": "http://127.0.0.1:7000"
 eos
       @cr = Slinky::ConfigReader.new(@config)
-      @proxies = Slinky::ProxyServer.process_proxies(@cr.proxies)
+      @proxies = Slinky::ProxyServer.process_proxies(@cr.proxy)
       @data = <<eos
 GET /test1/something/and?q=asdf&c=E9oBiwFqZmoJam9uYXNmdXAyclkLEj0KABoMQ29ja3RhaWxJbXBsIzAFchIaA2Z0cyAAKgkaB3doaXNrZXkkS1IPd2VpZ2h0ZWRBdmFyYWdlWAJMDAsSDENvY2t0YWlsSW1wbCIGNDYtODE3DHIeGg93ZWlnaHRlZEF2YXJhZ2UgACoJIQAAAAAAAAAAggEA4AEAFA HTTP/1.1\r\nHost: 127.0.0.1:8888\nConnection: keep-alive\r\nX-Requested-With: XMLHttpRequest\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.904.0 Safari/535.7\r\nAccept: */*\r\nReferer: http://localhost:5323/\r\nAccept-Encoding: gzip,deflate,sdch\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\nCookie: mp_super_properties=%7B%22all%22%3A%20%7B%22%24initial_referrer%22%3A%20%22http%3A//localhost%3A5323/%22%2C%22%24initial_referring_domain%22%3A%20%22localhost%3A5323%22%7D%2C%22events%22%3A%20%7B%7D%2C%22funnels%22%3A%20%7B%7D%7D\r\n\r\n
 eos
@@ -691,7 +700,7 @@ proxy:
     lag: 1000
 eos
       @cr = Slinky::ConfigReader.new(@config)
-      @proxies = Slinky::ProxyServer.process_proxies(@cr.proxies)
+      @proxies = Slinky::ProxyServer.process_proxies(@cr.proxy)
 
       @proxies[0][0].should == "/test3"
       @proxies[0][1].to_s.should == "http://127.0.0.1:6000"

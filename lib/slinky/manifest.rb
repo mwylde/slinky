@@ -50,7 +50,7 @@ module Slinky
       if include_ignores
         @files
       else
-        @files.reject{|f| @config.ignores.any?{|p| f.in_tree? p}}
+        @files.reject{|f| @config.ignore.any?{|p| f.in_tree? p}}
       end
     end
 

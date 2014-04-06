@@ -19,11 +19,18 @@ module Slinky
       @arguments = @argv
 
       config_path = @options[:config] || "#{@options[:src_dir] || "."}/slinky.yaml"
-      @config = if File.exist?(config_path) 
-                  ConfigReader.from_file(config_path)
-                else
-                  ConfigReader.empty
-                end
+      begin
+        @config = if File.exist?(config_path) 
+                    ConfigReader.from_file(config_path)
+                  else
+                    ConfigReader.empty
+                  end
+      rescue InvalidConfigError => e
+        $stderr.puts("The configuration file at #{config_path} is invalid:".foreground(:red))
+        $stderr.puts(e.message.foreground(:red))
+        exit(1)
+      end
+        
     end
 
     def version
@@ -72,9 +79,9 @@ module Slinky
         port = @options[:port] || @config.port
 
         should_proxy = !(@config.no_proxy || @options[:no_proxy])
-        if !@config.proxies.empty? && should_proxy
+        if !@config.proxy.empty? && should_proxy
           server = EM::start_server "127.0.0.1", port+1, Slinky::Server
-          ProxyServer.run(@config.proxies, port, port+1)
+          ProxyServer.run(@config.proxy, port, port+1)
         else
           EM::start_server "127.0.0.1", port, Slinky::Server
         end
