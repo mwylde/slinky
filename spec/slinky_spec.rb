@@ -347,6 +347,17 @@ describe "Slinky" do
       mfiles.include?("/src/l1/test2.js").should == false
     end
 
+    it "should properly filter out relative ignores in files list" do
+      config = Slinky::ConfigReader.new("ignore:\n  - l1/test2.js")
+      config.ignores.should == ["l1/test2.js"]
+      mdevel = Slinky::Manifest.new("/src", config)
+      mfiles = mdevel.files(false).map{|x| x.source}.sort
+      files = (@files - ["l1/test2.js"]).map{|x| "/src/" + x}.sort
+      mfiles.should == files
+      # double check
+      mfiles.include?("/src/l1/test2.js").should == false
+    end
+    
     it "should properly filter out directory ignores in files list" do
       config = Slinky::ConfigReader.new("ignore:\n  - /l1/l2")
       config.ignores.should == ["/l1/l2"]

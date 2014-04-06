@@ -397,10 +397,10 @@ module Slinky
     # Predicate which determines whether the file is the supplied path
     # or lies on supplied tree
     def in_tree? path
-      full_path = @manifest.dir + path
+      full_path = @manifest.dir + "/" + path
       abs_path = Pathname.new(full_path).expand_path.to_s
       dir = Pathname.new(@source).dirname.expand_path.to_s
-      dir.start_with?(abs_path) || full_path == @source
+      dir.start_with?(abs_path) || abs_path == @source
     end
 
     # Returns the path to which this file should be output. This is
