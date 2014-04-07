@@ -88,7 +88,7 @@ module Slinky
       if @devel
         dependency_list.reject{|x| x.output_path.extname != ".js" }.collect{|d|
           %Q\<script type="text/javascript" src="/#{d.relative_output_path}"></script>\
-        }.join("")
+        }.join("\n")
       else
         %Q\<script type="text/javascript" src="/scripts.js?#{rand(999999999)}"></script>\
       end
@@ -134,7 +134,7 @@ module Slinky
       if @devel
         dependency_list.reject{|x| x.output_path.extname != ".css"}.collect{|d|
           %Q\<link rel="stylesheet" href="/#{d.relative_output_path}" />\
-        }.join("")
+        }.join("\n")
       else
         %Q\<link rel="stylesheet" href="/styles.css?#{rand(999999999)}" />\
       end
