@@ -22,16 +22,16 @@ module EventMachine
     EM.attach rd, Popen3StderrHandler, connection
     connection
   end
-  
+
   class Popen3StderrHandler < EventMachine::Connection
     def initialize(connection)
       @connection = connection
     end
-    
+
     def receive_data(data)
       @connection.receive_stderr(data)
     end
-  end  
+  end
 end
 
 class ProcessHandler < EventMachine::Connection  
@@ -48,7 +48,7 @@ class ProcessHandler < EventMachine::Connection
   def receive_stderr data 
     @stderr << data
   end
-  
+
   def unbind
     @cb.call @stdout.join(''), @stderr.join(''), get_status if @cb
   end

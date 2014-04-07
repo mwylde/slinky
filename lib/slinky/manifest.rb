@@ -22,7 +22,7 @@ module Slinky
   # Raised when there is a cycle in the dependency graph (i.e., file A
   # requires file B which requires C which requires A)
   class DependencyError < StandardError; end
-  
+
   class Manifest
     attr_accessor :manifest_dir, :dir
 
@@ -113,7 +113,7 @@ module Slinky
         scripts.collect{|s| FileUtils.rm(s.build_to)}
       end
     end
-    
+
     def compress_scripts
       compressor = YUI::JavaScriptCompressor.new(:munge => false)
       compress(".js", "#{@build_to}/scripts.js", compressor)
@@ -305,7 +305,7 @@ module Slinky
         md
       end
     end
-    
+
     # Adds a file on the filesystem to the manifest
     #
     # @param String path The path of the file
@@ -325,7 +325,7 @@ module Slinky
     def remove_file mf
       @files.delete(mf)
     end
-    
+
     def build
       unless File.directory?(@build_dir.to_s)
         FileUtils.mkdir(@build_dir.to_s)
@@ -421,7 +421,7 @@ module Slinky
     def relative_source_path
       Pathname.new(@source).relative_path_from Pathname.new(@manifest.dir)
     end
-    
+
     # Returns the output path relative to the manifest directory
     def relative_output_path
       output_path.relative_path_from Pathname.new(@manifest.dir)

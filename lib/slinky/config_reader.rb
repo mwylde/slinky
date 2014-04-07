@@ -24,7 +24,7 @@ module Slinky
       ConfigEntry.new("ignore", ARRAY_TYPE, []),
       ConfigEntry.new("port", NUMBER_TYPE, 5323),
       ConfigEntry.new("src_dir", STRING_TYPE, "."),
-      ConfigEntry.new("build_dir", STRING_TYPE, "."),      
+      ConfigEntry.new("build_dir", STRING_TYPE, "."),
       ConfigEntry.new("no_proxy", BOOL_TYPE, false),
       ConfigEntry.new("no_livereload", BOOL_TYPE, false),
       ConfigEntry.new("livereload_port", NUMBER_TYPE, 35729),

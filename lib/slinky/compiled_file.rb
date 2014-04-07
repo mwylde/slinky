@@ -4,7 +4,7 @@ module Slinky
   class CompiledFile
     attr_accessor :source, :print_name, :output_path
     attr_reader :last_compiled, :output_ext
-    
+
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
     def initialize source, compiler, output_ext
@@ -36,7 +36,7 @@ module Slinky
         out = File.open @source do |f|
           @compiler.compile f.read, @source
         end
-        
+
         compile_succeeded
         File.open(path, "w+") do |f|
           f.write out

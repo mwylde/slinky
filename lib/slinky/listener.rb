@@ -26,7 +26,7 @@ module Slinky
           @livereload.reload_browser(files)
         } if @livereload
 
-        handle_rem(rem) if rem.size > 0        
+        handle_rem(rem) if rem.size > 0
       end
       listener.start
       listener
@@ -34,7 +34,7 @@ module Slinky
 
     def handle_mod files
     end
-    
+
     def handle_add files
       EM.next_tick {
         begin

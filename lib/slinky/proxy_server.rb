@@ -2,7 +2,7 @@ module Slinky
   module ProxyServer
     HTTP_MATCHER = /(GET|POST|PUT|DELETE|HEAD) (.+?)(?= HTTP)/
     HOST_MATCHER = /Host: (.+)/
-    
+
     def self.process_proxies proxy_hash
       proxy_hash.map{|from, h|
         begin
@@ -23,7 +23,7 @@ module Slinky
     end
 
     def self.rewrite_path path, proxy
-      path.gsub(/^#{proxy[0]}/, "")      
+      path.gsub(/^#{proxy[0]}/, "")
     end
 
     def self.replace_path http, old_path, new_path, addition

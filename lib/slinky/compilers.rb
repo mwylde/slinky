@@ -2,7 +2,7 @@ require 'set'
 
 module Slinky
   EXTENSION_REGEX = /(.+)\.(\w+)/
-  
+
   class Compilers
     @compilers = []
     @compilers_by_ext = {}
@@ -50,7 +50,7 @@ module Slinky
           end
         }
       end
-      
+
       # Produces a CompiledFile for an input file if the file needs to
       # be compiled, or nil otherwise. Note that path is the path of
       # the compiled file, so script.js not script.coffee.

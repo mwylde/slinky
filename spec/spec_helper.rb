@@ -105,7 +105,7 @@ module Slinky
       s
     end
   end
-  
+
   class Manifest
     alias :old_compress :compress
     def compress ext, output, compressor
@@ -116,7 +116,7 @@ module Slinky
       end
     end
   end
-  
+
   # No way to make this work with FakeFS, so just disabled it
   class Listener
     def run; end

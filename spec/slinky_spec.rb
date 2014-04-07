@@ -23,7 +23,7 @@ describe "Slinky" do
       @md_prod = @mprod.manifest_dir
       @md_devel = @mdevel.manifest_dir
     end
-    
+
     it "should build manifest dir with all files in current dir" do
       @md_prod.files.collect{|f| f.source}.should == ["/src/test.haml"]
       @md_devel.files.collect{|f| f.source}.should == ["/src/test.haml"]
@@ -183,7 +183,7 @@ describe "Slinky" do
       mf.in_tree?("/l1/l3").should == false
       mf.in_tree?("test.txt").should == false
     end
-    
+
     it "should correctly build the dependency graph" do
       @mprod.build_dependency_graph.collect{|x| x.collect{|y| y.source}}.sort.should ==
         [["/src/l1/test2.js", "/src/l1/test.js"],
@@ -255,7 +255,7 @@ describe "Slinky" do
       f.process
       File.open("/src/l1/cache.coffee", "a"){|f| f.write("() -> 'goodbye, world!'\n")}
       $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/cache.coffee/)
-      f.process      
+      f.process
     end
 
     it "should handle new directives" do
@@ -289,18 +289,18 @@ describe "Slinky" do
       f = manifest.find_by_path("l1/cache.coffee").first
       f.should_not == nil
       manifest.scripts_string.match("l1/cache.js").should_not == nil
-      
+
       FileUtils.rm("/src/l1/cache.coffee")
       File.exists?("/src/l1/cache.coffee").should == false
       manifest.remove_all_by_path(["/src/l1/cache.coffee"])
       f = manifest.find_by_path("l1/cache.coffee").first
       f.should == nil
-      manifest.scripts_string.match("l1/cache.js").should == nil      
+      manifest.scripts_string.match("l1/cache.js").should == nil
     end
 
     it "should ignore the build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(6).times
-      options = {:src_dir => "/src", :build_dir => "/src/build"}      
+      options = {:src_dir => "/src", :build_dir => "/src/build"}
       Slinky::Builder.build(options, @config)
       File.exists?("/src/build/build").should_not == true
       File.exists?("/src/build/test.html").should == true
@@ -411,7 +411,7 @@ describe "Slinky" do
       @resp = double("EventMachine::DelegatedHttpResponse")
       @resp.stub(:content=){|c| @content = c}
       @resp.stub(:content){ @content }
-      @mdevel = Slinky::Manifest.new("/src", @config)      
+      @mdevel = Slinky::Manifest.new("/src", @config)
     end
 
     it "path_for_uri should work correctly" do
@@ -459,8 +459,8 @@ describe "Slinky" do
 pushstate:
   "/": "/test.html"
 eos
-      File.open("/src/slinky.yaml", "w+"){|f| f.write config}      
-      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml") 
+      File.open("/src/slinky.yaml", "w+"){|f| f.write config}
+      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml")
       Slinky::Server.config = cr
       Slinky::Server.manifest = @mdevel
       $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
@@ -474,12 +474,12 @@ eos
 pushstate:
   "/": "/notreal.html"
 eos
-      File.open("/src/slinky.yaml", "w+"){|f| f.write config}      
-      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml") 
+      File.open("/src/slinky.yaml", "w+"){|f| f.write config}
+      cr = Slinky::ConfigReader.from_file("/src/slinky.yaml")
       Slinky::Server.config = cr
       Slinky::Server.manifest = @mdevel
       @resp.should_receive(:status=).with(404)
-      @resp.should_receive(:content_type).with("text/html").at_least(:once)      
+      @resp.should_receive(:content_type).with("text/html").at_least(:once)
       Slinky::Server.process_path @resp, "this/doesnt/exist.html"
     end
 
@@ -534,7 +534,7 @@ eos
         base = "http://localhost:43453"
         multi = EventMachine::MultiRequest.new
         $stdout.should_receive(:puts).with(/Compiled \/src\/index.haml/)
-        
+
         # add multiple requests to the multi-handler
         multi.add(:index, EventMachine::HttpRequest.new("#{base}/index.html").get)
         multi.add(:base, EventMachine::HttpRequest.new(base).get)
@@ -658,16 +658,16 @@ eos
       Slinky::ProxyServer.process_proxy_servers(@proxies).should ==
         [["127.0.0.1", 8000], ["127.0.0.1", 7000]]
     end
-    
+
     it "should find the correct matcher for a request" do
       p = Slinky::ProxyServer.find_matcher(@proxies, "/test1/this/is/another")
       p[0].should == "/test1"
       p[1].to_s.should == "http://127.0.0.1:8000"
-      
+
       p = Slinky::ProxyServer.find_matcher(@proxies, "/test2/whatsgoing.html?something=asdf")
       p[0].should == "/test2/"
       p[1].to_s.should == "http://127.0.0.1:7000"
-      
+
       Slinky::ProxyServer.find_matcher(@proxies, "/asdf/test1/asdf").should == nil
       Slinky::ProxyServer.find_matcher(@proxies, "/test2x/asdf").should == nil
     end
@@ -706,6 +706,5 @@ eos
       @proxies[0][1].to_s.should == "http://127.0.0.1:6000"
       @proxies[0][2].should == {"lag" => 1000}
     end
-    
   end
 end
