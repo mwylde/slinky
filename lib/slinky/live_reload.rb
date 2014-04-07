@@ -17,7 +17,6 @@ module Slinky
                                     EventMachine::WebSocket::Connection, {}) do |ws|
             ws.onopen do
               begin
-                $stdout.puts "Browser connected to livereload server"
                 ws.send "!!ver:1.6"
                 @websockets << ws
               rescue
@@ -27,7 +26,6 @@ module Slinky
 
             ws.onclose do
               @websockets.delete ws
-              $stdout.puts "Browser disconnected"
             end
           end
           $stdout.puts "Started live-reload server on port #{@port}"

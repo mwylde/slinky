@@ -38,6 +38,12 @@ describe "Slinky" do
       }.sort.should == @files.collect{|x| "/src/" + x}.sort
     end
 
+    it "should not include dot files" do
+      File.open("/src/.index.haml.swp", "w+"){|f| f.write("x")}
+      manifest = Slinky::Manifest.new("/src", @config)
+      manifest.files.map{|x| x.source}.include?("/src/.index.haml.swp").should == false
+    end
+
     it "should find files in the manifest by path" do
       @mdevel.find_by_path("test.haml").first.source.should == "/src/test.haml"
       @mdevel.find_by_path("asdf.haml").first.should == nil

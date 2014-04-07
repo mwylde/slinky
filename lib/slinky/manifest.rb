@@ -312,7 +312,7 @@ module Slinky
     def add_file path
       file = File.basename(path)
       full_path = [@dir, file].join(File::SEPARATOR)
-      if File.exists? full_path
+      if File.exists?(full_path) && !file.start_with?(".")
         mf = ManifestFile.new(full_path, @build_dir, @manifest, self)
         @files << mf
         mf
