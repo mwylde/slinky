@@ -444,7 +444,7 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/src/l1/test.sass", nil, @mdevel)
       $stdout.should_receive(:puts).with("Compiled /src/l1/test.sass".foreground(:green))
       Slinky::Server.handle_file @resp, mf
-      @resp.content.should == Slinky::SassCompiler::compile(File.read("/src/l1/test.sass"), "")
+      @resp.content.should == Slinky::SassCompiler::compile(File.read("/src/l1/test.sass"), "/src/l1/test.sass")
     end
 
     it "should handle non-existant files" do

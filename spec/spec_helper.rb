@@ -133,9 +133,11 @@ end
 RSpec.configure do |config|
   config.before :all do
     FakeFS.activate!
+    FileUtils.rm_rf("/tmp") rescue nil
     FileUtils.mkdir("/tmp")
     @config = Slinky::ConfigReader.empty
   end
+
   config.before :each do
     FakeFS.activate!
     FileUtils.rm_rf("/src") rescue nil
@@ -214,4 +216,3 @@ def run_for secs
     }
   end
 end
-
