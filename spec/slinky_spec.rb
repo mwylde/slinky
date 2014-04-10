@@ -44,6 +44,15 @@ describe "Slinky" do
       manifest.files.map{|x| x.source}.include?("/src/.index.haml.swp").should == false
     end
 
+    it "should be able to compute a hash for the entire manifest" do
+      m = @mdevel
+      hash1 = m.md5
+      File.open("/src/hello.html", "w+") {|f| f.write("Hell!") }
+      $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green)).exactly(2).times
+      m.add_all_by_path(["/src/hello.html"])
+      m.md5.should_not == hash1
+    end
+
     it "should find files in the manifest by path" do
       @mdevel.find_by_path("test.haml").first.source.should == "/src/test.haml"
       @mdevel.find_by_path("asdf.haml").first.should == nil

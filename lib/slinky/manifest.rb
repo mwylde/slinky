@@ -62,14 +62,23 @@ module Slinky
       end
     end
 
+    # Notifies of an update to a file in the manifest
+    def update_all_by_path paths
+      manifest_update paths do |path|
+        md = find_by_path(File.dirname(path)).first
+        if mf = find_by_path(path).first
+          mf.parent.remove_file(mf)
+        end
+        md.add_file(File.basename(path))
+      end
+    end
+
     # Removes a file from the manifest
     def remove_all_by_path paths
       manifest_update paths do |path|
         mf = find_by_path(path).first()
-        begin
+        if mf
           mf.parent.remove_file(mf)
-        rescue
-          puts "Failed to remove <#{path}>"
         end
       end
     end
@@ -202,6 +211,18 @@ module Slinky
       end
     end
 
+    # Returns a md5 encompassing the current state of the manifest.
+    # Any change to the manifest should produce a different hash.
+    # This can be used to determine if the manifest has changed.
+    def md5
+      if @md5
+        @md5
+      else
+        @md5 = Digest::MD5.hexdigest(files.map{|f| [f.source, f.md5]}
+                                      .sort.flatten.join(":"))
+      end
+    end
+
     private
     def files_rec md
       @files += md.files
@@ -213,6 +234,7 @@ module Slinky
     def invalidate_cache
       @files = nil
       @dependency_graph = nil
+      @md5 = nil
     end
 
     def manifest_update paths
@@ -311,9 +333,14 @@ module Slinky
     # @param String path The path of the file
     def add_file path
       file = File.basename(path)
-      full_path = [@dir, file].join(File::SEPARATOR)
+      full_path = Pathname.new(@dir).join(file).to_s
       if File.exists?(full_path) && !file.start_with?(".")
         mf = ManifestFile.new(full_path, @build_dir, @manifest, self)
+        # we don't want two files with the same source
+        extant_file = @files.find{|f| f.source == mf.source}
+        if extant_file
+          @files.delete(extant_file)
+        end
         @files << mf
         mf
       end
