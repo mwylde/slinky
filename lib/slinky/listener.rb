@@ -39,15 +39,27 @@ module Slinky
     end
 
     def handle_mod files
-      @manifest.update_all_by_path files rescue nil
+      begin
+        @manifest.update_all_by_path files
+      rescue
+        puts "Unable to update file: #{$!}"
+      end
     end
 
     def handle_add files
-      @manifest.add_all_by_path files rescue nil
+      begin
+        @manifest.add_all_by_path files
+      rescue
+        puts "Unable to add file: #{$!}"
+      end
     end
 
     def handle_rem files
-      @manifest.remove_all_by_path files rescue nil
+      begin
+        @manifest.remove_all_by_path files
+      rescue
+        puts "Unable to remove file: #{$1}"
+      end
     end
   end
 end

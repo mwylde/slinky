@@ -64,13 +64,7 @@ module Slinky
 
     # Notifies of an update to a file in the manifest
     def update_all_by_path paths
-      manifest_update paths do |path|
-        md = find_by_path(File.dirname(path)).first
-        if mf = find_by_path(path).first
-          mf.parent.remove_file(mf)
-        end
-        md.add_file(File.basename(path))
-      end
+      manifest_update paths
     end
 
     # Removes a file from the manifest
@@ -242,7 +236,7 @@ module Slinky
         if path[0] == '/'
           path = Pathname.new(path).relative_path_from(Pathname.new(@dir).expand_path).to_s
         end
-        yield path
+        yield path if block_given?
       }
       invalidate_cache
       files.each{|f|
