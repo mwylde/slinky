@@ -1,6 +1,7 @@
 source "http://rubygems.org"
 
 # main gems
+gem 'multi_json', '~> 1.9.2'
 gem "eventmachine", "~> 1.0"
 gem "eventmachine_httpserver", "~> 0.2"
 gem "em-websocket", "~> 0.3"
