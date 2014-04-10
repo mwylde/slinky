@@ -39,15 +39,15 @@ module Slinky
     end
 
     def handle_mod files
-      @manifest.update_all_by_path files
+      @manifest.update_all_by_path files rescue nil
     end
 
     def handle_add files
-      @manifest.add_all_by_path files
+      @manifest.add_all_by_path files rescue nil
     end
 
     def handle_rem files
-      @manifest.remove_all_by_path files
+      @manifest.remove_all_by_path files rescue nil
     end
   end
 end
