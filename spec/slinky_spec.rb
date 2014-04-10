@@ -434,6 +434,17 @@ describe "Slinky" do
       File.read("/build/styles.css").include?("IGNORE!!!").should == false
       File.exists?("/build/l1/l2/ignore.css").should == true
     end
+
+    it "should allow specification of products" do
+      config = <<eos
+products:
+  "/scripts.js":
+    inputs:
+      - "/l1/l2/*.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+      config.products.should == {"/scripts.js" => {"inputs" => ["/l1/l2/*.js"]}}
+    end
   end
 
   context "Server" do
@@ -622,6 +633,13 @@ dont_minify: true
 pushstate:
   "/app1": "/index.html"
   "/app2": "/index2.html"
+products:
+  "/scripts.js":
+    inputs:
+      - "**/src/*.js"
+  "/tests.js":
+    inputs:
+      - "**/test/*.js "
 eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write @config}
       @proxies = {
