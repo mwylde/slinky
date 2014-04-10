@@ -526,7 +526,7 @@ module Slinky
     # @param String path to which the file should be compiled
     #
     # @return String the path of the processed file, ready for serving
-    def process to = nil
+    def process to = nil, should_compile = true
       return if @processing # prevent infinite recursion
       start_time = Time.now
       hash = md5
@@ -553,7 +553,8 @@ module Slinky
         @last_md5 = hash
         @updated = Time.now
         # mangle file appropriately
-        @last_path = handle_directives((compile @source), to)
+        f = should_compile ? (compile @source) : @source
+        @last_path = handle_directives(f, to)
       end
     end
 

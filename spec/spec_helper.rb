@@ -176,6 +176,7 @@ eos
       f.write <<eos
 slinky_require('test2.js')
 slinky_require("l2/test3.js")
+console.log("Hello!");
 eos
     }
 

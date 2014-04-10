@@ -117,6 +117,14 @@ describe "Slinky" do
       File.read(path).match(/slinky_scripts|slinky_styles/).should == nil
     end
 
+    it "should build tmp file without directives for .js" do
+      original = "/src/l1/test.js"
+      mf = Slinky::ManifestFile.new("/src/l1/test.js", "/src/build", @mprod)
+      path = mf.handle_directives mf.source
+      File.read(original).match(/slinky_require/).should_not == nil
+      File.read(path).match(/slinky_require/).should == nil
+    end
+
     it "should compile files that need it" do
       $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
@@ -460,6 +468,14 @@ describe "Slinky" do
       mf = Slinky::ManifestFile.new("/src/l1/l2/test.txt", nil, @mdevel)
       Slinky::Server.handle_file @resp, mf
       @resp.content.should == File.read("/src/l1/l2/test.txt")
+    end
+
+    it "should serve the processed version of static files" do
+      Slinky::Server.manifest = @mdevel
+      @resp.should_receive(:content_type).with("application/javascript").at_least(:once)
+      Slinky::Server.process_path @resp, "/l1/test.js"
+      File.read("/src/l1/test.js").match("slinky_require").should_not == nil
+      @resp.content.match("slinky_require").should == nil
     end
 
     it "should handle compiled files" do

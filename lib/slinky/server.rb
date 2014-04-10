@@ -42,16 +42,13 @@ module Slinky
         path += "/index.html"
       end
 
-      resp.content_type MIME::Types.type_for(path).first
+      resp.content_type MIME::Types.type_for(path).first.to_s
 
       if file
-        if file.source.end_with?(path)
-          # They're requesting the source file and we should just
-          # return it
-          serve_file(resp, file.source)
-        else
-          handle_file(resp, file)
-        end
+        # They're requesting the source file and we should not
+        # compile it (but still process directives)
+        compile = !(file.source.end_with?(path) && file.source)
+        handle_file(resp, file, compile)
       elsif !pushstate && p = config.pushstate_for_path("/" + path)
         path = p[0] == "/" ? p[1..-1] : p
         self.process_path(resp, path, true)
@@ -62,9 +59,9 @@ module Slinky
     end
 
     # Takes a manifest file and produces a response for it
-    def self.handle_file resp, mf
+    def self.handle_file resp, mf, compile = true
       begin
-        if path = mf.process
+        if path = mf.process(nil, compile)
           serve_file resp, path.to_s
         else
           raise StandardError.new
