@@ -3,8 +3,8 @@ module Slinky
     Compilers.register_compiler self,
                                 :inputs => ["jsx"],
                                 :outputs => ["js"],
-                                :dependencies => [["react-jsx", "~> 0.8.0"]]
-    require 'react/jsx'
+                                :dependencies => [["react-jsx", "~> 0.8.0"]],
+                                :requires => ["react/jsx"]
 
     def JSXCompiler::compile s, file
       React::JSX.compile(s)

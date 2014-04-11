@@ -34,7 +34,7 @@ module Slinky
       end
 
       def has_dependencies compiler, ext
-        (compiler[:dependencies] || []).all? {|d|
+        ds = (compiler[:dependencies] || []).all? {|d|
           if @checked_dependencies.include?(d)
             true
           else
@@ -48,6 +48,10 @@ module Slinky
             end
           end
         }
+        (compiler[:requires] || []).each {|d|
+          require d
+        }
+        ds
       end
 
       # Produces a CompiledFile for an input file if the file needs to

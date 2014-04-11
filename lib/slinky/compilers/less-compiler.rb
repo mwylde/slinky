@@ -3,8 +3,8 @@ module Slinky
     Compilers.register_compiler self,
                                 :inputs => ["less"],
                                 :outputs => ["css"],
-                                :dependencies => [["less", ">= 2.2.0"]]
-    require 'less'
+                                :dependencies => [["less", ">= 2.2.0"]],
+                                :requires => ["less"]
 
     def LessCompiler::compile s, file
       parser = Less::Parser.new

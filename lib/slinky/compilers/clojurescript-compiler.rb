@@ -3,10 +3,8 @@ module Slinky
     Compilers.register_compiler self,
                                 :inputs => ["cljs"],
                                 :outputs => ["js"],
-                                :dependencies => [["clementine", "~> 0.0.3"]]
-
-    require 'clementine'
-    
+                                :dependencies => [["clementine", "~> 0.0.3"]],
+                                :requires => ["clementine"]
     def ClojureScriptCompiler::compile s, file
       # Clementine.options[:pretty_print] = true
       # Clementine.options[:optimizations] = :none

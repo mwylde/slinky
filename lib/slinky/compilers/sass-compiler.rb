@@ -1,11 +1,10 @@
 module Slinky
   module SassCompiler
     Compilers.register_compiler self,
-      :inputs => ["sass", "scss"],
-      :outputs => ["css"],
-      :dependencies => [["sass", ">= 3.1.1"]]
-
-    require 'sass'
+                                :inputs => ["sass", "scss"],
+                                :outputs => ["css"],
+                                :dependencies => [["sass", ">= 3.1.1"]],
+                                :requires => ["sass"]
 
     def SassCompiler::compile s, file
       syntax = file.end_with?(".sass") ? :sass : :scss
