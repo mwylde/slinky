@@ -5,6 +5,8 @@ module Slinky
       :outputs => ["css"],
       :dependencies => [["sass", ">= 3.1.1"]]
 
+    require 'sass'
+
     def SassCompiler::compile s, file
       syntax = file.end_with?(".sass") ? :sass : :scss
       sass_engine = Sass::Engine.new(s,

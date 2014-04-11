@@ -90,4 +90,19 @@ eos
       }
     end
   end
+
+  context "JSXCompiler" do
+    it "should be able to compile .jsx files" do
+      src = <<-EOF
+  /** @jsx React.DOM */
+  React.renderComponent(
+    <h1>Hello, world!</h1>,
+    document.getElementById('example')
+  );
+EOF
+      compiler_test("/compilers/test.jsx", ".js", src){|s|
+        s.include?("Hello, world!")
+      }
+    end
+  end
 end

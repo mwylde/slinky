@@ -86,6 +86,19 @@ module Slinky
     end
   end
 
+  # The JSX compiler doesn't work under FakeFS
+  module JSXCompiler
+    class << self
+      alias :old_compile :compile
+      def JSXCompiler::compile s, file
+        FakeFS.deactivate!
+        o = old_compile(s, file)
+        FakeFS.activate!
+        o
+      end
+    end
+  end
+
   # This is necessary because require doesn't work with FakeFS
   class Compilers
     class << self

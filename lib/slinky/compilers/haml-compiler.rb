@@ -1,9 +1,11 @@
 module Slinky
   module HamlCompiler
     Compilers.register_compiler self,
-      :inputs => ["haml"],
-      :outputs => ["html"],
-      :dependencies => [["haml", "~> 3.1.0"]]
+                                :inputs => ["haml"],
+                                :outputs => ["html"],
+                                :dependencies => [["haml", "~> 3.1.0"]]
+
+    require 'haml'
 
     def HamlCompiler::compile s, file
       haml_engine = Haml::Engine.new(s)

@@ -40,7 +40,6 @@ module Slinky
           else
             begin
               gem(d[0], d[1])
-              require d[0]
               @checked_dependencies.add(d)
               true
             rescue Gem::LoadError

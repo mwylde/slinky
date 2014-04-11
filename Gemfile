@@ -27,4 +27,5 @@ group :development do
   # optional compilation gems
   gem "less", ">= 2.2.0"
   gem "therubyracer" # for less
+  gem "react-jsx", '~> 0.8.0'
 end
