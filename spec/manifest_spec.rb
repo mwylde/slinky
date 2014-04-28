@@ -214,7 +214,7 @@ describe "Manifest" do
     end
 
     it "should correctly build the dependency graph" do
-      @mprod.build_dependency_graph.collect{|x| x.collect{|y| y.source}}.sort.should ==
+      @mprod.dependency_graph.collect{|x| x.collect{|y| y.source}}.sort.should ==
         [["/src/l1/test2.js", "/src/l1/test.js"],
          ["/src/l1/l2/test3.coffee", "/src/l1/test.js"],
          ["/src/l1/test5.js", "/src/l1/test2.js"],
@@ -226,7 +226,7 @@ describe "Manifest" do
       manifest = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
       $stderr.should_receive(:puts).with("Could not find file test2.js required by /src/l1/test.js".foreground(:red))
       proc {
-        manifest.build_dependency_graph
+        manifest.dependency_graph
       }.should raise_error Slinky::FileNotFoundError
     end
 

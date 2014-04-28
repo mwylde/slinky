@@ -202,12 +202,12 @@ dont_minify: true
 pushstate:
   "/app1": "/index.html"
   "/app2": "/index2.html"
-products:
+produce:
   "/scripts.js":
-    inputs:
+    include:
       - "**/src/*.js"
   "/tests.js":
-    inputs:
+    include:
       - "**/test/*.js "
 eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write @config}
