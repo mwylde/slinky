@@ -30,7 +30,7 @@ module Slinky
       ConfigEntry.new("livereload_port", NUMBER_TYPE, 35729),
       ConfigEntry.new("dont_minify", BOOL_TYPE, false),
       ConfigEntry.new("pushstate", ANY_TYPE, []),
-      ConfigEntry.new("products", HASH_TYPE, []),
+      ConfigEntry.new("produce", HASH_TYPE, {}),
     ]
 
     @entries.each{|e|
@@ -65,8 +65,15 @@ module Slinky
       end
     end
 
-    def initialize string
-      @config = YAML::load(string)
+    def initialize string_or_hash
+      case string_or_hash
+      when String
+        @config = YAML::load(string_or_hash)
+      when Hash
+        @config = string_or_hash
+      else
+        raise TypeError.new("Config must be either a string or a hash")
+      end
       ConfigReader.validate(@config)
     end
 

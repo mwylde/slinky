@@ -185,9 +185,23 @@ describe "Manifest" do
     it "should match files" do
       mf = Slinky::ManifestFile.new("/src/l1/l2/test.txt", "/src/build/l1/l2", @mprod)
       mf.matches?("test.txt").should == true
-      mf = Slinky::ManifestFile.new("/src/l1/test.sass", "", @prod)
+      mf = Slinky::ManifestFile.new("/src/l1/test.sass", "", @mprod)
       mf.matches?("test.css").should == true
       mf.matches?("test.sass").should == true
+    end
+
+    it "should match file paths" do
+      mf = Slinky::ManifestFile.new("/src/l1/l2/test.txt", "/src/build/l1/l2", @mprod)
+      mf.matches_path?("test.txt").should == false
+      mf.matches_path?("/l1/l2/test.txt").should == true
+      mf.matches_path?("/l1/l2/*.txt").should == false
+      mf.matches_path?("/l1/l2/*.txt", true).should == true
+      mf = Slinky::ManifestFile.new("/src/l1/test.sass", "", @mprod)
+      mf.matches_path?("/l1/test.css").should == true
+      mf.matches_path?("/l1/test.sass").should == true
+      mf.matches_path?("/l1/*.css", true).should == true
+      mf.matches_path?("/l1/*.sass", true).should == true
+      mf.matches_path?("l1/test.sass").should == false
     end
 
     it "should should properly determine if in tree" do
@@ -419,17 +433,70 @@ describe "Manifest" do
       File.read("/build/styles.css").include?("IGNORE!!!").should == false
       File.exists?("/build/l1/l2/ignore.css").should == true
     end
+  end
+
+  context "Products" do
+    it "should fail if non-configured product is requested" do
+      proc { @mdevel.files_for_product("/something.js") }
+        .should raise_error Slinky::NoSuchProductError
+    end
 
     it "should allow specification of products" do
       config = <<eos
-products:
-  "/scripts.js":
-    inputs:
-      - "/l1/l2/*.js"
+produce:
+  "/special.js":
+    include:
+      - "/l1/*.js"
+    exclude:
+      - "/l1/exclude.js"
 eos
       config = Slinky::ConfigReader.new(config)
-      config.products.should == {"/scripts.js" => {"inputs" => ["/l1/l2/*.js"]}}
+      config.produce.should == {"/special.js" => {
+                                   "include" => ["/l1/*.js"],
+                                   "exclude" => ["/l1/exclude.js"]
+                                }}
+
+      File.open("/src/l1/exclude.js", "w+").close
+
+      mdevel = Slinky::Manifest.new("/src", config, :devel => true)
+
+      mdevel.files_for_product("/special.js")
+        .map{|x| x.source}.sort.should == [
+        "/src/l1/test2.js", "/src/l1/test.js", "/src/l1/test5.js",
+        "/src/l1/l2/test3.coffee", "/src/l1/l2/test6.js"].sort
     end
-    
+
+    it "should not require an exclude for products" do
+      config = {"produce" => {"/special.js" => {"include" => ["/l1/*.js"]}}}
+
+      config = Slinky::ConfigReader.new(config)
+
+      File.open("/src/l1/exclude.js", "w+").close
+
+      mdevel = Slinky::Manifest.new("/src", config, :devel => true)
+
+      mdevel.files_for_product("/special.js")
+        .map{|x| x.source}.sort.should == ["/src/l1/exclude.js",
+                                           "/src/l1/l2/test3.coffee",
+                                           "/src/l1/l2/test6.js",
+                                           "/src/l1/test.js",
+                                           "/src/l1/test2.js",
+                                           "/src/l1/test5.js"].sort
+    end
+
+    it "should fail if a product rule does not match anything" do
+      config = <<eos
+produce:
+  "/special.js":
+    include:
+      - "/l1/doesntexist.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+
+      mdevel = Slinky::Manifest.new("/src", config, :devel => true)
+
+      proc { mdevel.files_for_product("/special.js") }
+        .should raise_error Slinky::FileNotFoundError
+    end
   end
 end

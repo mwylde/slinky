@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'pathname'
 require 'digest/md5'
+require 'matrix'
 
 module Slinky
   # extensions of files that can contain build directives
@@ -22,6 +23,8 @@ module Slinky
   # Raised when there is a cycle in the dependency graph (i.e., file A
   # requires file B which requires C which requires A)
   class DependencyError < StandardError; end
+  # Raise when there is a request for a product that doesn't exist
+  class NoSuchProductError < StandardError; end
 
   class Manifest
     attr_accessor :manifest_dir, :dir
@@ -87,6 +90,44 @@ module Slinky
       @manifest_dir.find_by_path path, allow_multiple
     end
 
+    # Finds all the matching manifest files for a particular product.
+    # This does not take into account dependencies.
+    def files_for_product product
+      if !p = @config.produce[product]
+        raise NoSuchProductError.
+               new("Product <#{product}> has not been configured")
+      end
+
+      g = transitive_closure
+
+      # First find the list of files that have been explictly
+      # included/excluded
+      p["include"].map{|f|
+        mfs = find_by_path(f, true)
+              .map{|mf| [mf] + g[f]}
+        if mfs.empty?
+          raise FileNotFoundError.new(
+            "No files matched by include #{f} in product #{product}")
+        end
+        mfs.flatten
+      }.flatten.reject{|f|
+        p["exclude"].any?{|ex|
+          f.matches_path?(ex, true)
+        } if p["exclude"]
+      # Then add all the files these require
+      }.map{|f|
+        # Find all of the downstream files
+        # check that we're not excluding any required files
+        g[f].each{|rf|
+          if p["exclude"] && r = p["exclude"].find{|ex| rf.matches_path?(ex, true)}
+            raise DependencyError.new(
+              "File #{f} requires #{rf} which is excluded by exclusion rule #{r}")
+          end
+        }
+        [f] + g[f]
+      }.flatten.uniq
+    end
+
     def scripts_string
       if @devel
         dependency_list.reject{|x| x.output_path.extname != ".js" }.collect{|d|
@@ -94,6 +135,12 @@ module Slinky
         }.join("\n")
       else
         %Q\<script type="text/javascript" src="/scripts.js?#{rand(999999999)}"></script>\
+      end
+    end
+
+    def script_product product
+      if @devel
+      else
       end
     end
 
@@ -149,7 +196,8 @@ module Slinky
     # (required, by), each of which describes an edge.
     #
     # @return [[ManifestFile, ManifestFile]] the graph
-    def build_dependency_graph
+    def dependency_graph
+      return @dependency_graph if @dependency_graph
       graph = []
       files(false).each{|mf|
         mf.directives[:slinky_require].each{|rf|
@@ -168,13 +216,64 @@ module Slinky
       @dependency_graph = graph
     end
 
+    # Builds the transitive closure of the dependency graph using
+    # Floyd–Warshall
+    # TODO: this, along with the other generic graph algorithms, should
+    # be extracted into a separate graph class.
+    def transitive_closure
+      return @transitive_closure if @transitive_closure
+      # Convert from adjacency list to a map structure
+      g = Hash.new{|h,k| h[k] = []}
+      dependency_graph.each{|x|
+        g[x[1]] << x[0]
+      }
+
+      # Then construct the adjacency matrix
+      all_files = files(false)
+      index_map = {}
+      all_files.each_with_index{|f, i| index_map[f] = i}
+
+      size = all_files.size
+
+      # Set up the distance matrix
+      dist = Array.new(size){|_| Array.new(size, Float::INFINITY)}
+      all_files.each_with_index{|fi, i|
+        dist[i][i] = 0
+        g[fi].each{|fj|
+          dist[i][index_map[fj]] = 1
+        }
+      }
+
+      # Compute the all-paths costs
+      size.times{|k|
+        size.times{|i|
+          size.times{|j|
+            if dist[i][j] > dist[i][k] + dist[k][j] 
+              dist[i][j] = dist[i][k] + dist[k][j]
+            end
+          }
+        }
+      }
+
+      # Compute the transitive closure in map form
+      @transitive_closure = Hash.new{|h,k| h[k] = []}
+      size.times{|i|
+        size.times{|j|
+          if dist[i][j] < Float::INFINITY
+            @transitive_closure[all_files[i]] << all_files[j]
+          end
+        }
+      }
+
+      @transitive_closure
+    end
+
     # Builds a list of files in topological order, so that when
     # required in this order all dependencies are met. See
     # http://en.wikipedia.org/wiki/Topological_sorting for more
     # information.
     def dependency_list
-      build_dependency_graph unless @dependency_graph
-      graph = @dependency_graph.clone
+      graph = dependency_graph.clone
       # will contain sorted elements
       l = []
       # start nodes, those with no incoming edges
@@ -228,6 +327,7 @@ module Slinky
     def invalidate_cache
       @files = nil
       @dependency_graph = nil
+      @transitive_closure
       @md5 = nil
     end
 
@@ -415,6 +515,16 @@ module Slinky
       end
     end
 
+    # Predicate which determines whether the file matches (see
+    # `ManifestPath#matches?`) the full path relative to the manifest
+    # root.
+    def matches_path? s, match_glob = false
+      p = Pathname.new(s)
+      dir = Pathname.new("/" + relative_source_path.to_s).dirname
+      matches?(p.basename.to_s, match_glob) &&
+         dir == p.dirname
+    end
+
     # Predicate which determines whether the file is the supplied path
     # or lies on supplied tree
     def in_tree? path
@@ -440,12 +550,12 @@ module Slinky
 
     # returns the source path relative to the manifest directory
     def relative_source_path
-      Pathname.new(@source).relative_path_from Pathname.new(@manifest.dir)
+      Pathname.new(@source).relative_path_from(Pathname.new(@manifest.dir))
     end
 
     # Returns the output path relative to the manifest directory
     def relative_output_path
-      output_path.relative_path_from Pathname.new(@manifest.dir)
+      output_path.relative_path_from(Pathname.new(@manifest.dir))
     end
 
     # Looks through the file for directives
