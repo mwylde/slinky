@@ -1,4 +1,4 @@
-# Slinky 
+# Slinky
 
 If you write single-page rich client apps, Slinky is here to
 make your life easier. For development, it provides a static file
@@ -52,6 +52,8 @@ $ scp -r ../pub/ myserver.com:/var/www/project
 7. [PushState](#pushstate)
 8. [Proxies](#proxies)
 9. [Ignores](#ignores)
+10. [Products](#products)
+11. [Path matching](#path-matching)
 
 ### Transparent compilation
 
@@ -69,6 +71,7 @@ Currently supported languages include:
 * HAML
 * SASS/SCSS
 * LESS
+* JSX (react templates)
 * ClojureScript (experimental)
 
 Adding support for new languages is simple, and pull requests are welcome.
@@ -109,7 +112,8 @@ sees this:
 it will compile the HAML to HTML and replace slinky_styles with the
 appropriate HTML. You can also disable minification with the
 `--dont-minify` option or the `dont_minify: true` configuration
-option.
+option. `slinky_scripts` and `slinky_styles` are conveniences built on
+top of the [full product system](#products).
 
 ### Specifying order
 
@@ -153,8 +157,8 @@ changes, you would like the HAML file to be recompiled so that the
 templates will also be updated.
 
 These relationships are specified as "dependencies," and like requirements
-they are incdicated through a special `slinky_depends("file")` directive in 
-your source files. For our template example, the index.haml files might look 
+they are incdicated through a special `slinky_depends("file")` directive in
+your source files. For our template example, the index.haml files might look
 like this:
 
 ```haml
@@ -212,7 +216,7 @@ that retain the advantages of their multi-page peers without resorting
 to hacks like hash urls. The essential idea is this: when a user
 navigates to a conceptually different "page" in the app, the URL
 should be updated to reflect that so that behaviors such as
-deep-linking and history navigation work properly. 
+deep-linking and history navigation work properly.
 
 For this to work, however, the server must be able to return the
 content of your main HTML page for arbitrary paths, as otherwise when
@@ -271,6 +275,9 @@ request and finally returns the response back to the browser.
 
 ###  Ignores
 
+_Ignores are deprecated and will be removed in the next major release.
+Use the new product system instead._
+
 By default slinky will include every javascript and css file it finds
 into the combined scripts.js and styles.css files. However, it may be
 that for some reason you want to keep some files separate and handle
@@ -285,3 +292,97 @@ ignore:
 
 This will causes everything in the script/vendor directory to be
 ignored by slinky, as well as the reset.css file.
+
+### Products
+
+_New in 0.8: use master to get them now_
+
+Products are the outputs of the build system. Most files are just
+copied to the build directory, but you may want some to undergo
+further processing. For simplicity, Slinky defines two default
+products which you have seen above: `/scripts.js` and `/styles.css`.
+These are defined like this:
+
+```yaml
+produce:
+  "/scripts.js":
+    include:
+      - "*.js"
+  "/styles.css":
+    include:
+      - ".css"
+```
+
+Products are defined by an output path (in this case `/scripts.js` and
+`/styles.css`), a set of paths to include, and a set of paths to
+exclude (with gitignore-style glob patterns supported; see
+[here](#path-matching) for the match rules). In development mode, all
+of the files included in a product will be included in your html
+separately. When built in production mode, they will all be minified
+and concatenated into a single output file. We can also create our own
+products:
+
+```yaml
+produce:
+  "/test/test.js":
+    include:
+      - "*_test.js"
+  "/main.js":
+    include:
+      - "*.js"
+    exclude:
+      - "vendor/jquery*.js"
+      - "*_test.js"
+  "/main.css":
+    include:
+      - "*.css"
+    exclude:
+      - "vendor/boostrap.css"
+```
+
+This config will produce three products in the build directory:
+`test/test.js`, which will include all files ending in `_test.js`,
+`main.js' which includes all .js files except jquery and test files,
+and `main.css` which includes all css files except for boostrap.css in
+the vendor directory. Custom products can be included in your HTML
+like this:
+
+```html
+<html>
+  <head>
+    slinky_product("/main.js")
+    slinky_product("/main.css")
+  </head>
+  ...
+```
+
+The default product directives (`slinky_scripts` and `slinky_styles`)
+are merely sugar for `slinky_product("/scripts.js")` and
+`slinky_product("/styles.css")`.
+
+# Path matching
+
+Several slinky config features involve specifying paths, with support
+for globbing. These are interpreted similarly to .gitignore rules. The full
+specification is:
+
+1. If the pattern ends with a slash, it will only match directories;
+   e.g. `foo/` would match a directory `foo/` but not a file `foo`.
+   Other than that, the trailing slash is ignored in path handling.
+2. If the pattern does not contain a slash, slinky treats it as a
+   relative pathname which can match files in any directory. For
+   example, the rule `test.js` will matching `/test.js` and
+   `/component/test.js`.
+3. If the pattern begins with a slash, it will be treated as an
+   absolute path starting at the root of the source directory.
+4. If the pattern does not begin with a slash, but does contain one or
+   more slashes, it will be treated as a path relative to any
+   directory. For example, `test/*.js` will match `/test/main.js`, and
+   `/component/test/component.js`, but not `main.js`.
+5. A single star `*` in a pattern will match any number of characters within a
+   single path component. For example, `/test/*.js` will match
+   `/test/main_test.js` but not `/test/component/test.js`.
+6. A double star `**` will match any number of characters including
+   path separators. For example `/scripts/**/main.js` will match any
+   file named `main.js` under the `/scripts` directory, including
+   `/scripts/main.js` and `/scripts/component/main.js`.

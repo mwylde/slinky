@@ -143,24 +143,6 @@ module Slinky
       }
     end
 
-    def compress ext, output, compressor
-      scripts = dependency_list.reject{|x| x.output_path.extname != ext}
-      if scripts.size > 0
-        s = scripts.collect{|s|
-          f = File.open(s.build_to.to_s, 'rb'){|f| f.read}
-          (block_given?) ? (yield s, f) : f
-        }.join("\n")
-
-        File.open(output, "w+"){|f|
-          unless @no_minify
-            f.write(compressor.compress(s))
-          else
-            f.write(s)
-          end
-        }
-      end
-    end
-
     def compress_product product
       compressor = compressor_for_product product
       post_processor = post_processor_for_product product
@@ -179,14 +161,26 @@ module Slinky
       }
     end
 
+    # These are special cases for simplicity and backwards
+    # compatability. If no products are defined, we have two default
+    # products, one which includes are .js files in the repo and one
+    # that includes all .css files. This method produces an HTML include
+    # string for all of the .js files.
     def scripts_string
-      product_string "/scripts.js"
+      product_string ConfigReader::DEFAULT_SCRIPT_PRODUCT
     end
 
+    # These are special cases for simplicity and backwards
+    # compatability. If no products are defined, we have two default
+    # products, one which includes are .js files in the repo and one
+    # that includes all .css files. This method produces an HTML include
+    # string for all of the .css files.
     def styles_string
-      product_string "/styles.css"
+      product_string ConfigReader::DEFAULT_STYLE_PRODUCT
     end
 
+    # Produces a string of HTML that includes all of the files for the
+    # given product.
     def product_string product
       if @devel
         files_for_product(product).map{|f|

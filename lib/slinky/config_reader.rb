@@ -10,6 +10,9 @@ module Slinky
     BOOL_TYPE = "bool"
     ANY_TYPE = "any"
 
+    DEFAULT_SCRIPT_PRODUCT = "/scripts.js"
+    DEFAULT_STYLE_PRODUCT = "/styles.css"
+
     class ConfigEntry
       attr_reader :type, :name, :default
       def initialize(name, type, default)
@@ -31,8 +34,8 @@ module Slinky
       ConfigEntry.new("dont_minify", BOOL_TYPE, false),
       ConfigEntry.new("pushstate", ANY_TYPE, []),
       ConfigEntry.new("produce", HASH_TYPE, {
-                        "/scripts.js" => {"include" => ["*.js"]},
-                        "/styles.css" => {"include" => ["*.css"]}
+                        DEFAULT_SCRIPT_PRODUCT => {"include" => ["*.js"]},
+                        DEFAULT_STYLE_PRODUCT => {"include" => ["*.css"]}
                       }),
     ]
 
