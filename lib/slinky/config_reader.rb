@@ -30,7 +30,10 @@ module Slinky
       ConfigEntry.new("livereload_port", NUMBER_TYPE, 35729),
       ConfigEntry.new("dont_minify", BOOL_TYPE, false),
       ConfigEntry.new("pushstate", ANY_TYPE, []),
-      ConfigEntry.new("produce", HASH_TYPE, {}),
+      ConfigEntry.new("produce", HASH_TYPE, {
+                        "/scripts.js" => {"include" => ["*.js"]},
+                        "/styles.css" => {"include" => ["*.css"]}
+                      }),
     ]
 
     @entries.each{|e|

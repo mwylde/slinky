@@ -497,5 +497,56 @@ eos
       proc { mdevel.files_for_product("/special.js") }
         .should raise_error Slinky::FileNotFoundError
     end
+
+    it "should allow product directives" do
+      config = <<eos
+produce:
+  "/special.js":
+    include:
+      - "/l1/*.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+
+      File.open("/src/product.html", "w+"){|f|
+        f.write("<html><head>\nslinky_product('/special.js')\n</head></html")
+      }
+
+      mdevel = Slinky::Manifest.new("/src", config, :devel => true)
+      path = mdevel.find_by_path("/product.html").first.process(nil, true)
+
+      contents = File.read(path)
+      contents.include?("slinky_product").should == false
+      contents.include?('<script type="text/javascript" src="/l1/test.js">').
+        should == true
+    end
+
+    it "should build products in production mode" do
+      config = <<eos
+produce:
+  "/special.js":
+    include:
+      - "/l1/*.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+
+      File.open("/src/product.html", "w+"){|f|
+        f.write("<html><head>\nslinky_product('/special.js')\n</head></html")
+      }
+
+      mprod = Slinky::Manifest.new("/src",
+                                   config,
+                                   :devel => false,
+                                   :build_to => "/build_special")
+
+      $stdout.should_receive(:puts).with(/Compiled/).exactly(3).times
+      path = mprod.find_by_path("/product.html").first.process(nil, true)
+      mprod.build
+
+      File.exists?("/build_special/special.js").should == true
+      File.read("/build_special/special.js").
+        include?('console.log("Hello!");').should == true
+      File.exists?("/build_special/scripts.js").should == false
+      File.exists?("/build_special/styles.css").should == false
+    end
   end
 end

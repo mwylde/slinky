@@ -10,10 +10,12 @@ module Slinky
   REQUIRE_DIRECTIVE = /^[^\n\w]*(slinky_require)\((".*"|'.+'|)\)[^\n\w]*$/
   SCRIPTS_DIRECTIVE = /^[^\n\w]*(slinky_scripts)[^\n\w]*$/
   STYLES_DIRECTIVE  = /^[^\n\w]*(slinky_styles)[^\n\w]*$/
+  PRODUCT_DIRECTIVE = /^[^\n\w]*(slinky_product)\((".*"|'.+'|)\)[^\n\w]*$/
   BUILD_DIRECTIVES = Regexp.union(DEPENDS_DIRECTIVE,
                                   REQUIRE_DIRECTIVE,
                                   SCRIPTS_DIRECTIVE,
-                                  STYLES_DIRECTIVE)
+                                  STYLES_DIRECTIVE,
+                                  PRODUCT_DIRECTIVE)
   CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
   # Raised when a compilation fails for any reason
@@ -98,13 +100,23 @@ module Slinky
                new("Product <#{product}> has not been configured")
       end
 
+      type = type_for_product product
+      if type != ".js" && type != ".css"
+        raise InvalidConfigError.new("Only .js and .css products are supported")
+      end
+
       g = dependency_graph.transitive_closure
 
+      # Topological indices for each file
+      indices = {}
+      dependency_list.each_with_index{|f, i| indices[f] = i}
       # First find the list of files that have been explictly
       # included/excluded
       p["include"].map{|f|
-        mfs = find_by_path(f, true)
+        mfs = (find_by_path(f, true) + files(false).reject{|mf| !mf.matches?(f, true)})
               .map{|mf| [mf] + g[f]}
+              .flatten
+              .reject{|f| f.output_path.extname != type}
         if mfs.empty?
           raise FileNotFoundError.new(
             "No files matched by include #{f} in product #{product}")
@@ -125,23 +137,10 @@ module Slinky
           end
         }
         [f] + g[f]
-      }.flatten.uniq
-    end
-
-    def scripts_string
-      if @devel
-        dependency_list.reject{|x| x.output_path.extname != ".js" }.collect{|d|
-          %Q\<script type="text/javascript" src="/#{d.relative_output_path}"></script>\
-        }.join("\n")
-      else
-        %Q\<script type="text/javascript" src="/scripts.js?#{rand(999999999)}"></script>\
-      end
-    end
-
-    def script_product product
-      if @devel
-      else
-      end
+      }.flatten.uniq.sort_by{|f|
+        # Sort by topological order
+        indices[f]
+      }
     end
 
     def compress ext, output, compressor
@@ -159,33 +158,42 @@ module Slinky
             f.write(s)
           end
         }
-        scripts.collect{|s| FileUtils.rm(s.build_to)}
       end
     end
 
-    def compress_scripts
-      compressor = YUI::JavaScriptCompressor.new(:munge => false)
-      compress(".js", "#{@build_to}/scripts.js", compressor)
-    end
+    def compress_product product
+      compressor = compressor_for_product product
+      post_processor = post_processor_for_product product
 
-    def compress_styles
-      compressor = YUI::CssCompressor.new()
+      s = files_for_product(product).map{|mf|
+        f = File.open(mf.build_to.to_s, 'rb'){|f| f.read}
+        post_processor ? (post_processor.call(mf, f)) : f
+      }.join("\n")
 
-      compress(".css", "#{@build_to}/styles.css", compressor){|s, css|
-        css.gsub(CSS_URL_MATCHER){|url|
-          p = s.relative_output_path.dirname.to_s + "/#{$1}"
-          "url('/#{p}')"
-        }
+      File.open("#{@build_to}/#{product}", "w+"){|f|
+        unless @no_minify
+          f.write(compressor.compress(s))
+        else
+          f.write(s)
+        end
       }
     end
 
+    def scripts_string
+      product_string "/scripts.js"
+    end
+
     def styles_string
+      product_string "/styles.css"
+    end
+
+    def product_string product
       if @devel
-        dependency_list.reject{|x| x.output_path.extname != ".css"}.collect{|d|
-          %Q\<link rel="stylesheet" href="/#{d.relative_output_path}" />\
+        files_for_product(product).map{|f|
+          html_for_path("/#{f.relative_output_path}")
         }.join("\n")
       else
-        %Q\<link rel="stylesheet" href="/styles.css?#{rand(999999999)}" />\
+        html_for_path("#{product}?#{rand(999999999)}")
       end
     end
 
@@ -224,8 +232,14 @@ module Slinky
     def build
       @manifest_dir.build
       unless @devel
-        compress_scripts
-        compress_styles
+        @config.produce.keys.each{|product|
+          compress_product(product)
+        }
+
+        # clean up the files that have been processed
+        @config.produce.keys.map{|product|
+          files_for_product(product)
+        }.flatten.uniq.each{|mf| FileUtils.rm(mf.build_to)}
       end
     end
 
@@ -249,10 +263,45 @@ module Slinky
       end
     end
 
+    def compressor_for_product product
+      case type_for_product(product)
+      when ".js"
+        YUI::JavaScriptCompressor.new(:munge => false)
+      when ".css"
+        YUI::CssCompressor.new()
+      end
+    end
+
+    def post_processor_for_product product
+      case type_for_product(product)
+      when ".css"
+         lambda{|s, css| css.gsub(CSS_URL_MATCHER){|url|
+             p = s.relative_output_path.dirname.to_s + "/#{$1}"
+             "url('/#{p}')"
+           }}
+      end
+    end
+
     def invalidate_cache
       @files = nil
       @dependency_graph = nil
       @md5 = nil
+    end
+
+    def html_for_path path
+      ext = path.split("?").first.split(".").last
+      case ext
+      when "css"
+        %Q|<link rel="stylesheet" href="#{path}" />|
+      when "js"
+        %Q|<script type="text/javascript" src="#{path}"></script>|
+      else
+        raise InvalidConfigError.new("Unsupported file extension #{ext}")
+      end
+    end
+
+    def type_for_product product
+      "." + product.split(".")[-1]
     end
 
     def manifest_update paths
@@ -440,7 +489,7 @@ module Slinky
     end
 
     # Predicate which determines whether the file matches (see
-    # `ManifestPath#matches?`) the full path relative to the manifest
+    # `ManifestFile#matches?`) the full path relative to the manifest
     # root.
     def matches_path? s, match_glob = false
       p = Pathname.new(s)
@@ -516,8 +565,11 @@ module Slinky
         out = File.read(path)
         out.gsub!(DEPENDS_DIRECTIVE, "")
         out.gsub!(REQUIRE_DIRECTIVE, "")
-        out.gsub!(SCRIPTS_DIRECTIVE, @manifest.scripts_string)
-        out.gsub!(STYLES_DIRECTIVE, @manifest.styles_string)
+        out.gsub!(SCRIPTS_DIRECTIVE){ @manifest.scripts_string }
+        out.gsub!(STYLES_DIRECTIVE){ @manifest.styles_string }
+        out.gsub!(PRODUCT_DIRECTIVE){
+          @manifest.product_string($2[1..-2])
+        }
         to = to || Tempfile.new("slinky").path + ".cache"
         File.open(to, "w+"){|f|
           f.write(out)
