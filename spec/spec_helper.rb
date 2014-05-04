@@ -120,13 +120,8 @@ module Slinky
   end
 
   class Manifest
-    alias :old_compress :compress
-    def compress ext, output, compressor
-      if block_given?
-        old_compress ext, output, FakeCompressor.new, &Proc.new
-      else
-        old_compress ext, output, FakeCompressor.new
-      end
+    def compressor_for_product product
+      FakeCompressor.new
     end
   end
 
