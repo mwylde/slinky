@@ -16,6 +16,7 @@ require 'multi_json'
 require "slinky/em-popen3"
 require "slinky/compilers"
 require "slinky/config_reader"
+require "slinky/graph"
 require "slinky/manifest"
 require "slinky/compiled_file"
 require "slinky/proxy_server"

@@ -67,6 +67,10 @@ module Slinky
         else
           raise StandardError.new
         end
+      rescue DependencyError => e
+        $stderr.puts("#{e.message}".foreground(:red))
+        resp.status = 500
+        resp.content = "Dependency error: #{e.message}"
       rescue
         resp.status = 500
         resp.content = "Error compiling #{mf.source}\n"

@@ -237,7 +237,6 @@ describe "Manifest" do
     it "should fail if there is a cycle in the dependency graph" do
       File.open("/src/l1/test5.js", "w+"){|f| f.write("slinky_require('test.js')")}
       manifest = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
-      $stderr.should_receive(:puts).with("Dependencies /src/l1/test2.js -> /src/l1/test.js, /src/l1/test5.js -> /src/l1/test2.js, /src/l1/test.js -> /src/l1/test5.js could not be satisfied".foreground(:red))
       proc { manifest.dependency_list }.should raise_error Slinky::DependencyError
     end
 

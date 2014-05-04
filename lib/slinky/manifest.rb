@@ -98,7 +98,7 @@ module Slinky
                new("Product <#{product}> has not been configured")
       end
 
-      g = transitive_closure
+      g = dependency_graph.transitive_closure
 
       # First find the list of files that have been explictly
       # included/excluded
@@ -146,7 +146,6 @@ module Slinky
 
     def compress ext, output, compressor
       scripts = dependency_list.reject{|x| x.output_path.extname != ext}
-
       if scripts.size > 0
         s = scripts.collect{|s|
           f = File.open(s.build_to.to_s, 'rb'){|f| f.read}
@@ -198,6 +197,7 @@ module Slinky
     # @return [[ManifestFile, ManifestFile]] the graph
     def dependency_graph
       return @dependency_graph if @dependency_graph
+
       graph = []
       files(false).each{|mf|
         mf.directives[:slinky_require].each{|rf|
@@ -213,87 +213,12 @@ module Slinky
           end
         } if mf.directives[:slinky_require]
       }
-      @dependency_graph = graph
+
+      @dependency_graph = Graph.new(files(false), graph)
     end
 
-    # Builds the transitive closure of the dependency graph using
-    # Floyd–Warshall
-    # TODO: this, along with the other generic graph algorithms, should
-    # be extracted into a separate graph class.
-    def transitive_closure
-      return @transitive_closure if @transitive_closure
-      # Convert from adjacency list to a map structure
-      g = Hash.new{|h,k| h[k] = []}
-      dependency_graph.each{|x|
-        g[x[1]] << x[0]
-      }
-
-      # Then construct the adjacency matrix
-      all_files = files(false)
-      index_map = {}
-      all_files.each_with_index{|f, i| index_map[f] = i}
-
-      size = all_files.size
-
-      # Set up the distance matrix
-      dist = Array.new(size){|_| Array.new(size, Float::INFINITY)}
-      all_files.each_with_index{|fi, i|
-        dist[i][i] = 0
-        g[fi].each{|fj|
-          dist[i][index_map[fj]] = 1
-        }
-      }
-
-      # Compute the all-paths costs
-      size.times{|k|
-        size.times{|i|
-          size.times{|j|
-            if dist[i][j] > dist[i][k] + dist[k][j] 
-              dist[i][j] = dist[i][k] + dist[k][j]
-            end
-          }
-        }
-      }
-
-      # Compute the transitive closure in map form
-      @transitive_closure = Hash.new{|h,k| h[k] = []}
-      size.times{|i|
-        size.times{|j|
-          if dist[i][j] < Float::INFINITY
-            @transitive_closure[all_files[i]] << all_files[j]
-          end
-        }
-      }
-
-      @transitive_closure
-    end
-
-    # Builds a list of files in topological order, so that when
-    # required in this order all dependencies are met. See
-    # http://en.wikipedia.org/wiki/Topological_sorting for more
-    # information.
     def dependency_list
-      graph = dependency_graph.clone
-      # will contain sorted elements
-      l = []
-      # start nodes, those with no incoming edges
-      s = files(false).reject{|mf| mf.directives[:slinky_require]}
-      while s.size > 0
-        n = s.delete s.first
-        l << n
-        files(false).each{|m|
-          e = graph.find{|e| e[0] == n && e[1] == m}
-          next unless e
-          graph.delete e
-          s << m unless graph.any?{|e| e[1] == m}
-        }
-      end
-      if graph != []
-        problems = graph.collect{|e| e.collect{|x| x.source}.join(" -> ")}
-        $stderr.puts "Dependencies #{problems.join(", ")} could not be satisfied".foreground(:red)
-        raise DependencyError
-      end
-      l
+      dependency_graph.dependency_list
     end
 
     def build
@@ -327,7 +252,6 @@ module Slinky
     def invalidate_cache
       @files = nil
       @dependency_graph = nil
-      @transitive_closure
       @md5 = nil
     end
 
