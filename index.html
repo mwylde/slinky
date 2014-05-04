@@ -31,7 +31,8 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>Slinky</h1>
+        <h1>
+<a name="slinky" class="anchor" href="#slinky"><span class="octicon octicon-link"></span></a>Slinky</h1>
 
 <p>If you write single-page rich client apps, Slinky is here to
 make your life easier. For development, it provides a static file
@@ -41,9 +42,13 @@ proxying and automatic browser reloads. And once you're ready to
 deploy, Slinky will compile, concatenate, and minify your sources,
 leaving you ready to push to production.</p>
 
-<h4>What can slinky do for you?</h4>
+<p><a href="http://travis-ci.org/mwylde/slinky"><img src="https://secure.travis-ci.org/mwylde/slinky.png" alt="Build Status"></a></p>
 
-<h5>Slinky Server</h5>
+<h4>
+<a name="what-can-slinky-do-for-you" class="anchor" href="#what-can-slinky-do-for-you"><span class="octicon octicon-link"></span></a>What can slinky do for you?</h4>
+
+<h5>
+<a name="slinky-server" class="anchor" href="#slinky-server"><span class="octicon octicon-link"></span></a>Slinky Server</h5>
 
 <ul>
 <li>Transparently compiles sources for a variety of languages</li>
@@ -51,7 +56,8 @@ leaving you ready to push to production.</p>
 instant browser updates</li>
 <li>Includes a customizable proxy, so your dev environment can mirror production</li>
 <li>Includes support for HTML5 <a href="https://developer.mozilla.org/en-US/docs/DOM/Manipulating_the_browser_history">pushState</a> based apps</li>
-</ul><h5>Slinky Builder</h5>
+</ul><h5>
+<a name="slinky-builder" class="anchor" href="#slinky-builder"><span class="octicon octicon-link"></span></a>Slinky Builder</h5>
 
 <ul>
 <li>Keeps track of the proper include order of your scripts and styles</li>
@@ -61,7 +67,8 @@ code. Its goal is to help you when you want it—and get out of the way
 when you don't. It endeavors to be sufficiently flexible to support a
 wide variety of development styles.</p>
 
-<h2>Quick start</h2>
+<h2>
+<a name="quick-start" class="anchor" href="#quick-start"><span class="octicon octicon-link"></span></a>Quick start</h2>
 
 <pre><code>$ gem install slinky
 $ cd ~/my/awesome/project/src
@@ -71,7 +78,8 @@ $ slinky build -o ../pub
 $ scp -r ../pub/ myserver.com:/var/www/project
 </code></pre>
 
-<h2>The details</h2>
+<h2>
+<a name="the-details" class="anchor" href="#the-details"><span class="octicon octicon-link"></span></a>The details</h2>
 
 <ol>
 <li><a href="#transparent-compilation">Transparent compilation</a></li>
@@ -83,7 +91,10 @@ $ scp -r ../pub/ myserver.com:/var/www/project
 <li><a href="#pushstate">PushState</a></li>
 <li><a href="#proxies">Proxies</a></li>
 <li><a href="#ignores">Ignores</a></li>
-</ol><h3>Transparent compilation</h3>
+<li><a href="#products">Products</a></li>
+<li><a href="#path-matching">Path matching</a></li>
+</ol><h3>
+<a name="transparent-compilation" class="anchor" href="#transparent-compilation"><span class="octicon octicon-link"></span></a>Transparent compilation</h3>
 
 <p>The Slinky server will transparently compile various front-end languages
 for you, providing a smooth transition from development to production.
@@ -100,10 +111,12 @@ and which need compilation.</p>
 <li>HAML</li>
 <li>SASS/SCSS</li>
 <li>LESS</li>
+<li>JSX (react templates)</li>
 <li>ClojureScript (experimental)</li>
 </ul><p>Adding support for new languages is simple, and pull requests are welcome.</p>
 
-<h3>LiveReload/Guard support</h3>
+<h3>
+<a name="livereloadguard-support" class="anchor" href="#livereloadguard-support"><span class="octicon octicon-link"></span></a>LiveReload/Guard support</h3>
 
 <p>The typical edit-save-reload cycle of web development can be tedious,
 especially when trying to get your CSS <em>just</em> right. What if you could
@@ -117,7 +130,8 @@ LiveReload supports hot reloading of CSS, letting you tweak your
 styles with ease. If don't want the LiveReload server running,
 disabling it is a simple <code>--no-livereload</code> away.</p>
 
-<h3>Script &amp; style management</h3>
+<h3>
+<a name="script--style-management" class="anchor" href="#script--style-management"><span class="octicon octicon-link"></span></a>Script &amp; style management</h3>
 
 <p>Slinky can manage all of your javascript and css files if you want it
 to, serving them up individually during development and concatenating
@@ -125,7 +139,7 @@ and minifying them for production. To support this, Slinky recognizes
 <code>slinky_scripts</code> in your HTML/HAML files. For example, when Slinky
 sees this:</p>
 
-<div class="highlight"><pre><span class="nn">!!!5</span>
+<div class="highlight highlight-haml"><pre><span class="nn">!!!5</span>
 <span class="nt">%html</span>
   <span class="nt">%head</span>
     slinky_scripts
@@ -137,9 +151,11 @@ sees this:</p>
 <p>it will compile the HAML to HTML and replace slinky_styles with the
 appropriate HTML. You can also disable minification with the
 <code>--dont-minify</code> option or the <code>dont_minify: true</code> configuration
-option.</p>
+option. <code>slinky_scripts</code> and <code>slinky_styles</code> are conveniences built on
+top of the <a href="#products">full product system</a>.</p>
 
-<h3>Specifying order</h3>
+<h3>
+<a name="specifying-order" class="anchor" href="#specifying-order"><span class="octicon octicon-link"></span></a>Specifying order</h3>
 
 <p>Often scripts and styles depend on being included in the page
 in a particular order. For this, we need the <code>slinky_require</code>
@@ -151,24 +167,25 @@ want to make sure that A comes before B in the concatenation order.</p>
 
 <p>File A.coffee:</p>
 
-<div class="highlight"><pre><span class="k">class</span> <span class="nx">A</span>
+<div class="highlight highlight-coffeescript"><pre><span class="k">class</span> <span class="nx">A</span>
   <span class="nv">hello: </span><span class="nf">(thing) -&gt;</span> <span class="s">"Hello, "</span> <span class="o">+</span> <span class="nx">thing</span>
 </pre></div>
 
 <p>File B.coffee:</p>
 
-<div class="highlight"><pre><span class="nx">slinky_require</span><span class="p">(</span><span class="s">"A.coffee"</span><span class="p">)</span>
+<div class="highlight highlight-coffeescript"><pre><span class="nx">slinky_require</span><span class="p">(</span><span class="s">"A.coffee"</span><span class="p">)</span>
 <span class="nx">alert</span> <span class="p">(</span><span class="k">new</span> <span class="nx">A</span><span class="p">).</span><span class="nx">hello</span><span class="p">(</span><span class="s">"world"</span><span class="p">)</span>
 </pre></div>
 
 <p>We can also do this in CSS/SASS/SC SS:</p>
 
-<div class="highlight"><pre><span class="cm">/* slinky_require("reset.css")</span>
+<div class="highlight highlight-sass"><pre><span class="cm">/* slinky_require("reset.css")</span>
 <span class="nt">a</span>
   <span class="na">color</span><span class="o">:</span> <span class="nb">red</span>
 </pre></div>
 
-<h3>Dependencies</h3>
+<h3>
+<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h3>
 
 <p>As HAML and SASS scripts can include external content as part of their
 build process, you may want certain files to be recompiled whenever
@@ -179,11 +196,11 @@ changes, you would like the HAML file to be recompiled so that the
 templates will also be updated.</p>
 
 <p>These relationships are specified as "dependencies," and like requirements
-they are incdicated through a special <code>slinky_depends("file")</code> directive in 
-your source files. For our template example, the index.haml files might look 
+they are incdicated through a special <code>slinky_depends("file")</code> directive in
+your source files. For our template example, the index.haml files might look
 like this:</p>
 
-<div class="highlight"><pre>slinky_depends("scripts/templates/*.mustache")
+<div class="highlight highlight-haml"><pre>slinky_depends("scripts/templates/*.mustache")
 <span class="nn">!!!5</span>
 
 <span class="nt">%html</span>
@@ -197,7 +214,8 @@ like this:</p>
   <span class="nt">%body</span>
 </pre></div>
 
-<h2>Configuration</h2>
+<h2>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
 
 <p>Slinky can optionally be configured using a yaml file. By default, it
 looks for a file called <code>slinky.yaml</code> in the source directory, but you
@@ -206,15 +224,22 @@ can also supply a file name on the command line using <code>-c</code>.</p>
 <p>Most of what can be specified on the command line is also available in
 the configuration file. Here's a fully-decked out config:</p>
 
-<div class="highlight"><pre><span class="l-Scalar-Plain">pushstate</span><span class="p-Indicator">:</span>
+<div class="highlight highlight-yaml"><pre><span class="l-Scalar-Plain">pushstate</span><span class="p-Indicator">:</span>
   <span class="s">"/app1"</span><span class="p-Indicator">:</span> <span class="s">"/index.html"</span>
   <span class="s">"/app2"</span><span class="p-Indicator">:</span> <span class="s">"/index2.html"</span>
 <span class="l-Scalar-Plain">proxy</span><span class="p-Indicator">:</span>
   <span class="s">"/test1"</span><span class="p-Indicator">:</span> <span class="s">"http://127.0.0.1:8000"</span>
   <span class="s">"/test2"</span><span class="p-Indicator">:</span> <span class="s">"http://127.0.0.1:7000"</span>
-<span class="l-Scalar-Plain">ignore</span><span class="p-Indicator">:</span>
-  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">script/vendor</span>
-  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">script/jquery.js</span>
+<span class="l-Scalar-Plain">produce</span><span class="p-Indicator">:</span>
+  <span class="s">"/scripts.js"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*.js"</span>
+    <span class="l-Scalar-Plain">exclude</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"/script/vendor/"</span>
+      <span class="p-Indicator">-</span> <span class="s">"/script/jquery.js"</span>
+  <span class="s">"/styles.css"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*.css"</span>
 <span class="l-Scalar-Plain">port</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5555</span>
 <span class="l-Scalar-Plain">src_dir</span><span class="p-Indicator">:</span> <span class="s">"src/"</span>
 <span class="l-Scalar-Plain">build_dir</span><span class="p-Indicator">:</span> <span class="s">"build/"</span>
@@ -227,7 +252,8 @@ the configuration file. Here's a fully-decked out config:</p>
 <p>Most are self explanatory, but a few of the options merit further
 attention:</p>
 
-<h3>PushState</h3>
+<h3>
+<a name="pushstate" class="anchor" href="#pushstate"><span class="octicon octicon-link"></span></a>PushState</h3>
 
 <p><a href="https://developer.mozilla.org/en-US/docs/DOM/Manipulating_the_browser_history">PushState</a>
 is a new Javascript API that gives web apps more control over the
@@ -236,7 +262,7 @@ that retain the advantages of their multi-page peers without resorting
 to hacks like hash urls. The essential idea is this: when a user
 navigates to a conceptually different "page" in the app, the URL
 should be updated to reflect that so that behaviors such as
-deep-linking and history navigation work properly. </p>
+deep-linking and history navigation work properly.</p>
 
 <p>For this to work, however, the server must be able to return the
 content of your main HTML page for arbitrary paths, as otherwise when
@@ -244,7 +270,7 @@ a user tries to reload a pushstate-enabled web app they would receive
 a 404. Slinky supports multiple pushState paths using the pushstate
 configuration option:</p>
 
-<div class="highlight"><pre><span class="l-Scalar-Plain">pushstate</span><span class="p-Indicator">:</span>
+<div class="highlight highlight-yaml"><pre><span class="l-Scalar-Plain">pushstate</span><span class="p-Indicator">:</span>
   <span class="s">"/"</span><span class="p-Indicator">:</span>     <span class="s">"/index.html"</span>
   <span class="s">"/app1"</span><span class="p-Indicator">:</span> <span class="s">"/app1/index.haml"</span>
   <span class="s">"/app2"</span><span class="p-Indicator">:</span> <span class="s">"/app2.haml"</span>
@@ -259,14 +285,15 @@ wins. For this config, instead of returning a 404 for a path like
 that content. Similarly, a request for <code>/app1/photo/1/edit</code>, assuming
 such file does not exist, will return <code>/app1/index.haml</code>.</p>
 
-<h3>Proxies</h3>
+<h3>
+<a name="proxies" class="anchor" href="#proxies"><span class="octicon octicon-link"></span></a>Proxies</h3>
 
 <p>Slinky has a built-in proxy server which lets you test ajax requests
 with your actual backend servers without violating the same-origin
 policy. To set it up, your slinky.yaml file will look something like
 this:</p>
 
-<div class="highlight"><pre><span class="l-Scalar-Plain">proxy</span><span class="p-Indicator">:</span>
+<div class="highlight highlight-yaml"><pre><span class="l-Scalar-Plain">proxy</span><span class="p-Indicator">:</span>
   <span class="s">"/login"</span><span class="p-Indicator">:</span> <span class="s">"http://127.0.0.1:4567/login"</span>
   <span class="s">"/search"</span><span class="p-Indicator">:</span>
     <span class="l-Scalar-Plain">to</span><span class="p-Indicator">:</span> <span class="s">"http://127.0.0.1:4567/search"</span>
@@ -291,7 +318,11 @@ server (in this case, 127.0.0.1:4567). Once it gets a response it will
 wait until 2 seconds has elapsed since slinky itself received the
 request and finally returns the response back to the browser.</p>
 
-<h3>Ignores</h3>
+<h3>
+<a name="ignores" class="anchor" href="#ignores"><span class="octicon octicon-link"></span></a>Ignores</h3>
+
+<p><em>Ignores are deprecated and will be removed in the next major release.
+Use the new product system instead.</em></p>
 
 <p>By default slinky will include every javascript and css file it finds
 into the combined scripts.js and styles.css files. However, it may be
@@ -299,13 +330,108 @@ that for some reason you want to keep some files separate and handle
 them manually. The ignore directive lets you do that, by telling the
 system to skip over any files or directories listed. For example:</p>
 
-<div class="highlight"><pre><span class="l-Scalar-Plain">ignore</span><span class="p-Indicator">:</span>
+<div class="highlight highlight-yaml"><pre><span class="l-Scalar-Plain">ignore</span><span class="p-Indicator">:</span>
   <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">script/vendor</span>
   <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">css/reset.css</span>
 </pre></div>
 
 <p>This will causes everything in the script/vendor directory to be
 ignored by slinky, as well as the reset.css file.</p>
+
+<h3>
+<a name="products" class="anchor" href="#products"><span class="octicon octicon-link"></span></a>Products</h3>
+
+<p><em>New in 0.8: use master to get them now</em></p>
+
+<p>Products are the outputs of the build system. Most files are just
+copied to the build directory, but you may want some to undergo
+further processing. For simplicity, Slinky defines two default
+products which you have seen above: <code>/scripts.js</code> and <code>/styles.css</code>.
+These are defined like this:</p>
+
+<div class="highlight highlight-yaml"><pre><span class="l-Scalar-Plain">produce</span><span class="p-Indicator">:</span>
+  <span class="s">"/scripts.js"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*.js"</span>
+  <span class="s">"/styles.css"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*.css"</span>
+</pre></div>
+
+<p>Products are defined by an output path (in this case <code>/scripts.js</code> and
+<code>/styles.css</code>), a set of paths to include, and a set of paths to
+exclude (with gitignore-style glob patterns supported; see
+<a href="#path-matching">here</a> for the match rules). In development mode, all
+of the files included in a product will be included in your html
+separately. When built in production mode, they will all be minified
+and concatenated into a single output file. We can also create our own
+products:</p>
+
+<div class="highlight highlight-yaml"><pre><span class="l-Scalar-Plain">produce</span><span class="p-Indicator">:</span>
+  <span class="s">"/test/test.js"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*_test.js"</span>
+  <span class="s">"/main.js"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*.js"</span>
+    <span class="l-Scalar-Plain">exclude</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"vendor/jquery*.js"</span>
+      <span class="p-Indicator">-</span> <span class="s">"*_test.js"</span>
+  <span class="s">"/main.css"</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">include</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"*.css"</span>
+    <span class="l-Scalar-Plain">exclude</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="s">"vendor/boostrap.css"</span>
+</pre></div>
+
+<p>This config will produce three products in the build directory:
+<code>test/test.js</code>, which will include all files ending in <code>_test.js</code>,
+<code>main.js</code> which includes all .js files except jquery and test files,
+and <code>main.css</code> which includes all css files except for boostrap.css in
+the vendor directory. Custom products can be included in your HTML
+like this:</p>
+
+<div class="highlight highlight-html"><pre><span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    slinky_product("/main.js")
+    slinky_product("/main.css")
+  <span class="nt">&lt;/head&gt;</span>
+  ...
+</pre></div>
+
+<p>The default product directives (<code>slinky_scripts</code> and <code>slinky_styles</code>)
+are merely sugar for <code>slinky_product("/scripts.js")</code> and
+<code>slinky_product("/styles.css")</code>.</p>
+
+<h1>
+<a name="path-matching" class="anchor" href="#path-matching"><span class="octicon octicon-link"></span></a>Path matching</h1>
+
+<p>Several slinky config features involve specifying paths, with support
+for globbing. These are interpreted similarly to .gitignore rules. The full
+specification is:</p>
+
+<ol>
+<li>If the pattern ends with a slash, it will only match directories;
+e.g. <code>foo/</code> would match a directory <code>foo/</code> but not a file <code>foo</code>.
+Other than that, the trailing slash is ignored in path handling.</li>
+<li>If the pattern does not contain a slash, slinky treats it as a
+relative pathname which can match files in any directory. For
+example, the rule <code>test.js</code> will matching <code>/test.js</code> and
+<code>/component/test.js</code>.</li>
+<li>If the pattern begins with a slash, it will be treated as an
+absolute path starting at the root of the source directory.</li>
+<li>If the pattern does not begin with a slash, but does contain one or
+more slashes, it will be treated as a path relative to any
+directory. For example, <code>test/*.js</code> will match <code>/test/main.js</code>, and
+<code>/component/test/component.js</code>, but not <code>main.js</code>.</li>
+<li>A single star <code>*</code> in a pattern will match any number of characters within a
+single path component. For example, <code>/test/*.js</code> will match
+<code>/test/main_test.js</code> but not <code>/test/component/test.js</code>.</li>
+<li>A double star <code>**</code> will match any number of characters including
+path separators. For example <code>/scripts/**/main.js</code> will match any
+file named <code>main.js</code> under the <code>/scripts</code> directory, including
+<code>/scripts/main.js</code> and <code>/scripts/component/main.js</code>.</li>
+</ol>
       </section>
     </div>
 
