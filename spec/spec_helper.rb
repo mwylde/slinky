@@ -149,6 +149,7 @@ RSpec.configure do |config|
   config.before :each do
     FakeFS.activate!
     FileUtils.rm_rf("/src") rescue nil
+    FileUtils.rm_rf("/build") rescue nil
     FileUtils.mkdir("/src")
     FileUtils.mkdir_p("/src/l1/l2/l3")
     File.open("/src/test.haml", "w+"){|f|

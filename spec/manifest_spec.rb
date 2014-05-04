@@ -548,5 +548,25 @@ eos
       File.exists?("/build_special/scripts.js").should == false
       File.exists?("/build_special/styles.css").should == false
     end
+
+    it "should build products inside directories" do
+      config = <<eos
+produce:
+  "/d1/d2/d3/special.js":
+    include:
+      - "/l1/*.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+
+      mprod = Slinky::Manifest.new("/src",
+                                   config,
+                                   :devel => false,
+                                   :build_to => "/build_nested")
+
+      $stdout.should_receive(:puts).with(/Compiled/).exactly(3).times
+      mprod.build
+
+      File.exists?("/build_nested/d1/d2/d3/special.js").should == true
+    end
   end
 end

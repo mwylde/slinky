@@ -152,6 +152,8 @@ module Slinky
         post_processor ? (post_processor.call(mf, f)) : f
       }.join("\n")
 
+      # Make the directory the product is in
+      FileUtils.mkdir_p("#{@build_to}/#{Pathname.new(product).dirname}")
       File.open("#{@build_to}/#{product}", "w+"){|f|
         unless @no_minify
           f.write(compressor.compress(s))
