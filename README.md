@@ -192,9 +192,16 @@ pushstate:
 proxy:
   "/test1": "http://127.0.0.1:8000"
   "/test2": "http://127.0.0.1:7000"
-ignore:
-  - script/vendor
-  - script/jquery.js
+produce:
+  "/scripts.js":
+    include:
+      - "*.js"
+    exclude:
+      - "/script/vendor/"
+      - "/script/jquery.js"
+  "/styles.css":
+    include:
+      - "*.css"
 port: 5555
 src_dir: "src/"
 build_dir: "build/"
@@ -310,7 +317,7 @@ produce:
       - "*.js"
   "/styles.css":
     include:
-      - ".css"
+      - "*.css"
 ```
 
 Products are defined by an output path (in this case `/scripts.js` and
@@ -342,7 +349,7 @@ produce:
 
 This config will produce three products in the build directory:
 `test/test.js`, which will include all files ending in `_test.js`,
-`main.js' which includes all .js files except jquery and test files,
+`main.js` which includes all .js files except jquery and test files,
 and `main.css` which includes all css files except for boostrap.css in
 the vendor directory. Custom products can be included in your HTML
 like this:
