@@ -92,6 +92,57 @@ module Slinky
       @manifest_dir.find_by_path path, allow_multiple
     end
 
+    # Finds all files that match the given pattern. The match rules
+    # are similar to those for .gitignore and given by
+    #
+    # 1. If the pattern ends with a slash, it will only match directories;
+    #    e.g. `foo/` would match a directory `foo/` but not a file `foo`. In
+    #    a file context, matching a directory is equivalent to matching all
+    #    files under that directory, recursively.
+    # 2. If the pattern does not contain a slash, slinky treats it as a
+    #    relative pathname which can match files in any directory. For
+    #    example, the rule `test.js` will matching `/test.js` and
+    #   `/component/test.js`.
+    # 3. If the pattern begins with a slash, it will be treated as an
+    #    absolute path starting at the root of the source directory.
+    # 4. If the pattern does not begin with a slash, but does contain one or
+    #    more slashes, it will be treated as a path relative to any
+    #    directory. For example, `test/*.js` will match `/test/main.js`, and
+    #    /component/test/component.js`, but not `main.js`.
+    # 5. A single star `*` in a pattern will match any number of characters within a
+    #    single path component. For example, `/test/*.js` will match
+    #    `/test/main_test.js` but not `/test/component/test.js`.
+    # 6. A double star `**` will match any number of characters including
+    #    path separators. For example `/scripts/**/main.js` will match any
+    #    file named `main.js` under the `/scripts` directory, including
+    #   `/scripts/main.js` and `/scripts/component/main.js`.
+    def find_by_pattern pattern
+      # The strategy here is to convert the pattern into an equivalent
+      # regex and run that against the pathnames of all the files in
+      # the manifest.
+      regex_str = Regexp.escape(pattern)
+                  .gsub('\*\*/', ".*")
+                  .gsub('\*\*', ".*")
+                  .gsub('\*', "[^/]*")
+
+      if regex_str[0] != '/'
+        regex_str = '.*/' + regex_str
+      end
+
+      if regex_str[-1] == '/'
+        regex_str += '.*'
+      end
+
+      regex_str = "^#{regex_str}$"
+
+      regex = Regexp.new(regex_str)
+
+      files(false).reject{|f|
+        !regex.match('/' + f.relative_source_path.to_s) &&
+        !regex.match('/' + f.relative_output_path.to_s)
+      }
+    end
+
     # Finds all the matching manifest files for a particular product.
     # This does not take into account dependencies.
     def files_for_product product
@@ -113,7 +164,7 @@ module Slinky
       # First find the list of files that have been explictly
       # included/excluded
       p["include"].map{|f|
-        mfs = (find_by_path(f, true) + files(false).reject{|mf| !mf.matches?(f, true)})
+        mfs = find_by_pattern(f)
               .map{|mf| [mf] + g[f]}
               .flatten
               .reject{|f| f.output_path.extname != type}

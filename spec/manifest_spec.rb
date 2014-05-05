@@ -434,6 +434,107 @@ describe "Manifest" do
     end
   end
 
+  context "FindByPattern" do
+    def cf(file)
+      FileUtils.mkdir_p(Pathname.new(file).dirname)
+      File.open(file, "w+").close
+    end
+    def test(md, pattern, files)
+      md.find_by_pattern(pattern).map{|mf| mf.relative_source_path.to_s}
+        .sort.should == files.sort
+    end
+
+    before :all do
+      FileUtils.mkdir("/find")
+
+      cf("/find/main.js")
+      cf("/find/main/main.js")
+      cf("/find/main/test.js")
+      cf("/find/src/main.coffee")
+      cf("/find/src/main_test.js")
+      cf("/find/src/main/main.js")
+      cf("/find/src/component/main.js")
+      cf("/find/src/component/test.js")
+      cf("/find/src/component/test/test.js")
+
+      @md = Slinky::Manifest.new("/find", @config, :devel => false)
+    end
+
+    it "find_by_pattern should follow rule #1" do
+      test(@md, "/src/", [
+             "src/main.coffee",
+             "src/main_test.js",
+             "src/main/main.js",
+             "src/component/main.js",
+             "src/component/test.js",
+             "src/component/test/test.js"
+           ])
+    end
+
+    it "find_by_pattern should follow rule #2" do
+      test(@md, "test.js", ["main/test.js",
+                           "src/component/test.js",
+                           "src/component/test/test.js"])
+    end
+
+    it "find_by_pattern should follow rule #3" do
+      test(@md, "/main/*.js", [
+             "main/main.js",
+             "main/test.js"
+           ])
+    end
+
+    it "find_by_pattern should follow rule #4" do
+      test(@md, "main/", [
+             "main/main.js",
+             "main/test.js",
+             "src/main/main.js"
+           ])
+
+      test(@md, "main/main*", [
+             "main/main.js",
+             "src/main/main.js"
+           ])
+    end
+
+    it "find_by_pattern should follow rule #5" do
+      test(@md, "/*/*.js", [
+             "main/main.js",
+             "main/test.js",
+             "src/main.coffee",
+             "src/main_test.js"
+           ])
+
+      test(@md, "/*/*test.js", [
+             "main/test.js",
+             "src/main_test.js"
+           ])
+    end
+
+    it "find_by_pattern should follow rule #6" do
+      test(@md, "/**/*.js", [
+             "main.js",
+             "main/main.js",
+             "main/test.js",
+             "src/main.coffee",
+             "src/main_test.js",
+             "src/main/main.js",
+             "src/component/main.js",
+             "src/component/test.js",
+             "src/component/test/test.js"
+           ])
+
+      test(@md, "src/**/*.js", [
+             "src/main.coffee",
+             "src/main_test.js",
+             "src/main/main.js",
+             "src/component/main.js",
+             "src/component/test.js",
+             "src/component/test/test.js"
+           ])
+    end
+  end
+
   context "Products" do
     it "should fail if non-configured product is requested" do
       proc { @mdevel.files_for_product("/something.js") }
@@ -518,6 +619,21 @@ eos
       contents.include?("slinky_product").should == false
       contents.include?('<script type="text/javascript" src="/l1/test.js">').
         should == true
+    end
+
+    it "should full match syntax" do
+      config = {"produce" => {"/special.js" => {"include" => ["/l1/**/*.js"]}}}
+
+      config = Slinky::ConfigReader.new(config)
+
+      mdevel = Slinky::Manifest.new("/src", config, :devel => true)
+
+      mdevel.files_for_product("/special.js")
+        .map{|x| x.source}.sort.should == ["/src/l1/l2/test3.coffee",
+                                           "/src/l1/l2/test6.js",
+                                           "/src/l1/test.js",
+                                           "/src/l1/test2.js",
+                                           "/src/l1/test5.js"].sort
     end
 
     it "should build products in production mode" do

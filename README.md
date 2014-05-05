@@ -374,8 +374,9 @@ for globbing. These are interpreted similarly to .gitignore rules. The full
 specification is:
 
 1. If the pattern ends with a slash, it will only match directories;
-   e.g. `foo/` would match a directory `foo/` but not a file `foo`.
-   Other than that, the trailing slash is ignored in path handling.
+   e.g. `foo/` would match a directory `foo/` but not a file `foo`. In
+   a file context, matching a directory is equivalent to matching all
+   files under that directory, recursively.
 2. If the pattern does not contain a slash, slinky treats it as a
    relative pathname which can match files in any directory. For
    example, the rule `test.js` will matching `/test.js` and
