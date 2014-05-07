@@ -224,7 +224,7 @@ describe "Manifest" do
     it "should fail if a required file isn't in the manifest" do
       FileUtils.rm("/src/l1/test2.js")
       manifest = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
-      $stderr.should_receive(:puts).with("Could not find file test2.js required by /src/l1/test.js".foreground(:red))
+      $stderr.should_receive(:puts).with("Could not find file test2.js required by /l1/test.js".foreground(:red))
       proc {
         manifest.dependency_graph
       }.should raise_error Slinky::FileNotFoundError
@@ -272,6 +272,25 @@ describe "Manifest" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test2.sass/)
       $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test5.coffee/)
       f.process
+    end
+
+    it "should handle depends directives in config" do
+      cf "/depend/script/vendor/backbone.js"
+      cf "/depend/script/vendor/jquery.js"
+      cf "/depend/script/vendor/underscore.js"
+
+      config = <<eos
+dependencies:
+  "/script/vendor/backbone.js":
+      - "/script/vendor/jquery.js"
+      - "/script/vendor/underscore.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+
+      mdevel = Slinky::Manifest.new("/depend", config, :devel => true)
+
+      files = mdevel.files_for_product("/scripts.js").map{|x| x.source}
+      files[2].should == "/depend/script/vendor/backbone.js"
     end
 
     it "should cache files" do
@@ -435,10 +454,6 @@ describe "Manifest" do
   end
 
   context "FindByPattern" do
-    def cf(file)
-      FileUtils.mkdir_p(Pathname.new(file).dirname)
-      File.open(file, "w+").close
-    end
     def test(md, pattern, files)
       md.find_by_pattern(pattern).map{|mf| mf.relative_source_path.to_s}
         .sort.should == files.sort

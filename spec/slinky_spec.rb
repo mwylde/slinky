@@ -129,7 +129,7 @@ eos
     it "should not crash for syntax errors" do
       File.open("/src/bad_file.haml", "w+"){|f| f.write("%head{") }
       mf = Slinky::ManifestFile.new("/src/bad_file.haml", nil, @mdevel)
-      $stderr.should_receive(:puts).with(/Failed on/)
+      $stderr.should_receive(:puts).with(/Failed/)
       @resp.should_receive(:status=).with(500)
       Slinky::Server.handle_file @resp, mf
     end

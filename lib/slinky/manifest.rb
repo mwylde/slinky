@@ -4,8 +4,8 @@ require 'digest/md5'
 require 'matrix'
 
 module Slinky
-  # extensions of files that can contain build directives
-  DIRECTIVE_FILES = %w{js css html haml sass scss coffee}
+  # extensions of non-compiled files that can contain build directives
+  DIRECTIVE_FILES = %w{js css html}
   DEPENDS_DIRECTIVE = /^[^\n\w]*(slinky_depends)\((".*"|'.+'|)\)[^\n\w]*$/
   REQUIRE_DIRECTIVE = /^[^\n\w]*(slinky_require)\((".*"|'.+'|)\)[^\n\w]*$/
   SCRIPTS_DIRECTIVE = /^[^\n\w]*(slinky_scripts)[^\n\w]*$/
@@ -29,7 +29,7 @@ module Slinky
   class NoSuchProductError < StandardError; end
 
   class Manifest
-    attr_accessor :manifest_dir, :dir
+    attr_accessor :manifest_dir, :dir, :config
 
     def initialize dir, config, options = {}
       @dir = dir
@@ -255,18 +255,9 @@ module Slinky
 
       graph = []
       files(false).each{|mf|
-        mf.directives[:slinky_require].each{|rf|
-          required = mf.parent.find_by_path(rf, true)
-          if required.size > 0
-            required.each{|x|
-              graph << [x, mf]
-            }
-          else
-            error = "Could not find file #{rf} required by #{mf.source}"
-            $stderr.puts error.foreground(:red)
-            raise FileNotFoundError.new(error)
-          end
-        } if mf.directives[:slinky_require]
+        mf.dependencies.each{|d|
+          graph << [d, mf]
+        }
       }
 
       @dependency_graph = Graph.new(files(false), graph)
@@ -398,6 +389,11 @@ module Slinky
     #
     # @return [ManifestFile] the manifest file at that path if one exists
     def find_by_path path, allow_multiple = false
+      if path[0] == '/'
+        # refer absolute paths to the manifest
+        return @manifest.find_by_path(path[1..-1], allow_multiple)
+      end
+
       components = path.to_s.split(File::SEPARATOR).reject{|x| x == ""}
       case components.size
       when 0
@@ -501,6 +497,25 @@ module Slinky
     def invalidate
       @last_built = Time.at(0)
       @last_md5 = nil
+    end
+
+    # Gets the list of manifest files that this one depends on
+    # according to its directive list and the dependencies config
+    # option.
+    #
+    # Throws a FileNotFoundError if a dependency doesn't exist in the
+    # tree.
+    def dependencies
+      (@directives[:slinky_require].to_a +
+       @manifest.config.dependencies["/" + relative_source_path.to_s].to_a).map{|rf|
+        required = parent.find_by_path(rf, true).flatten
+        if required.empty?
+          error = "Could not find file #{rf} required by /#{relative_source_path}"
+          $stderr.puts error.foreground(:red)
+          raise FileNotFoundError.new(error)
+        end
+        required
+      }.flatten
     end
 
     # Predicate which determines whether the supplied name is the same
@@ -710,6 +725,10 @@ module Slinky
         @last_built = Time.now
       end
       to
+    end
+
+    def inspect
+      to_s
     end
 
     def to_s

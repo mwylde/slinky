@@ -226,3 +226,9 @@ def run_for secs
     }
   end
 end
+
+# Create an empty file and the enclosing directory, if needed
+def cf(file)
+  FileUtils.mkdir_p(Pathname.new(file).dirname)
+  File.open(file, "w+").close
+end
