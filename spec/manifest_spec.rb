@@ -697,5 +697,34 @@ eos
 
       File.exists?("/build_nested/d1/d2/d3/special.js").should == true
     end
+
+    it "should not build scripts if they are not included in products" do
+      config = <<eos
+produce:
+  "/special.js":
+    include:
+      - "/l1/l2/test6.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+
+      File.open("/src/product.html", "w+"){|f|
+        f.write("<html><head>\nslinky_product('/special.js')\n</head></html")
+      }
+
+      mprod = Slinky::Manifest.new("/src",
+                                   config,
+                                   :devel => false,
+                                   :build_to => "/build_special")
+
+      $stdout.should_receive(:puts).with(/Compiled/).exactly(1).times
+      path = mprod.find_by_path("/product.html").first.process(nil, true)
+      mprod.build
+
+      File.exists?("/build_special/special.js").should == true
+      File.read("/build_special/special.js").
+        include?('console.log("Hello!");').should == false
+      File.exists?("/build_special/scripts.js").should == false
+      File.exists?("/build_special/styles.css").should == false
+    end
   end
 end
