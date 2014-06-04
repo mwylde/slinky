@@ -282,7 +282,7 @@ module Slinky
         }
 
         # clean up the files that have been processed
-        files_for_all_products.each{|mf| FileUtils.rm(mf.build_to)}
+        files_for_all_products.each{|mf| FileUtils.rm(mf.build_to, :force => true)}
       end
     end
 
