@@ -430,7 +430,6 @@ eos
       mprod.build
 
       File.read("/build/scripts.js").include?("IGNORE!!!").should == false
-      File.exists?("/build/l1/l2/ignore.js").should == true
     end
 
     it "should properly handle ignores for styles" do
@@ -449,7 +448,6 @@ eos
       mprod.build
 
       File.read("/build/styles.css").include?("IGNORE!!!").should == false
-      File.exists?("/build/l1/l2/ignore.css").should == true
     end
   end
 
@@ -669,7 +667,7 @@ eos
                                    :devel => false,
                                    :build_to => "/build_special")
 
-      $stdout.should_receive(:puts).with(/Compiled/).exactly(3).times
+      $stdout.should_receive(:puts).with(/Compiled/).exactly(2).times
       path = mprod.find_by_path("/product.html").first.process(nil, true)
       mprod.build
 
@@ -694,7 +692,7 @@ eos
                                    :devel => false,
                                    :build_to => "/build_nested")
 
-      $stdout.should_receive(:puts).with(/Compiled/).exactly(3).times
+      $stdout.should_receive(:puts).with(/Compiled/).exactly(2).times
       mprod.build
 
       File.exists?("/build_nested/d1/d2/d3/special.js").should == true

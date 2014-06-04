@@ -194,6 +194,13 @@ module Slinky
       }
     end
 
+    def files_for_all_products
+      return @files_for_all_products if @files_for_all_products
+      @files_for_all_products = @config.produce.keys.map{|product|
+        files_for_product(product)
+      }.flatten.uniq
+    end
+
     def compress_product product
       compressor = compressor_for_product product
       post_processor = post_processor_for_product product
@@ -275,9 +282,7 @@ module Slinky
         }
 
         # clean up the files that have been processed
-        @config.produce.keys.map{|product|
-          files_for_product(product)
-        }.flatten.uniq.each{|mf| FileUtils.rm(mf.build_to)}
+        files_for_all_products.each{|mf| FileUtils.rm(mf.build_to)}
       end
     end
 
@@ -324,6 +329,7 @@ module Slinky
       @files = nil
       @dependency_graph = nil
       @md5 = nil
+      @files_for_all_products = nil
     end
 
     def html_for_path path
@@ -467,9 +473,16 @@ module Slinky
       unless File.directory?(@build_dir.to_s)
         FileUtils.mkdir(@build_dir.to_s)
       end
-      (@files + @children).each{|m|
+
+      keep_directory = (@files + @children).map {|m|
         m.build
-      }
+      }.inject(false) {|memo, keep| memo || keep}
+
+      unless keep_directory
+        FileUtils.rmdir(@build_dir.to_s)
+      end
+
+      keep_directory
     end
 
     def to_s
@@ -708,6 +721,9 @@ module Slinky
     # Builds the file by handling and compiling it and then copying it
     # to the build path
     def build
+      unless should_build
+        return false
+      end
       if !File.exists? @build_path
         FileUtils.mkdir_p(@build_path)
       end
@@ -725,6 +741,10 @@ module Slinky
         @last_built = Time.now
       end
       to
+    end
+
+    def should_build
+      @manifest.files_for_all_products.include?(self) || ![".js", ".css"].include?(output_path.extname)
     end
 
     def inspect
