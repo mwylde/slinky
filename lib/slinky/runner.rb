@@ -70,7 +70,7 @@ module Slinky
       EM::run {
         @config ||= Config.empty
 
-        Slinky::Server.dir = @options[:src_dir]
+        Slinky::Server.dir = @options[:src_dir] || @config.src_dir
         Slinky::Server.config = @config
         manifest = Manifest.new(Slinky::Server.dir,
                                 Slinky::Server.config)
