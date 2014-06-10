@@ -718,9 +718,8 @@ module Slinky
     # Builds the file by handling and compiling it and then copying it
     # to the build path
     def build
-      unless should_build
-        return false
-      end
+      return nil unless should_build
+      
       if !File.exists? @build_path
         FileUtils.mkdir_p(@build_path)
       end
