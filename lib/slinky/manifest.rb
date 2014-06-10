@@ -474,15 +474,12 @@ module Slinky
         FileUtils.mkdir(@build_dir.to_s)
       end
 
-      keep_directory = (@files + @children).map {|m|
-        m.build
-      }.any?
-
-      unless keep_directory
+      if (@files + @children).map {|m| m.build}.any?
+        @build_dir
+      else
         FileUtils.rmdir(@build_dir.to_s)
+        nil
       end
-
-      keep_directory
     end
 
     def to_s
