@@ -476,7 +476,7 @@ module Slinky
 
       keep_directory = (@files + @children).map {|m|
         m.build
-      }.inject(false) {|memo, keep| memo || keep}
+      }.any?
 
       unless keep_directory
         FileUtils.rmdir(@build_dir.to_s)
