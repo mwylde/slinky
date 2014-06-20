@@ -1,7 +1,7 @@
 module Slinky
   module ProxyServer
     HTTP_MATCHER = /(GET|POST|PUT|DELETE|HEAD) (.+?)(?= HTTP)/
-    HOST_MATCHER = /Host: (.+)/
+    HOST_MATCHER = /Host: (\S+)/
 
     def self.process_proxies proxy_hash
       proxy_hash.map{|from, h|
