@@ -2,6 +2,7 @@
 require 'pathname'
 require 'digest/md5'
 require 'matrix'
+require 'set'
 
 module Slinky
   # extensions of non-compiled files that can contain build directives
@@ -161,6 +162,12 @@ module Slinky
       # Topological indices for each file
       indices = {}
       dependency_list.each_with_index{|f, i| indices[f] = i}
+
+      # Compute the set of excluded files
+      excludes = Set.new((p["exclude"] || []).map{|p|
+                           find_by_pattern(p)
+                         }.flatten.uniq)
+
       # First find the list of files that have been explictly
       # included/excluded
       p["include"].map{|f|
@@ -174,9 +181,7 @@ module Slinky
         end
         mfs.flatten
       }.flatten.reject{|f|
-        p["exclude"].any?{|ex|
-          f.matches_path?(ex, true)
-        } if p["exclude"]
+        excludes.include?(f)
       # Then add all the files these require
       }.map{|f|
         # Find all of the downstream files

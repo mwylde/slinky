@@ -597,6 +597,31 @@ eos
                                            "/src/l1/test5.js"].sort
     end
 
+    it "should support full match syntax for excludes" do
+      config = <<eos
+produce:
+  "/special.js":
+    include:
+      - "/l1/*.js"
+    exclude:
+      - "exclude.js"
+eos
+      config = Slinky::ConfigReader.new(config)
+      config.produce.should == {"/special.js" => {
+                                  "include" => ["/l1/*.js"],
+                                  "exclude" => ["exclude.js"]
+                                }}
+
+      File.open("/src/l1/exclude.js", "w+").close
+
+      mdevel = Slinky::Manifest.new("/src", config, :devel => true)
+
+      mdevel.files_for_product("/special.js")
+        .map{|x| x.source}.sort.should == [
+        "/src/l1/test2.js", "/src/l1/test.js", "/src/l1/test5.js",
+        "/src/l1/l2/test3.coffee", "/src/l1/l2/test6.js"].sort
+    end
+    
     it "should fail if a product rule does not match anything" do
       config = <<eos
 produce:
