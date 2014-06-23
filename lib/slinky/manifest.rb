@@ -19,16 +19,6 @@ module Slinky
                                   PRODUCT_DIRECTIVE)
   CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
-  # Raised when a compilation fails for any reason
-  class BuildFailedError < StandardError; end
-  # Raised when a required file is not found.
-  class FileNotFoundError < StandardError; end
-  # Raised when there is a cycle in the dependency graph (i.e., file A
-  # requires file B which requires C which requires A)
-  class DependencyError < StandardError; end
-  # Raise when there is a request for a product that doesn't exist
-  class NoSuchProductError < StandardError; end
-
   class Manifest
     attr_accessor :manifest_dir, :dir, :config
 
@@ -148,13 +138,13 @@ module Slinky
     # This does not take into account dependencies.
     def files_for_product product
       if !p = @config.produce[product]
-        raise NoSuchProductError.
-               new("Product <#{product}> has not been configured")
+        SlinkyError.raise NoSuchProductError,
+               "Product '#{product}' has not been configured"
       end
 
       type = type_for_product product
       if type != ".js" && type != ".css"
-        raise InvalidConfigError.new("Only .js and .css products are supported")
+        SlinkyError.raise InvalidConfigError, "Only .js and .css products are supported"
       end
 
       g = dependency_graph.transitive_closure
@@ -168,42 +158,46 @@ module Slinky
                            find_by_pattern(p)
                          }.flatten.uniq)
 
-      # First find the list of files that have been explictly
-      # included/excluded
-      p["include"].map{|f|
-        mfs = find_by_pattern(f)
-              .map{|mf| [mf] + g[f]}
-              .flatten
-              .reject{|f| f.output_path.extname != type}
-        if mfs.empty?
-          raise FileNotFoundError.new(
-            "No files matched by include #{f} in product #{product}")
-        end
-        mfs.flatten
-      }.flatten.reject{|f|
-        excludes.include?(f)
-      # Then add all the files these require
-      }.map{|f|
-        # Find all of the downstream files
-        # check that we're not excluding any required files
-        g[f].each{|rf|
-          if p["exclude"] && r = p["exclude"].find{|ex| rf.matches_path?(ex, true)}
-            raise DependencyError.new(
-              "File #{f} requires #{rf} which is excluded by exclusion rule #{r}")
+      SlinkyError.batch_errors do
+        # First find the list of files that have been explictly
+        # included/excluded
+        p["include"].map{|f|
+          mfs = find_by_pattern(f)
+                .map{|mf| [mf] + g[f]}
+                .flatten
+                .reject{|f| f.output_path.extname != type}
+          if mfs.empty?
+            SlinkyError.raise FileNotFoundError,
+                              "No files matched by include #{f} in product #{product}"
           end
+          mfs.flatten
+        }.flatten.reject{|f|
+          excludes.include?(f)
+          # Then add all the files these require
+        }.map{|f|
+          # Find all of the downstream files
+          # check that we're not excluding any required files
+          g[f].each{|rf|
+            if p["exclude"] && r = p["exclude"].find{|ex| rf.matches_path?(ex, true)}
+              SlinkyError.raise DependencyError,
+                "File #{f} requires #{rf} which is excluded by exclusion rule #{r}"
+            end
+          }
+          [f] + g[f]
+        }.flatten.uniq.sort_by{|f|
+          # Sort by topological order
+          indices[f]
         }
-        [f] + g[f]
-      }.flatten.uniq.sort_by{|f|
-        # Sort by topological order
-        indices[f]
-      }
+      end
     end
 
     def files_for_all_products
       return @files_for_all_products if @files_for_all_products
-      @files_for_all_products = @config.produce.keys.map{|product|
-        files_for_product(product)
-      }.flatten.uniq
+      SlinkyError.batch_errors do
+        @files_for_all_products = @config.produce.keys.map{|product|
+          files_for_product(product)
+        }.flatten.uniq
+      end
     end
 
     def compress_product product
@@ -521,16 +515,17 @@ module Slinky
     # Throws a FileNotFoundError if a dependency doesn't exist in the
     # tree.
     def dependencies
-      (@directives[:slinky_require].to_a +
-       @manifest.config.dependencies["/" + relative_source_path.to_s].to_a).map{|rf|
-        required = parent.find_by_path(rf, true).flatten
-        if required.empty?
-          error = "Could not find file #{rf} required by /#{relative_source_path}"
-          $stderr.puts error.foreground(:red)
-          raise FileNotFoundError.new(error)
-        end
-        required
-      }.flatten
+      SlinkyError.batch_errors do
+        (@directives[:slinky_require].to_a +
+         @manifest.config.dependencies["/" + relative_source_path.to_s].to_a).map{|rf|
+          required = parent.find_by_path(rf, true).flatten
+          if required.empty?
+            error = "Could not find file #{rf} required by /#{relative_source_path}"
+            SlinkyError.raise FileNotFoundError, error
+          end
+          required
+        }.flatten
+      end
     end
 
     # Predicate which determines whether the supplied name is the same
@@ -691,27 +686,32 @@ module Slinky
         find_directives
       end
 
-      depends = @directives[:slinky_depends].map{|f|
-        p = parent.find_by_path(f, true)
-        $stderr.puts "File #{f} depended on by #{@source} not found".foreground(:red) unless p.size > 0
-        p
-      }.flatten.compact if @directives[:slinky_depends]
-      depends ||= []
-      @processing = true
-      # process each file on which we're dependent, watching out for 
-      # infinite loops
-      depends.each{|f| f.process }
-      @processing = false
+      SlinkyError.batch_errors do
+        depends = @directives[:slinky_depends].map{|f|
+          p = parent.find_by_path(f, true)
+          unless p.size > 0        
+            SlinkyError.raise DependencyError,
+                              "File #{f} dependedon by #{@source} not found" 
+          end
+          p
+        }.flatten.compact if @directives[:slinky_depends]
+        depends ||= []
+        @processing = true
+        # process each file on which we're dependent, watching out for 
+        # infinite loops
+        depends.each{|f| f.process }
+        @processing = false
 
-      # get hash of source file
-      if @last_path && hash == @last_md5 && depends.all?{|f| f.updated < start_time}
-        @last_path
-      else
-        @last_md5 = hash
-        @updated = Time.now
-        # mangle file appropriately
-        f = should_compile ? (compile @source) : @source
-        @last_path = handle_directives(f, to)
+        # get hash of source file
+        if @last_path && hash == @last_md5 && depends.all?{|f| f.updated < start_time}
+          @last_path
+        else
+          @last_md5 = hash
+          @updated = Time.now
+          # mangle file appropriately
+          f = should_compile ? (compile @source) : @source
+          @last_path = handle_directives(f, to)
+        end
       end
     end
 
@@ -729,15 +729,9 @@ module Slinky
         FileUtils.mkdir_p(@build_path)
       end
       to = build_to
-      begin 
-        path = process to
-      rescue
-        raise BuildFailedError
-      end
+      path = process to
 
-      if !path
-        raise BuildFailedError
-      elsif path != to
+      if path != to
         FileUtils.cp(path.to_s, to.to_s)
         @last_built = Time.now
       end

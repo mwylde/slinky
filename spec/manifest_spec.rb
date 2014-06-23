@@ -137,20 +137,16 @@ describe "Manifest" do
       File.open("/src/l1/l2/bad.sass", "w+"){|f|
         f.write "color: red;"
       }
-      $stderr.should_receive(:puts).with(/Failed on/)
       mf = Slinky::ManifestFile.new("/src/l1/l2/bad.sass", "/src/build", @mprod)
-      build_path = mf.process
-      build_path.should == nil
+      expect { mf.process }.to raise_error Slinky::BuildFailedError
     end
 
     it "shouldn't crash on syntax errors" do
       File.open("/src/l1/asdf.haml", "w+"){|f|
         f.write("%h1{:width => 50px}")
       }
-      $stderr.should_receive(:puts).with(/Failed on/)
       mf = Slinky::ManifestFile.new("/src/l1/asdf.haml", "/src/build", @mprod)
-      build_path = mf.process
-      build_path.should == nil
+      expect { mf.process }.to raise_error Slinky::BuildFailedError
     end
 
     it "should properly determine build directives" do
@@ -224,7 +220,6 @@ describe "Manifest" do
     it "should fail if a required file isn't in the manifest" do
       FileUtils.rm("/src/l1/test2.js")
       manifest = Slinky::Manifest.new("/src", @config, :devel => false, :build_to => "/build")
-      $stderr.should_receive(:puts).with("Could not find file test2.js required by /l1/test.js".foreground(:red))
       proc {
         manifest.dependency_graph
       }.should raise_error Slinky::FileNotFoundError

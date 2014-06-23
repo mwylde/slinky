@@ -62,18 +62,18 @@ module Slinky
     # Takes a manifest file and produces a response for it
     def self.handle_file resp, mf, compile = true
       begin
-        if path = mf.process(nil, compile)
-          serve_file resp, path.to_s
-        else
-          raise StandardError.new
-        end
-      rescue DependencyError => e
+        path = mf.process(nil, compile)
+        serve_file resp, path.to_s
+      rescue SlinkyError => e
         resp.status = 500
-        resp.content = "Dependency error: #{e.message}"
-        $stderr.puts(e.message.foreground(:red))
+        resp.content = e.messages.map{|m| "* #{m}"}.join("\n")
+        e.messages.each{|m|
+          $stderr.puts(m.foreground(:red))
+        }
       rescue => e
         resp.status = 500
-        resp.content = "Error compiling #{mf.source}\n"
+        resp.content = "Unknown error handling #{mf.source}: #{$!}\n"
+        $stderr.puts("Unknown error handling #{mf.source}: #{$!}".foreground(:red))
       end
       resp
     end
