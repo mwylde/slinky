@@ -9,8 +9,10 @@ module Slinky
                               :no_minify => config.dont_minify || options[:no_minify])
       begin
         manifest.build
-      rescue BuildFailedError
-        $stderr.puts "Build failed"
+      rescue SlinkyError => e
+        e.messages.each{|m|
+          $stderr.puts(m.foreground(:red))
+        }
       end
     end
   end

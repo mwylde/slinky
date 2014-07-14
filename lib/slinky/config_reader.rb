@@ -38,6 +38,7 @@ module Slinky
                         DEFAULT_SCRIPT_PRODUCT => {"include" => ["*.js"]},
                         DEFAULT_STYLE_PRODUCT => {"include" => ["*.css"]}
                       }),
+      ConfigEntry.new("enable_browser_errors", BOOL_TYPE, false)
     ]
 
     @entries.each{|e|

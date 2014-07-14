@@ -1,0 +1,32 @@
+#slinky-error {
+  font-family: Helvetica, Arial, Sans-Serif;
+}
+
+#slinky-error .slinky-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background-color: rgb(141, 55, 55);
+  text-align: center;
+  font-size: 1.5em;
+  line-height: 1.5em;
+  color: whitesmoke;
+  text-shadow: -1px -1px rgba(0, 0, 0, 0.2)
+}
+
+#slinky-error .slinky-body {
+  position: absolute;
+  top: 100px; left: 0; right: 0;
+  padding: 0 50px;
+  padding-bottom: 20px;
+  font-size: 1.25em;
+  color: black;
+  background-color: whitesmoke;
+  border-bottom: 1px solid #aaa;
+}
+
+#slinky-error .slinky-body li {
+  padding-top: 20px;
+}

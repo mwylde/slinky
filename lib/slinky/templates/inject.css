@@ -1,0 +1,27 @@
+body:before {
+  font-family: Helvetica, Arial, Sans-Serif;
+  content: "oh no! build error!";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background-color: rgb(141, 55, 55);
+  text-align: center;
+  font-size: 2.5em;
+  line-height: 2.5em;
+  color: whitesmoke;
+  text-shadow: -1px -1px rgba(0, 0, 0, 0.2)
+}
+
+body:after {
+  font-family: Helvetica, Arial, Sans-Serif;
+  content: '{REPLACE_ERRORS}';
+  position: absolute;
+  top: 100px; left: 0; right: 0;
+  padding: 20px 50px;
+  font-size: 1.25em;
+  color: black;
+  background-color: whitesmoke;
+  border-bottom: 1px solid #aaa;
+}

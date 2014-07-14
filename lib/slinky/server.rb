@@ -2,6 +2,11 @@ module Slinky
   module Server
     include EM::HttpServer
 
+    INJECT_CSS = File.read("#{File.dirname(__FILE__)}/templates/inject.css")
+    ERROR_CSS = File.read("#{File.dirname(__FILE__)}/templates/error.css")
+    ERROR_HAML = File.read("#{File.dirname(__FILE__)}/templates/error.haml")
+    ERROR_JS = File.read("#{File.dirname(__FILE__)}/templates/error.js")
+
     # Sets the root directory from which files should be served
     def self.dir= _dir; @dir = _dir; end
     # Gets the root directory from which files should be served
@@ -59,6 +64,28 @@ module Slinky
       resp
     end
 
+    # Produces nice error output for various kinds of formats
+    def self.format_error_output resp, mf, error
+      resp.content =
+        case Pathname.new(mf.output_path).extname
+        when ".html"
+          Haml::Engine.new(ERROR_HAML).
+            render(Object.new, errors: error.messages, css: ERROR_CSS)
+        when ".css"
+          resp.status = 200 # browsers ignore 500'd css
+          INJECT_CSS.gsub("{REPLACE_ERRORS}",
+                          error.messages.join("\n").gsub("'", "\""))
+        when ".js"
+          resp.status = 200 # browsers ignore 500'd js
+          ERROR_JS
+            .gsub("{REPLACE_CSS}",
+                  JSON.dump({css: ERROR_CSS.gsub("\n", "")}))
+            .gsub("{REPLACE_ERRORS}", JSON.dump(error.messages))
+        else
+          error.message
+        end
+    end
+
     # Takes a manifest file and produces a response for it
     def self.handle_file resp, mf, compile = true
       begin
@@ -66,13 +93,18 @@ module Slinky
         serve_file resp, path.to_s
       rescue SlinkyError => e
         resp.status = 500
-        resp.content = e.messages.map{|m| "* #{m}"}.join("\n")
+        if self.config.enable_browser_errors
+          format_error_output(resp, mf, e)
+        else
+          resp.content = e.message
+        end
         e.messages.each{|m|
           $stderr.puts(m.foreground(:red))
         }
       rescue => e
         resp.status = 500
-        resp.content = "Unknown error handling #{mf.source}: #{$!}\n"
+        format_error_output(resp, mf, SlinkyError.new(
+                              "Unknown error handling #{mf.source}: #{$!}\n"))
         $stderr.puts("Unknown error handling #{mf.source}: #{$!}".foreground(:red))
       end
       resp
