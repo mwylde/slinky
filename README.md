@@ -209,6 +209,8 @@ no_proxy: true
 no_livereload: true
 livereload_port: 5556
 dont_minify: true
+# enable browser error injection (experimental)
+enable_browser_errors: true
 ```
 
 Most are self explanatory, but a few of the options merit further
