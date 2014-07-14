@@ -1,0 +1,13 @@
+!!!5
+%html
+  %head
+    %title Slinky encountered an error
+    %style{:type => "text/css"}= css
+  %body
+    #slinky-error
+      .slinky-header
+        %h1 Oh no! Build error!
+      .slinky-body
+        %ul
+          - errors.each do |error|
+            %li= error

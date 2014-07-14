@@ -129,7 +129,7 @@ eos
     it "should not crash for syntax errors" do
       File.open("/src/bad_file.haml", "w+"){|f| f.write("%head{") }
       mf = Slinky::ManifestFile.new("/src/bad_file.haml", nil, @mdevel)
-      $stderr.should_receive(:puts).with(/Failed/)
+      $stderr.should_receive(:puts).with(/Compilation failed/)
       @resp.should_receive(:status=).with(500)
       Slinky::Server.handle_file @resp, mf
     end
@@ -173,6 +173,7 @@ eos
     before :each do
       @compilation_subs = {".sass" => ".css", ".coffee" => ".js", ".haml" => ".html"}
     end
+
     it "should build manifest to build directory" do
       $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(3).times
       options = {:src_dir => "/src", :build_dir => "/build"}

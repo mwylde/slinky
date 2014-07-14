@@ -14,6 +14,7 @@ require 'listen'
 require 'multi_json'
 
 require "slinky/em-popen3"
+require "slinky/errors"
 require "slinky/compilers"
 require "slinky/config_reader"
 require "slinky/graph"
