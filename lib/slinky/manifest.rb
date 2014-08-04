@@ -60,7 +60,12 @@ module Slinky
 
     # Notifies of an update to a file in the manifest
     def update_all_by_path paths
-      manifest_update paths
+      manifest_update paths do |path|
+        mf = find_by_path(path).first()
+        if mf
+          mf.find_directives
+        end
+      end
     end
 
     # Removes a file from the manifest
