@@ -213,7 +213,7 @@ module Slinky
       FileUtils.mkdir_p("#{@build_to}/#{Pathname.new(product).dirname}")
       File.open("#{@build_to}/#{product}", "w+"){|f|
         unless @no_minify
-          f.write(compressor.compress(s))
+          f.write(compressor[s])
         else
           f.write(s)
         end
@@ -308,9 +308,12 @@ module Slinky
     def compressor_for_product product
       case type_for_product(product)
       when ".js"
-        YUI::JavaScriptCompressor.new(:munge => false)
+        # Use UglifyJS
+        lambda{|s| Uglifier.compile(s.force_encoding("UTF-8"),
+                               mangle: false, output: {ascii_only: false})}
       when ".css"
-        SassCompressor.new
+        # Use SASS's compressed output
+        lambda{|s| Sass::Engine.new(s, :syntax => :scss, :style => :compressed).render}
       end
     end
 

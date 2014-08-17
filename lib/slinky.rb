@@ -9,9 +9,9 @@ require 'tempfile'
 require 'rainbow'
 require 'optparse'
 require 'mime/types'
-require 'yui/compressor'
 require 'listen'
 require 'multi_json'
+require 'uglifier'
 
 require "slinky/em-popen3"
 require "slinky/errors"
@@ -26,7 +26,6 @@ require "slinky/runner"
 require "slinky/builder"
 require "slinky/listener"
 require "slinky/live_reload"
-require "slinky/sass_compressor"
 
 # load compilers
 root = File.expand_path(File.dirname(__FILE__))
@@ -39,11 +38,3 @@ Dir.glob("#{root}/slinky/compilers/*.rb").each{|compiler|
     puts "Failed to load #{compiler}: syntax error"
   end
 }
-
-# Without this monkeypatch data uris in CSS cause compression to fail
-class YUI::Compressor
-  def command
-    @command.insert 1, "-Xss8m"
-    @command.map { |word| Shellwords.escape(word) }.join(" ")
-  end
-end

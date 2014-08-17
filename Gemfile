@@ -8,7 +8,7 @@ gem "em-websocket", "~> 0.3"
 gem "em-proxy", "~> 0.1"
 gem "rainbow", "~> 1.1"
 gem "mime-types", "~> 1.16"
-gem "yui-compressor", "~> 0.12"
+gem "uglifier", "~> 2.5"
 gem "listen", "~> 2.4"
 
 # compilation support gems
