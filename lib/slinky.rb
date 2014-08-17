@@ -26,6 +26,7 @@ require "slinky/runner"
 require "slinky/builder"
 require "slinky/listener"
 require "slinky/live_reload"
+require "slinky/sass_compressor"
 
 # load compilers
 root = File.expand_path(File.dirname(__FILE__))

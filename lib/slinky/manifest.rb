@@ -310,7 +310,7 @@ module Slinky
       when ".js"
         YUI::JavaScriptCompressor.new(:munge => false)
       when ".css"
-        YUI::CssCompressor.new()
+        SassCompressor.new
       end
     end
 
