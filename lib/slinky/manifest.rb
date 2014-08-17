@@ -356,7 +356,9 @@ module Slinky
       }
       invalidate_cache
       files.each{|f|
-        if f.directives.include?(:slinky_scripts) || f.directives.include?(:slinky_styles)
+        if f.directives.include?(:slinky_scripts) ||
+           f.directives.include?(:slinky_styles) ||
+           f.directives.include?(:slinky_product)
           f.invalidate
           f.process
         end

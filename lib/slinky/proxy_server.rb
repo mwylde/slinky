@@ -23,7 +23,14 @@ module Slinky
     end
 
     def self.rewrite_path path, proxy
-      path.gsub(/^#{proxy[0]}/, "")
+      if proxy[0] == "/"
+        # If we're proxying everything, we just want to pass the path
+        # through unmodified. Otherwise we end up stripping the
+        # initial slash, which is the wrong behavior.
+        path
+      else
+        path.gsub(/^#{proxy[0]}/, "")
+      end
     end
 
     def self.replace_path http, old_path, new_path, addition
@@ -62,7 +69,6 @@ module Slinky
                      end
             [data, [server]]
           rescue
-            $stderr.puts "Got error: #{$!}".foreground(:red)
             conn.send_data "HTTP/1.1 500 Ooops...something went wrong\r\n"
           end
         end

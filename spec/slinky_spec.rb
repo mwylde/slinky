@@ -189,7 +189,7 @@ eos
       @config = <<eos
 proxy:
   "/test1": "http://127.0.0.1:8000"
-  "/test2": "http://127.0.0.1:7000"
+  "/test2": "http://127.0.0.1:7000/"
 ignore:
   - script/vendor
   - script/jquery.js
@@ -214,7 +214,7 @@ eos
       File.open("/src/slinky.yaml", "w+"){|f| f.write @config}
       @proxies = {
         "/test1" => "http://127.0.0.1:8000",
-        "/test2" => "http://127.0.0.1:7000"
+        "/test2" => "http://127.0.0.1:7000/"
       }
       @ignores = ["script/vendor", "script/jquery.js"]
       @pushstates = {
@@ -262,7 +262,7 @@ eos
     before :each do
       @config = <<eos
 proxy:
-  "/test1": "http://127.0.0.1:8000"
+  "/test1": "http://127.0.0.1:8000/"
   "/test2/": "http://127.0.0.1:7000"
 eos
       @cr = Slinky::ConfigReader.new(@config)
@@ -276,7 +276,7 @@ eos
       @proxies.map{|x|
         [x[0], x[1].to_s]
       }.should ==
-        [["/test1", URI::parse("http://127.0.0.1:8000").to_s],
+        [["/test1", URI::parse("http://127.0.0.1:8000/").to_s],
          ["/test2/", URI::parse("http://127.0.0.1:7000").to_s]]
     end
 
@@ -288,7 +288,7 @@ eos
     it "should find the correct matcher for a request" do
       p = Slinky::ProxyServer.find_matcher(@proxies, "/test1/this/is/another")
       p[0].should == "/test1"
-      p[1].to_s.should == "http://127.0.0.1:8000"
+      p[1].to_s.should == "http://127.0.0.1:8000/"
 
       p = Slinky::ProxyServer.find_matcher(@proxies, "/test2/whatsgoing.html?something=asdf")
       p[0].should == "/test2/"
@@ -331,6 +331,20 @@ eos
       @proxies[0][0].should == "/test3"
       @proxies[0][1].to_s.should == "http://127.0.0.1:6000"
       @proxies[0][2].should == {"lag" => 1000}
+    end
+
+    it "should properly rewrite slashes for '/'" do
+      config = <<eos
+proxy:
+  "/": "http://127.0.0.1:6000/"
+eos
+      cr = Slinky::ConfigReader.new(config)
+      proxies = Slinky::ProxyServer.process_proxies(cr.proxy)
+
+      data = "GET /hello HTTP/1.1\r\nHost:127.0.0.1:8000\r\n\r\n\n" 
+      path = data.match(Slinky::ProxyServer::HTTP_MATCHER)[2]
+      p2 = Slinky::ProxyServer.rewrite_path(path, proxies[0])
+      p2.should == "/hello"
     end
   end
 end
