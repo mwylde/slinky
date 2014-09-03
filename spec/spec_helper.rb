@@ -112,16 +112,10 @@ module Slinky
     end
   end
 
-  # Compressors don't work under FakeFS
-  class FakeCompressor
-    def compress s
-      s
-    end
-  end
-
   class Manifest
     def compressor_for_product product
-      FakeCompressor.new
+      # Compressors don't work under FakeFS
+      lambda{|s| s}
     end
   end
 
