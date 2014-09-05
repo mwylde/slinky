@@ -155,6 +155,14 @@ describe "Manifest" do
       mf.find_directives.should == {:slinky_require => ["test2.js", "l2/test3.js"]}
     end
 
+    it "should properly find depends directives" do
+      File.open("/src/depends.sass", "w+") {|f|
+        f.write('// slinky_depends("/something.sass")')
+      }
+      mf = Slinky::ManifestFile.new("/src/depends.sass", "/src/build", @mprod)
+      mf.find_directives.should == {:slinky_depends => ["/something.sass"]}
+    end
+
     it "should properly determine build_to path" do
       mf = Slinky::ManifestFile.new("/src/test.haml", "/src/build", @mprod)
       mf.build_to.should == Pathname.new("/src/build/test.html")
@@ -440,6 +448,32 @@ eos
       mprod.build
 
       File.read("/build/styles.css").include?("IGNORE!!!").should == false
+    end
+
+    it "should recompile files when files they depend on change" do
+      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(4).times
+
+      File.open("/src/l1/depender.scss", "w+"){|f|
+        f.write("// slinky_depends('/l1/_dependee.scss')\n")
+        f.write("@import \"dependee\";\n")
+        f.write("body { color: $bodycolor }\n")
+      }
+      File.open("/src/l1/_dependee.scss", "w+"){|f|
+        f.write("$bodycolor: red;\n")
+      }
+      mdevel = Slinky::Manifest.new("/src", @config)
+
+      mf = mdevel.find_by_path("/l1/depender.scss").first
+      path = mf.process
+      File.read(path).should match /color: red/
+
+      File.open("/src/l1/_dependee.scss", "w+"){|f|
+        f.write("$bodycolor: green;\n")
+      }
+
+      mf = mdevel.find_by_path("/l1/depender.scss").first
+      path = mf.process
+      File.read(path).should match /color: green/
     end
   end
 
