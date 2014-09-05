@@ -363,7 +363,7 @@ module Slinky
            f.directives.include?(:slinky_styles) ||
            f.directives.include?(:slinky_product)
           f.invalidate
-          f.process
+          f.find_directives
         end
       }
     end
@@ -694,15 +694,15 @@ module Slinky
       SlinkyError.batch_errors do
         depends = @directives[:slinky_depends].map{|f|
           p = parent.find_by_path(f, true)
-          unless p.size > 0        
+          unless p.size > 0
             SlinkyError.raise DependencyError,
-                              "File #{f} dependedon by #{@source} not found" 
+                              "File #{f} depended on by #{@source} not found"
           end
           p
         }.flatten.compact if @directives[:slinky_depends]
         depends ||= []
         @processing = true
-        # process each file on which we're dependent, watching out for 
+        # process each file on which we're dependent, watching out for
         # infinite loops
         depends.each{|f| f.process }
         @processing = false

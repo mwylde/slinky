@@ -33,7 +33,6 @@ describe "Manifest" do
       m = @mdevel
       hash1 = m.md5
       File.open("/src/hello.html", "w+") {|f| f.write("Hell!") }
-      $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green)).exactly(2).times
       m.add_all_by_path(["/src/hello.html"])
       m.md5.should_not == hash1
     end
@@ -311,7 +310,6 @@ eos
     end
 
     it "should detect new files" do
-      $stdout.should_receive(:puts).with(/Compiled \/src\/test.haml/)
       manifest = Slinky::Manifest.new("/src", @config, :devel => true)
       File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
       manifest.add_all_by_path(["/src/l1/cache.coffee"])
@@ -326,7 +324,6 @@ eos
 
     it "should handle deletion of files" do
       File.open("/src/l1/cache.coffee", "w+"){|f| f.write("console.log 'hello'")}
-      $stdout.should_receive(:puts).with(/Compiled \/src\/test.haml/)
       manifest = Slinky::Manifest.new("/src", @config, :devel => true)
       f = manifest.find_by_path("l1/cache.coffee").first
       f.should_not == nil
