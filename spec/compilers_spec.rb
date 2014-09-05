@@ -48,6 +48,13 @@ eos
         s.include?("color: red;") && s.include?("h1 a")
       }
     end
+
+    it "should not compile partials" do
+      src = "body { color: $something; }"
+      compiler_test("/compilers/_partial.scss", ".css", src){|s|
+        s == ""
+      }
+    end
   end
 
   context "LessCompiler" do
