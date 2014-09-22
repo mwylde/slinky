@@ -6,7 +6,7 @@ module Slinky
                                 :dependencies => [["haml", "~> 3.1.0"]],
                                 :requires => ["haml"]
 
-    def HamlCompiler::compile s, file
+    def HamlCompiler::compile s, file, options = {}
       haml_engine = Haml::Engine.new(s)
       haml_engine.render
     end

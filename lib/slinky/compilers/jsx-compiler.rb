@@ -6,7 +6,7 @@ module Slinky
                                 :dependencies => [["react-jsx", "~> 0.8.0"]],
                                 :requires => ["react/jsx"]
 
-    def JSXCompiler::compile s, file
+    def JSXCompiler::compile s, file, options = {}
       React::JSX.compile(s)
     end
   end

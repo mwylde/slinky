@@ -7,10 +7,11 @@ module Slinky
 
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.
-    def initialize source, compiler, output_ext
+    def initialize source, compiler, output_ext, options
       @source = source
       @compiler = compiler
       @last_compiled = Time.at(0)
+      @compile_options = options
       @output_ext = output_ext
     end
 
@@ -34,7 +35,7 @@ module Slinky
     def compiler_compile path, cb
       begin
         out = File.open @source do |f|
-          @compiler.compile f.read, @source
+          @compiler.compile f.read, @source, @compile_options
         end
 
         compile_succeeded

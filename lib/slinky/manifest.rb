@@ -24,13 +24,12 @@ module Slinky
 
     def initialize dir, config, options = {}
       @dir = dir
+      @devel = (options[:devel].nil?) ? true : options[:devel]
       @build_to = if d = options[:build_to]
                     File.expand_path(d)
                   else
-                    dir
-                  end
-      @manifest_dir = ManifestDir.new dir, self, @build_to, self
-      @devel = (options[:devel].nil?) ? true : options[:devel]
+                    dir end
+      @manifest_dir = ManifestDir.new dir, self, @build_to, self, config, (!@devel ? 'prod' : 'dev') 
       @config = config
       @no_minify = options[:no_minify] || config.dont_minify
     end
@@ -371,13 +370,17 @@ module Slinky
 
   class ManifestDir
     attr_accessor :dir, :parent, :files, :children
-    def initialize dir, parent, build_dir, manifest
+    attr_reader :config, :env
+
+    def initialize dir, parent, build_dir, manifest, config, env
       @dir = dir
       @parent = parent
       @files = []
       @children = []
       @build_dir = Pathname.new(build_dir)
       @manifest = manifest
+      @config = config
+      @env = env
 
       Dir.glob("#{dir}/*").each do |path|
         # skip the build dir
@@ -442,7 +445,7 @@ module Slinky
     def add_child path
       if File.directory? path
         build_dir = (@build_dir + File.basename(path)).cleanpath
-        md = ManifestDir.new(path, self, build_dir, @manifest)
+        md = ManifestDir.new(path, self, build_dir, @manifest, @config, @env)
         @children << md
         md
       end
@@ -455,7 +458,7 @@ module Slinky
       file = File.basename(path)
       full_path = Pathname.new(@dir).join(file).to_s
       if File.exists?(full_path) && !file.start_with?(".")
-        mf = ManifestFile.new(full_path, @build_dir, @manifest, self)
+        mf = ManifestFile.new(full_path, @build_dir, @manifest, @config, @env, self)
         # we don't want two files with the same source
         extant_file = @files.find{|f| f.source == mf.source}
         if extant_file
@@ -493,14 +496,14 @@ module Slinky
 
   class ManifestFile
     attr_accessor :source, :build_path
-    attr_reader :last_built, :directives, :parent, :manifest, :updated
+    attr_reader :last_built, :directives, :parent, :manifest, :updated, :config, :env
 
-    def initialize source, build_path, manifest, parent = nil, options = {:devel => false}
+    def initialize source, build_path, manifest, config, env, parent = nil, options = {:devel => false}
       @parent = parent
       @source = source
       @last_built = Time.at(0)
 
-      @cfile = Compilers.cfile_for_file(@source)
+      @cfile = Compilers.cfile_for_file(@source, config, env)
 
       @directives = find_directives
       @build_path = build_path
