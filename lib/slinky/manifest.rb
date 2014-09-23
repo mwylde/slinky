@@ -19,6 +19,9 @@ module Slinky
                                   PRODUCT_DIRECTIVE)
   CSS_URL_MATCHER = /url\(['"]?([^'"\/][^\s)]+\.[a-z]+)(\?\d+)?['"]?\)/
 
+  ENVIRONMENT_PRODUCTION = 'prod'
+  ENVIRONMENT_DEVELOPMENT = 'dev'
+
   class Manifest
     attr_accessor :manifest_dir, :dir, :config
 
@@ -28,9 +31,12 @@ module Slinky
       @build_to = if d = options[:build_to]
                     File.expand_path(d)
                   else
-                    dir end
-      @manifest_dir = ManifestDir.new dir, self, @build_to, self, config, (!@devel ? 'prod' : 'dev') 
+                    dir
+                  end
       @config = config
+
+      @manifest_dir = ManifestDir.new dir, self, @build_to, self,
+                        (!@devel ? ENVIRONMENT_PRODUCTION : ENVIRONMENT_DEVELOPMENT) 
       @no_minify = options[:no_minify] || config.dont_minify
     end
 
@@ -370,16 +376,15 @@ module Slinky
 
   class ManifestDir
     attr_accessor :dir, :parent, :files, :children
-    attr_reader :config, :env
+    attr_reader :manifest, :env
 
-    def initialize dir, parent, build_dir, manifest, config, env
+    def initialize dir, parent, build_dir, manifest, env
       @dir = dir
       @parent = parent
       @files = []
       @children = []
       @build_dir = Pathname.new(build_dir)
       @manifest = manifest
-      @config = config
       @env = env
 
       Dir.glob("#{dir}/*").each do |path|
@@ -445,7 +450,7 @@ module Slinky
     def add_child path
       if File.directory? path
         build_dir = (@build_dir + File.basename(path)).cleanpath
-        md = ManifestDir.new(path, self, build_dir, @manifest, @config, @env)
+        md = ManifestDir.new(path, self, build_dir, @manifest, @env)
         @children << md
         md
       end
@@ -458,7 +463,7 @@ module Slinky
       file = File.basename(path)
       full_path = Pathname.new(@dir).join(file).to_s
       if File.exists?(full_path) && !file.start_with?(".")
-        mf = ManifestFile.new(full_path, @build_dir, @manifest, @config, @env, self)
+        mf = ManifestFile.new(full_path, @build_dir, @manifest, @env, self)
         # we don't want two files with the same source
         extant_file = @files.find{|f| f.source == mf.source}
         if extant_file
@@ -496,14 +501,14 @@ module Slinky
 
   class ManifestFile
     attr_accessor :source, :build_path
-    attr_reader :last_built, :directives, :parent, :manifest, :updated, :config, :env
+    attr_reader :last_built, :directives, :parent, :manifest, :updated, :env
 
-    def initialize source, build_path, manifest, config, env, parent = nil, options = {:devel => false}
+    def initialize source, build_path, manifest, env, parent = nil, options = {:devel => false}
       @parent = parent
       @source = source
       @last_built = Time.at(0)
 
-      @cfile = Compilers.cfile_for_file(@source, config, env)
+      @cfile = Compilers.cfile_for_file(@source, manifest.config["compile_options"], env)
 
       @directives = find_directives
       @build_path = build_path

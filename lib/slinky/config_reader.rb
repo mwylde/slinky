@@ -12,8 +12,6 @@ module Slinky
 
     DEFAULT_SCRIPT_PRODUCT = "/scripts.js"
     DEFAULT_STYLE_PRODUCT = "/styles.css"
-    DEFAULT_DEVELOPMENT_ENV = "dev"
-    DEFAULT_PRODUCTION_ENV = "prod"
 
     class ConfigEntry
       attr_reader :type, :name, :default
@@ -40,10 +38,7 @@ module Slinky
                         DEFAULT_SCRIPT_PRODUCT => {"include" => ["*.js"]},
                         DEFAULT_STYLE_PRODUCT => {"include" => ["*.css"]}
                       }),
-      ConfigEntry.new("scss", HASH_TYPE, {
-                        DEFAULT_DEVELOPMENT_ENV => {},
-                        DEFAULT_PRODUCTION_ENV => {}
-                      }),
+      ConfigEntry.new("compile_options", HASH_TYPE, {}),
       ConfigEntry.new("enable_browser_errors", BOOL_TYPE, false)
     ]
 

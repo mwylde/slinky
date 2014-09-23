@@ -7,7 +7,11 @@ module Slinky
                                 :requires => ["haml"]
 
     def HamlCompiler::compile s, file, options = {}
-      haml_engine = Haml::Engine.new(s)
+      default_options = {}
+
+      compile_options = default_options.merge(options)
+
+      haml_engine = Haml::Engine.new(s, compile_options)
       haml_engine.render
     end
 

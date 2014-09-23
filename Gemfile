@@ -12,8 +12,8 @@ gem "uglifier", "~> 2.5"
 gem "listen", "~> 2.4"
 
 # compilation support gems
-gem "haml", "~> 3.1"
-gem "sass", "~> 3.3"
+gem "haml", "~> 4.0"
+gem "sass", "~> 3.4"
 gem "coffee-script", "~> 2.2"
 
 group :development do

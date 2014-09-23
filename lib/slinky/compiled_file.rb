@@ -3,7 +3,7 @@ module Slinky
   # source file and last modified time
   class CompiledFile
     attr_accessor :source, :print_name, :output_path
-    attr_reader :last_compiled, :output_ext
+    attr_reader :last_compiled, :output_ext, :options
 
     # Creates a new CompiledFile, compiling the provided source file
     # with the provided compiler class.

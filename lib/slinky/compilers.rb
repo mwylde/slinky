@@ -29,7 +29,7 @@ module Slinky
 
       def get_cfile source, compiler, input_ext, output_ext, options
         if has_dependencies compiler, input_ext
-          CompiledFile.new source, compiler[:klass], output_ext, options
+          CompiledFile.new source, compiler[:klass], output_ext, options || {}
         end
       end
 
@@ -93,12 +93,11 @@ module Slinky
 
       # Like cfile_for_request, but for the actual file to be compiled
       # (so script.coffee, not script.js).
-      def cfile_for_file path, config, env
+      def cfile_for_file path, options, env
         _, file, ext = path.match(EXTENSION_REGEX).to_a
 
-        config[ext]
         if ext && ext != "" && compiler = @compilers_by_input[ext]
-          get_cfile(path, compiler, ext, compiler[:outputs].first, (config[ext] ? config[ext][env] : {}))
+          get_cfile(path, compiler, ext, compiler[:outputs].first, (options && options[ext] ? options[ext][env] : {}))
         else
           nil
         end
