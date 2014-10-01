@@ -13,6 +13,7 @@ module Slinky
         e.messages.each{|m|
           $stderr.puts(m.foreground(:red))
         }
+        exit 1
       end
     end
   end
