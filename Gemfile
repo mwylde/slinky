@@ -21,7 +21,7 @@ group :development do
   gem "yard", "~> 0.8"
   gem "bundler", "~> 1.5"
   gem "jeweler", "~> 1.8"
-  gem "fakefs", '~> 0.5', :require => "fakefs/safe"
+  gem "fakefs", '0.5.3', :require => "fakefs/safe"
   gem "em-http-request", '~> 1.0'
   gem 'simplecov'
   # optional compilation gems
