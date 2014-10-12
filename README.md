@@ -176,6 +176,11 @@ slinky_depends("scripts/templates/*.mustache")
   %body
 ```
 
+The paths in `slinky_depends` can be either relative or absolute. If
+relative, they support simple globbing (as in the example above). If
+absolute, they support
+[the full path matching syntax](#path-matching).
+
 ## Configuration
 
 Slinky can optionally be configured using a yaml file. By default, it

@@ -693,12 +693,16 @@ module Slinky
 
       SlinkyError.batch_errors do
         depends = @directives[:slinky_depends].map{|f|
-          p = parent.find_by_path(f, true)
-          unless p.size > 0
+          ps = if f.start_with?("/")
+                 @manifest.find_by_pattern(f)
+               else
+                 parent.find_by_path(f, true)
+               end
+          unless ps.size > 0
             SlinkyError.raise DependencyError,
                               "File #{f} depended on by #{@source} not found"
           end
-          p
+          ps
         }.flatten.compact if @directives[:slinky_depends]
         depends ||= []
         @processing = true

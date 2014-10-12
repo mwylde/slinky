@@ -203,8 +203,10 @@ eos
     File.open("/src/l1/l2/test.txt", "w+"){|f| f.write("hello\n") }
     File.open("/src/l1/l2/l3/test2.txt", "w+"){|f| f.write("goodbye\n") }
 
-      @files = ["test.haml", "l1/test.js", "l1/test.sass", "l1/l2/test2.css", "l1/l2/test.txt", "l1/l2/l3/test2.txt", "l1/test2.js", "l1/l2/test3.coffee", "l1/test5.js", "l1/l2/test6.js"]
-
+    @files = ["test.haml", "l1/test.js", "l1/test.sass",
+              "l1/l2/test2.css", "l1/l2/test.txt", "l1/l2/l3/test2.txt",
+              "l1/test2.js", "l1/l2/test3.coffee", "l1/test5.js",
+              "l1/l2/test6.js"]
   end
 
   config.after :all do

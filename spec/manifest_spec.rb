@@ -264,6 +264,18 @@ describe "Manifest" do
       f.process
     end
 
+    it "should handle depends directives with **" do
+      File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends('/l1/**/*.sass')")}
+      File.open("/src/l1/l2/test5.sass", "w+"){|f| f.write("body\n\tcolor: red")}
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test5.js").first
+      f.should_not == nil
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/l2\/test5.sass/)
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test5.coffee/)
+      f.process
+    end
+    
     it "should handle depends directives with infinite loops" do
       File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends('*.sass')")}
       File.open("/src/l1/test2.sass", "w+"){|f| f.write("/* slinky_depends('*.coffee')")}
