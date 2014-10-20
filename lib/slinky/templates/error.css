@@ -13,7 +13,8 @@
   font-size: 1.5em;
   line-height: 1.5em;
   color: whitesmoke;
-  text-shadow: -1px -1px rgba(0, 0, 0, 0.2)
+  text-shadow: -1px -1px rgba(0, 0, 0, 0.2);
+  z-index: 100000;
 }
 
 #slinky-error .slinky-body {
@@ -25,6 +26,7 @@
   color: black;
   background-color: whitesmoke;
   border-bottom: 1px solid #aaa;
+  z-index: 100000;  
 }
 
 #slinky-error .slinky-body li {
