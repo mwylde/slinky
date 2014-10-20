@@ -497,7 +497,7 @@ module Slinky
 
     def initialize source, build_path, manifest, parent = nil, options = {:devel => false}
       @parent = parent
-      @source = source
+      @source = Pathname.new(source).cleanpath.to_s
       @last_built = Time.at(0)
 
       @cfile = Compilers.cfile_for_file(@source)
