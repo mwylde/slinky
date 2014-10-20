@@ -4,6 +4,7 @@ module Slinky
   # graph algorithms.
   class Graph
     include Enumerable
+    include TSort
 
     attr_reader :nodes, :edges
 
@@ -71,43 +72,41 @@ module Slinky
       @transitive_closure
     end
 
-    # Builds a list of files in topological order, so that when
-    # required in this order all dependencies are met. See
-    # http://en.wikipedia.org/wiki/Topological_sorting for more
-    # information.
+    # Methods needed for TSort mixin
+    def tsort_each_node &block
+      nodes.each(&block)
+    end
+
+    def tsort_each_child node, &block
+      adjacency_matrix.fetch(node, []).each(&block)
+    end
+
+    # Uses the tsort library to build a list of files in topological
+    # order, so that when required in this order all dependencies are
+    # met.
     def dependency_list
       return @dependency_list if @dependency_list
 
-      graph = edges.clone
-      # will contain sorted elements
-      l = []
-      # start nodes, those with no incoming edges
-      s = nodes.reject{|mf| mf.directives[:slinky_require]}
-      while s.size > 0
-        n = s.delete s.first
-        l << n
-        nodes.each{|m|
-          e = graph.find{|e| e[0] == n && e[1] == m}
-          next unless e
-          graph.delete e
-          s << m unless graph.any?{|e| e[1] == m}
-        }
-      end
-      if graph != []
-        problems = graph.collect{|e| e.collect{|x| x.source}.join(" -> ")}
-        raise DependencyError.new("Dependencies #{problems.join(", ")} could not be satisfied")
-      end
-      @dependency_list = l
+      results = []
+      each_strongly_connected_component{|component|
+        if component.size == 1
+          results << component.first
+        else
+          cycle = component.map{|x| x.source}.join(" -> ")
+          raise DependencyError.new("Dependencies #{cycle} could not be satisfied")
+        end
+      }
+      @dependency_list = results
     end
 
-    def each &block  
+    def each &block
       edges.each do |e|
         if block_given?
           block.call e
-        else  
+        else
           yield e
         end
-      end  
+      end
     end
   end
 end

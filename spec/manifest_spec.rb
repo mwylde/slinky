@@ -54,8 +54,8 @@ describe "Manifest" do
     it "should produce the correct scripts string for devel" do
       @mdevel.scripts_string.should == [
         '<script type="text/javascript" src="/l1/test5.js"></script>',
-        '<script type="text/javascript" src="/l1/l2/test6.js"></script>',
         '<script type="text/javascript" src="/l1/test2.js"></script>',
+        '<script type="text/javascript" src="/l1/l2/test6.js"></script>',        
         '<script type="text/javascript" src="/l1/l2/test3.js"></script>',
         '<script type="text/javascript" src="/l1/test.js"></script>'].join("\n")
     end
@@ -233,7 +233,7 @@ describe "Manifest" do
     end
 
     it "should build a correct dependency list" do
-      @mprod.dependency_list.collect{|x| x.source}.should == ["/src/test.haml", "/src/l1/test.sass", "/src/l1/test5.js", "/src/l1/l2/test.txt", "/src/l1/l2/test2.css", "/src/l1/l2/test6.js", "/src/l1/l2/l3/test2.txt", "/src/l1/test2.js", "/src/l1/l2/test3.coffee", "/src/l1/test.js"]
+      @mprod.dependency_list.collect{|x| x.source}.should == ["/src/test.haml", "/src/l1/test5.js", "/src/l1/test2.js", "/src/l1/l2/test6.js", "/src/l1/l2/test3.coffee", "/src/l1/test.js", "/src/l1/test.sass", "/src/l1/l2/test.txt", "/src/l1/l2/test2.css", "/src/l1/l2/l3/test2.txt"]
     end
 
     it "should fail if there is a cycle in the dependency graph" do
