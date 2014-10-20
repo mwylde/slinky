@@ -2,6 +2,13 @@ module Slinky
   class Runner
     COMMANDS = %w{start build}
 
+    def version
+      root = File.expand_path(File.dirname(__FILE__))
+      File.open("#{root}/../../VERSION"){|f|
+        f.read.strip
+      }
+    end
+
     def initialize argv
       # While slinky largely works in Ruby 1.8, the tests don't run
       # properly and using 1.9 is highly recommended.
@@ -10,10 +17,7 @@ module Slinky
                       " Using 1.9 is highly recommended.").foreground(:red))
       end
 
-      root = File.expand_path(File.dirname(__FILE__))
-      File.open("#{root}/../../VERSION"){|f|
-        puts "slinky #{f.read.strip}"
-      }
+      puts "slinky #{version}"
 
       @argv = argv
       @options = {}

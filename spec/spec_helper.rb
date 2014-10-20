@@ -76,6 +76,12 @@ module FakeFS
 end
 
 module Slinky
+  class Runner
+    def version
+      "0.8.0"
+    end
+  end
+
   # The coffee script compiler doesn't work under FakeFS
   module CoffeeCompiler
     def CoffeeCompiler::compile s, file
