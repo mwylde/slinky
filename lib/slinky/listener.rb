@@ -23,12 +23,12 @@ module Slinky
             if mf
               mf.output_path
             else
-              path
+              nil
             end
-          }
+          }.compact
 
           # only reload if something's actually changed
-          if manifest_md5 != @manifest.md5
+          if manifest_md5 != @manifest.md5 && files.size > 0
             manifest_md5 = @manifest.md5
             @livereload.reload_browser(files)
           end
