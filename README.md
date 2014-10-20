@@ -8,7 +8,7 @@ proxying and automatic browser reloads. And once you're ready to
 deploy, Slinky will compile, concatenate, and minify your sources,
 leaving you ready to push to production.
 
-[![Build Status](https://secure.travis-ci.org/mwylde/slinky.png)](http://travis-ci.org/mwylde/slinky)
+[![Build Status](https://travis-ci.org/mwylde/slinky.svg?branch=master)](https://travis-ci.org/mwylde/slinky)
 
 #### What can slinky do for you?
 
