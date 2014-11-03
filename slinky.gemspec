@@ -57,12 +57,15 @@ Gem::Specification.new do |s|
     "spec/compilers_spec.rb",
     "spec/manifest_spec.rb",
     "spec/slinky_spec.rb",
-    "spec/spec_helper.rb"
+    "spec/spec_helper.rb",
+    "ext/transitive_closure/transitive_closure.c"
   ]
   s.homepage = "http://mwylde.github.com/slinky/"
   s.licenses = ["MIT"]
   s.rubygems_version = "2.2.2"
   s.summary = "Static file server for javascript apps"
+  s.extensions << "ext/transitive_closure/extconf.rb"
+  s.add_development_dependency "rake-compiler"
 
   if s.respond_to? :specification_version then
     s.specification_version = 4

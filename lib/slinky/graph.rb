@@ -33,37 +33,31 @@ module Slinky
       return @transitive_closure if @transitive_closure
 
       g = adjacency_matrix
-      
+
       index_map = {}
       nodes.each_with_index{|f, i| index_map[f] = i}
 
       size = nodes.size
 
+      maxint = 9000000
+
       # Set up the distance matrix
-      dist = Array.new(size){|_| Array.new(size, Float::INFINITY)}
+      dist = Array.new(size*size, maxint)
       nodes.each_with_index{|fi, i|
-        dist[i][i] = 0
+        dist[size*i+i] = 0
         g[fi].each{|fj|
-          dist[i][index_map[fj]] = 1
+          dist[size*i+index_map[fj]] = 1
         }
       }
 
       # Compute the all-paths costs
-      size.times{|k|
-        size.times{|i|
-          size.times{|j|
-            if dist[i][j] > dist[i][k] + dist[k][j] 
-              dist[i][j] = dist[i][k] + dist[k][j]
-            end
-          }
-        }
-      }
+      TransitiveClosure::all_paths_costs(size, dist)
 
       # Compute the transitive closure in map form
       @transitive_closure = Hash.new{|h,k| h[k] = []}
       size.times{|i|
         size.times{|j|
-          if dist[i][j] < Float::INFINITY
+          if dist[size*i+j] < maxint
             @transitive_closure[nodes[i]] << nodes[j]
           end
         }

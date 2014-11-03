@@ -14,6 +14,7 @@ require 'uri'
 require 'uri'
 require 'yaml'
 
+require "transitive_closure"
 require "slinky/em-popen3"
 require "slinky/errors"
 require "slinky/compilers"
