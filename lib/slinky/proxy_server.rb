@@ -51,22 +51,26 @@ module Slinky
         proxy = nil
         start_time = nil
         conn.server :slinky, :host => "127.0.0.1", :port => slinky_port
-
+        server = nil
+        
         conn.on_data do |data|
           begin
-            _, path = data.match(ProxyServer::HTTP_MATCHER)[1..2]
-            proxy = ProxyServer.find_matcher(proxies, path)
-            start_time = Time.now
-            server = if proxy
-                       new_path = ProxyServer.rewrite_path path, proxy
-                       data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
-                       new_host = proxy[1].select(:host, :port).join(":")
-                       data = ProxyServer.replace_host(data, new_host)
-                       conn.server [proxy[1].host, proxy[1].port],
-                         :host => proxy[1].host, :port => proxy[1].port
-                       [proxy[1].host, proxy[1].port]
-                     else :slinky
-                     end
+            matches = data.match(ProxyServer::HTTP_MATCHER)
+            if matches
+              path = matches[2]
+              proxy = ProxyServer.find_matcher(proxies, path)
+              start_time = Time.now
+              server = if proxy
+                         new_path = ProxyServer.rewrite_path path, proxy
+                         data = ProxyServer.replace_path(data, path, new_path, proxy[1].path)
+                         new_host = proxy[1].select(:host, :port).join(":")
+                         data = ProxyServer.replace_host(data, new_host)
+                         conn.server [proxy[1].host, proxy[1].port],
+                                     :host => proxy[1].host, :port => proxy[1].port
+                         [proxy[1].host, proxy[1].port]
+                       else :slinky
+                       end
+            end
             [data, [server]]
           rescue
             conn.send_data "HTTP/1.1 500 Ooops...something went wrong\r\n"
