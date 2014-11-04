@@ -49,3 +49,5 @@ Gemfile.lock
 #*.swp
 
 tmp
+
+ext/transitive_closure/Makefile
