@@ -4,6 +4,7 @@ require 'em-http'
 describe "Slinky" do
   context "Runner" do
     it "should output help" do
+      $stdout.should_receive(:puts).with(/slinky \d+\.\d+\.\d+/)
       $stdout.should_receive(:puts).with(/Usage: slinky/)
       lambda { ::Slinky::Runner.new(["--help"]).run }.should raise_error SystemExit
     end
@@ -120,6 +121,7 @@ eos
 
     it "should accept a port option" do
       port = 53455
+      $stdout.should_receive(:puts).with(/slinky \d+\.\d+\.\d+/)
       $stdout.should_receive(:puts).with(/Started static file server on port #{port}/)
       run_for 0.3 do
         Slinky::Runner.new(["start","--port", port.to_s, "--no-livereload"]).run
@@ -135,6 +137,7 @@ eos
     end
 
     it "should serve files for realz" do
+      $stdout.should_receive(:puts).with(/slinky \d+\.\d+\.\d+/)
       $stdout.should_receive(:puts).with(/Started static file server on port 43453/)
       @results = []
       File.open("/src/index.haml", "w+"){|f|

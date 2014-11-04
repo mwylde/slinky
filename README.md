@@ -8,7 +8,7 @@ proxying and automatic browser reloads. And once you're ready to
 deploy, Slinky will compile, concatenate, and minify your sources,
 leaving you ready to push to production.
 
-[![Build Status](https://secure.travis-ci.org/mwylde/slinky.png)](http://travis-ci.org/mwylde/slinky)
+[![Build Status](https://travis-ci.org/mwylde/slinky.svg?branch=master)](https://travis-ci.org/mwylde/slinky)
 
 #### What can slinky do for you?
 
@@ -175,6 +175,11 @@ slinky_depends("scripts/templates/*.mustache")
       %script{:id => name, :type => "text/x-handlebars-template"}= File.read(f)
   %body
 ```
+
+The paths in `slinky_depends` can be either relative or absolute. If
+relative, they support simple globbing (as in the example above). If
+absolute, they support
+[the full path matching syntax](#path-matching).
 
 ## Configuration
 
