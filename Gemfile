@@ -28,5 +28,5 @@ group :development do
   gem "less", ">= 2.2.0"
   gem "therubyracer" # for less
   gem "react-jsx", '~> 0.8.0'
-  gem "rake-compiler", "~> 2.2.2"
+  gem "rake-compiler", '~> 0.9.3'
 end
