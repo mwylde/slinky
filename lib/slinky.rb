@@ -13,7 +13,6 @@ require 'listen'
 require 'multi_json'
 require 'uglifier'
 
-require "transitive_closure"
 require "slinky/em-popen3"
 require "slinky/errors"
 require "slinky/compilers"
@@ -27,6 +26,12 @@ require "slinky/runner"
 require "slinky/builder"
 require "slinky/listener"
 require "slinky/live_reload"
+
+begin
+  require "transitive_closure"
+rescue LoadError
+  puts "Using pure Ruby implementation of Slinky::all_paths_costs"
+end
 
 # load compilers
 root = File.expand_path(File.dirname(__FILE__))

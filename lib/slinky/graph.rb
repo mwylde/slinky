@@ -50,7 +50,7 @@ module Slinky
       }
 
       # Compute the all-paths costs
-      TransitiveClosure::all_paths_costs(size, dist)
+      Slinky::all_paths_costs(size, dist)
 
       # Compute the transitive closure in map form
       @transitive_closure = Hash.new{|h,k| h[k] = []}
@@ -94,14 +94,26 @@ module Slinky
       @dependency_list = l
     end
 
-    def each &block  
+    def each &block
       edges.each do |e|
         if block_given?
           block.call e
-        else  
+        else
           yield e
         end
-      end  
+      end
     end
+  end
+
+  def self.all_paths_costs size, dist
+    size.times{|k|
+      size.times{|i|
+        size.times{|j|
+          if dist[size*i+j] > dist[size*i+k] + dist[size*k+j]
+            dist[size*i+j] = dist[size*i+k] + dist[size*k+j]
+          end
+        }
+      }
+    }
   end
 end

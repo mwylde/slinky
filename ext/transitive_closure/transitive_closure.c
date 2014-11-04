@@ -32,16 +32,9 @@ static VALUE all_paths_costs(VALUE module, VALUE rsize, VALUE distArray)
 
 void Init_transitive_closure(void)
 {
-    VALUE cTransitiveClosure;
+    VALUE cSlinky;
 
-    cTransitiveClosure = rb_define_module("TransitiveClosure");
+    cSlinky = rb_define_module("Slinky");
 
-    rb_define_module_function(cTransitiveClosure, "all_paths_costs", all_paths_costs, 2);
-
-    // rb_define_alloc_func(cMyMalloc, my_malloc_alloc);
-    // rb_define_method(cMyMalloc, "initialize", my_malloc_init, 1);
-    // rb_define_method(cMyMalloc, "free", my_malloc_release, 0);
-
-    // create a ruby class instance
-    // cMyClass = rb_define_class("MyClass", rb_cObject);
+    rb_define_module_function(cSlinky, "all_paths_costs", all_paths_costs, 2);
 }
