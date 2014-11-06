@@ -8,11 +8,13 @@ module Slinky
   # extensions of non-compiled files that can contain build directives
   DIRECTIVE_FILES = %w{js css html}
   DEPENDS_DIRECTIVE = /^[^\n\w]*(slinky_depends)\((".*"|'.+'|)\)[^\n\w]*$/
+  EXTERNAL_DEPENDS_DIRECTIVE = /^[^\n\w]*(slinky_depends_external)\((".*"|'.+'|)\)[^\n\w]*$/
   REQUIRE_DIRECTIVE = /^[^\n\w]*(slinky_require)\((".*"|'.+'|)\)[^\n\w]*$/
   SCRIPTS_DIRECTIVE = /^[^\n\w]*(slinky_scripts)[^\n\w]*$/
   STYLES_DIRECTIVE  = /^[^\n\w]*(slinky_styles)[^\n\w]*$/
   PRODUCT_DIRECTIVE = /^[^\n\w]*(slinky_product)\((".*"|'.+'|)\)[^\n\w]*$/
   BUILD_DIRECTIVES = Regexp.union(DEPENDS_DIRECTIVE,
+                                  EXTERNAL_DEPENDS_DIRECTIVE,
                                   REQUIRE_DIRECTIVE,
                                   SCRIPTS_DIRECTIVE,
                                   STYLES_DIRECTIVE,
@@ -641,6 +643,7 @@ module Slinky
       if path && @directives.size > 0
         out = File.read(path)
         out.gsub!(DEPENDS_DIRECTIVE, "")
+        out.gsub!(EXTERNAL_DEPENDS_DIRECTIVE, "")
         out.gsub!(REQUIRE_DIRECTIVE, "")
         out.gsub!(SCRIPTS_DIRECTIVE){ @manifest.scripts_string }
         out.gsub!(STYLES_DIRECTIVE){ @manifest.styles_string }
@@ -678,6 +681,20 @@ module Slinky
       Digest::MD5.hexdigest(File.read(@source)) rescue nil
     end
 
+    # The list of paths to files external to the manifest that this file
+    # depends on
+    def external_dependencies
+      (@directives[:slinky_depends_external] || []).map{|ed|
+        Dir.glob(File.join(@manifest.dir, ed))
+      }.flatten
+    end
+
+    def external_dependencies_updated?
+      return false if external_dependencies.empty?
+
+      external_dependencies.map{|x| File.mtime(x)}.max > (@updated || Time.at(0))
+    end
+
     # Gets manifest file ready for serving or building by handling the
     # directives and compiling the file if neccesary.
     # @param String path to which the file should be compiled
@@ -712,7 +729,9 @@ module Slinky
         @processing = false
 
         # get hash of source file
-        if @last_path && hash == @last_md5 && depends.all?{|f| f.updated < start_time}
+        if @last_path && hash == @last_md5 &&
+           depends.all?{|f| f.updated < start_time} &&
+           !external_dependencies_updated?
           @last_path
         else
           @last_md5 = hash
