@@ -39,7 +39,8 @@ module Slinky
 
       size = nodes.size
 
-      maxint = 2^30 - 1
+      # The max int supported by the transitive closure C extension (2^30 - 1)
+      maxint = 1073741823
 
       # Set up the distance matrix
       dist = Array.new(size * size, maxint)
