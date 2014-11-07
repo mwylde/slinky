@@ -1,5 +1,9 @@
 require 'rubygems'
 require 'bundler'
+require 'rake/extensiontask'
+
+Rake::ExtensionTask.new('transitive_closure')
+
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e

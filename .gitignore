@@ -47,3 +47,7 @@ Gemfile.lock
 #
 # For vim:
 #*.swp
+
+tmp
+
+ext/transitive_closure/Makefile

@@ -28,6 +28,12 @@ require "slinky/builder"
 require "slinky/listener"
 require "slinky/live_reload"
 
+begin
+  require "transitive_closure"
+rescue LoadError
+  puts "Using pure Ruby implementation of Slinky::all_paths_costs"
+end
+
 # load compilers
 root = File.expand_path(File.dirname(__FILE__))
 Dir.glob("#{root}/slinky/compilers/*.rb").each{|compiler|
