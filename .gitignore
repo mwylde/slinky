@@ -50,4 +50,8 @@ Gemfile.lock
 
 tmp
 
+# Compiled files
+*.bundle
+*.time
+*.o
 ext/transitive_closure/Makefile
