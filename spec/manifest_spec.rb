@@ -252,6 +252,22 @@ describe "Manifest" do
       f.process
     end
 
+    it "should handle external depends directives" do
+      Dir.mkdir("/external")
+      File.open("/external/file.js", "w+"){|f| f.write("Hello!") }
+      File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends_external('../external/*.js')")}
+      manifest = Slinky::Manifest.new("/src", @config, :devel => true)
+      f = manifest.find_by_path("l1/test5.js").first
+      f.should_not == nil
+      f.external_dependencies.should == ["/external/file.js"]
+      f.external_dependencies_updated?.should == true
+
+      $stdout.should_receive(:puts).with(/Compiled \/src\/l1\/test5.coffee/)
+      f.process
+
+      f.external_dependencies_updated?.should == false
+    end
+
     it "should handle depends directives with glob patterns" do
       File.open("/src/l1/test5.coffee", "w+"){|f| f.write("slinky_depends('*.sass')")}
       File.open("/src/l1/test2.sass", "w+"){|f| f.write("body\n\tcolor: red")}
