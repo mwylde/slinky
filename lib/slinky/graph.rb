@@ -39,7 +39,7 @@ module Slinky
 
       size = nodes.size
 
-      maxint = 9000000
+      maxint = 2^30 - 1
 
       # Set up the distance matrix
       dist = Array.new(size * size, maxint)
