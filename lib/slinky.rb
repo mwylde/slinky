@@ -32,6 +32,7 @@ begin
   require "transitive_closure"
 rescue LoadError
   puts "Using pure Ruby implementation of Slinky::all_paths_costs"
+  require 'slinky/pure_transitive_closure'
 end
 
 # load compilers
