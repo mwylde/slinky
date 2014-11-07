@@ -42,11 +42,11 @@ module Slinky
       maxint = 9000000
 
       # Set up the distance matrix
-      dist = Array.new(size*size, maxint)
+      dist = Array.new(size * size, maxint)
       nodes.each_with_index{|fi, i|
-        dist[size*i+i] = 0
+        dist[size * i + i] = 0
         g[fi].each{|fj|
-          dist[size*i+index_map[fj]] = 1
+          dist[size * i + index_map[fj]] = 1
         }
       }
 
@@ -57,7 +57,7 @@ module Slinky
       @transitive_closure = Hash.new{|h,k| h[k] = []}
       size.times{|i|
         size.times{|j|
-          if dist[size*i+j] < maxint
+          if dist[size * i + j] < maxint
             @transitive_closure[nodes[i]] << nodes[j]
           end
         }
@@ -108,8 +108,8 @@ module Slinky
     size.times{|k|
       size.times{|i|
         size.times{|j|
-          if dist[size*i+j] > dist[size*i+k] + dist[size*k+j]
-            dist[size*i+j] = dist[size*i+k] + dist[size*k+j]
+          if dist[size * i + j] > dist[size * i + k] + dist[size * k + j]
+            dist[size * i + j] = dist[size * i + k] + dist[size * k + j]
           end
         }
       }
