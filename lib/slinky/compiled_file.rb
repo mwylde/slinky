@@ -25,7 +25,7 @@ module Slinky
       if @compiler.respond_to? :compile
         compiler_compile path, cb
       else
-        compile_failed "invalid compiler"
+        compile_failed Exception.new("invalid compiler")
         cb.call @output_path, nil, nil, "invalid compiler"
         # compiler_command path, cb
       end
