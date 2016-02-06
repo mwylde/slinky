@@ -49,6 +49,7 @@ module Slinky
           end
         }
         (compiler[:requires] || []).each {|d|
+          puts "Requiring #{d}"
           require d
         }
         ds

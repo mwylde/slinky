@@ -308,6 +308,7 @@ module Slinky
     end
 
     def compressor_for_product product
+      require 'sassc'
       case type_for_product(product)
       when ".js"
         # Use UglifyJS
@@ -315,7 +316,7 @@ module Slinky
                                mangle: false, output: {ascii_only: false})}
       when ".css"
         # Use SASS's compressed output
-        lambda{|s| Sass::Engine.new(s, :syntax => :scss, :style => :compressed).render}
+        lambda{|s| SassC::Engine.new(s, :syntax => :scss, :style => :compressed).render}
       end
     end
 
@@ -752,7 +753,7 @@ module Slinky
     # to the build path
     def build
       return nil unless should_build
-      
+
       if !File.exists? @build_path
         FileUtils.mkdir_p(@build_path)
       end

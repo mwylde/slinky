@@ -75,6 +75,7 @@ module Slinky
 
     def compile_failed e
       SlinkyError.raise BuildFailedError, "Compilation failed on #{name}: #{e}"
+      $stderr.puts e.backtrace
     end
 
     # Calls the supplied callback with the path of the compiled file,
