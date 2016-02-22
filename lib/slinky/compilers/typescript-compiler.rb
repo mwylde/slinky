@@ -10,8 +10,13 @@ module Slinky
       # Raises an error if node is not available
       TypeScript::Node.check_node
 
-      # compiles a TypeScript source code string and returns String
-      TypeScript::Node.compile(s, '--target', 'ES5')
+      puts "PATH: #{File.absolute_path(File.dirname(file))}"
+
+      # we need to compile using the correct working dir
+      # Dir.chdir(File.absolute_path(File.dirname(file))) {
+        # compiles a TypeScript source code string and returns String
+        TypeScript::Node.compile_file(file, '--target', 'ES5').js
+      #}
     end
   end
 end
