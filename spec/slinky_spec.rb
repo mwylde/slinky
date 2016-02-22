@@ -53,7 +53,8 @@ describe "Slinky" do
 
     it "should serve the processed version of static files" do
       Slinky::Server.manifest = @mdevel
-      @resp.should_receive(:content_type).with("application/javascript").at_least(:once)
+      @resp.should_receive(:content_type)
+        .with("application/javascript; charset=utf-8").at_least(:once)
       Slinky::Server.process_path @resp, "/l1/test.js"
       File.read("/src/l1/test.js").match("slinky_require").should_not == nil
       @resp.content.match("slinky_require").should == nil
@@ -83,7 +84,7 @@ eos
       Slinky::Server.config = cr
       Slinky::Server.manifest = @mdevel
       $stdout.should_receive(:puts).with("Compiled /src/test.haml".foreground(:green))
-      @resp.should_receive(:content_type).with("text/html").at_least(:once)
+      @resp.should_receive(:content_type).with("text/html; charset=utf-8").at_least(:once)
       Slinky::Server.process_path @resp, "this/doesnt/exist.html"
       @resp.content.include?("html").should == true
     end
@@ -98,7 +99,7 @@ eos
       Slinky::Server.config = cr
       Slinky::Server.manifest = @mdevel
       @resp.should_receive(:status=).with(404)
-      @resp.should_receive(:content_type).with("text/html").at_least(:once)
+      @resp.should_receive(:content_type).with("text/html; charset=utf-8").at_least(:once)
       Slinky::Server.process_path @resp, "this/doesnt/exist.html"
     end
 
@@ -114,7 +115,7 @@ eos
       Slinky::Server.config = cr
       manifest = Slinky::Manifest.new("/src", cr)
       Slinky::Server.manifest = manifest
-      @resp.should_receive(:content_type).with("text/html").at_least(:once)
+      @resp.should_receive(:content_type).with("text/html; charset=utf-8").at_least(:once)
       Slinky::Server.process_path @resp, "hello/doesnt/exist.html"
       @resp.content.include?("goodbye").should == true
     end
