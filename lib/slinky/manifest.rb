@@ -139,14 +139,16 @@ module Slinky
     # Finds all the matching manifest files for a particular product.
     # This does not take into account dependencies.
     def files_for_product product
-      if !p = @config.produce[product]
-        SlinkyError.raise NoSuchProductError,
-               "Product '#{product}' has not been configured"
+      p = @config.produce[product]
+
+      if p.nil?
+        raise NoSuchProductError.new(
+                "Product '#{product}' has not been configured")
       end
 
       type = type_for_product product
       if type != ".js" && type != ".css"
-        SlinkyError.raise InvalidConfigError, "Only .js and .css products are supported"
+        raise InvalidConfigError.new("Only .js and .css products are supported")
       end
 
       g = dependency_graph.transitive_closure

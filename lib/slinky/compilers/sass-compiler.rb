@@ -13,8 +13,8 @@ module Slinky
         ""
       else
         sass_engine = SassC::Engine.new(s,
-                                        :syntax => syntax,
-                                        :load_paths => [File.dirname(file)])
+          :syntax => syntax,
+          :load_paths => [File.dirname(file)])
         sass_engine.render
       end
     end
