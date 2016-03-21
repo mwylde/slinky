@@ -2,36 +2,40 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'em-http'
 
 def compiler_test file, ext, src, &test
-  File.open(file, "w+"){|f| f.write(src)}
-  cf = Slinky::Compilers.cfile_for_file(file)
-  called_back = false
+  FakeFS.without {
+    dir = Dir.mktmpdir
 
-  $stdout.should_receive(:puts).with("Compiled #{file}".foreground(:green))  
+    begin
+      path = "#{dir}/#{file}"
+      
+      File.open(path, "w+"){|f| f.write(src)}
+      cf = Slinky::Compilers.cfile_for_file(path)
+      called_back = false
 
-  cf.compile{|cpath, _, _, error|
-    error.should == nil
-    cpath.nil?.should == false
-    cpath.end_with?(ext).should == true
-    test.call(File.open(cpath).read).should == true
-    called_back = true
+      $stdout.should_receive(:puts).with("Compiled #{path}".foreground(:green))  
+
+      cf.compile{|cpath, _, _, error|
+        error.should == nil
+        cpath.nil?.should == false
+        cpath.end_with?(ext).should == true
+        test.call(File.open(cpath).read).should == true
+        called_back = true
+      }
+      called_back.should == true
+    ensure
+      FileUtils.rm_rf(dir)
+    end
   }
-
-  called_back.should == true
 end
 
 describe "Compilers" do
-  before :each do
-    FileUtils.rm_rf("/compilers") rescue nil
-    FileUtils.mkdir("/compilers")
-  end
-
   context "SassCompiler" do
     it "should be able to compile SASS files" do
       src = <<eos
 h1
   color: red
 eos
-      compiler_test("/compilers/test.sass", ".css", src){|s|
+      compiler_test("test.sass", ".css", src){|s|
         s.include?("color: red;")
       }
     end
@@ -44,14 +48,14 @@ h1 {
   }
 }
 eos
-      compiler_test("/compilers/test.scss", ".css", src){|s|
+      compiler_test("test.scss", ".css", src){|s|
         s.include?("color: red;") && s.include?("h1 a")
       }
     end
 
     it "should not compile partials" do
       src = "body { color: $something; }"
-      compiler_test("/compilers/_partial.scss", ".css", src){|s|
+      compiler_test("_partial.scss", ".css", src){|s|
         s == ""
       }
     end
@@ -66,7 +70,7 @@ eos
   width: percentage(@width);
 }
 eos
-      compiler_test("/compilers/test.less", ".css", src){|s|
+      compiler_test("test.less", ".css", src){|s|
         s.include?("width: 50%;")
       }
     end
@@ -78,7 +82,7 @@ eos
 test = {do: (x) -> console.log(x)}
 test.do("Hello, world")
 eos
-      compiler_test("/compilers/test.coffee", ".js", src){|s|
+      compiler_test("test.coffee", ".js", src){|s|
         s.include?("function(x) {")
       }
     end
@@ -92,7 +96,7 @@ eos
   %title Hello!
 %body
 eos
-      compiler_test("/compilers/test.haml", ".html", src){|s|
+      compiler_test("test.haml", ".html", src){|s|
         s.include?("<title>Hello!</title>")
       }
     end
@@ -107,7 +111,7 @@ eos
     document.getElementById('example')
   );
 EOF
-      compiler_test("/compilers/test.jsx", ".js", src){|s|
+      compiler_test("test.jsx", ".js", src){|s|
         s.include?("Hello, world!")
       }
     end
