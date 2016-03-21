@@ -1,9 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'em-http'
 
-def compiler_test file, ext, src, &test
+def compiler_test file, ext, src, dir = nil, &test
   FakeFS.without {
-    dir = Dir.mktmpdir
+    dir ||= Dir.mktmpdir
 
     begin
       path = "#{dir}/#{file}"
@@ -113,6 +113,44 @@ eos
 EOF
       compiler_test("test.jsx", ".js", src){|s|
         s.include?("Hello, world!")
+      }
+    end
+  end
+
+  context "TypescriptCompiler" do
+    it "should be able to compile .ts files" do
+      src = <<-EOF
+function greeter(person: string) {
+    return "Hello, " + person;
+}
+
+var user = "Jane User";
+EOF
+      compiler_test("test.ts", ".js", src){|s|
+        s.include?("function greeter(person)")
+      }
+    end
+
+    it "should be able to reference definition files" do
+      dts = <<-EOF
+declare var Test: {x: number}
+EOF
+      
+      src = <<-EOF
+///<reference path="types/my.d.ts">
+
+console.log(Test.x + 5);
+EOF
+
+      FakeFS.without {      
+        dir = Dir.mktmpdir
+
+        FileUtils.mkdir("#{dir}/types")
+        File.open("#{dir}/types/my.d.ts", "w+"){|f| f.write(dts)}
+
+        compiler_test("test.ts", ".js", src, dir){|s|
+          s.include?("Test.x")
+        }
       }
     end
   end

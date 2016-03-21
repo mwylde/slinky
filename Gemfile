@@ -29,4 +29,5 @@ group :development do
   gem "therubyracer" # for less
   gem "react-jsx", '~> 0.8.0'
   gem "rake-compiler", '~> 0.9.3'
+  gem "typescript-node", "~> 1.6.2"
 end
