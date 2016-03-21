@@ -13,7 +13,7 @@ gem "listen", "~> 2.4"
 
 # compilation support gems
 gem "haml", "~> 3.1"
-gem "sass", "~> 3.3"
+gem "sassc", "~> 1.8"
 gem "coffee-script", "~> 2.2"
 
 group :development do
@@ -21,7 +21,7 @@ group :development do
   gem "yard", "~> 0.8"
   gem "bundler", "~> 1.5"
   gem "jeweler", "~> 1.8"
-  gem "fakefs", '0.5.3', :require => "fakefs/safe"
+  gem "fakefs", '0.6.7', :require => "fakefs/safe"
   gem "em-http-request", '~> 1.0'
   gem 'simplecov'
   # optional compilation gems

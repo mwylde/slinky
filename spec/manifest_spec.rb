@@ -132,7 +132,7 @@ describe "Manifest" do
       build_path = mf.process
     end
 
-    it "should report errors for bad files" do
+    it "should report errors for bad files" do      
       File.open("/src/l1/l2/bad.sass", "w+"){|f|
         f.write "color: red;"
       }
@@ -479,29 +479,39 @@ eos
     end
 
     it "should recompile files when files they depend on change" do
-      $stdout.should_receive(:puts).with(/Compiled \/src\/.+/).exactly(4).times
+      $stdout.should_receive(:puts).with(/Compiled .+/).exactly(4).times
 
-      File.open("/src/l1/depender.scss", "w+"){|f|
-        f.write("// slinky_depends('/l1/_dependee.scss')\n")
-        f.write("@import \"dependee\";\n")
-        f.write("body { color: $bodycolor }\n")
-      }
-      File.open("/src/l1/_dependee.scss", "w+"){|f|
-        f.write("$bodycolor: red;\n")
-      }
-      mdevel = Slinky::Manifest.new("/src", @config)
+      # We can't use FakeFS with SassC
+      FakeFS.without do
+        dir = Dir.mktmpdir
+        begin
+          FileUtils.mkdir("#{dir}/l1")
+          File.open("#{dir}/l1/depender.scss", "w+"){|f|
+            f.write("// slinky_depends('/l1/_dependee.scss')\n")
+            f.write("@import \"dependee\";\n")
+            f.write("body { color: $bodycolor }\n")
+          }
+          File.open("#{dir}/l1/_dependee.scss", "w+"){|f|
+            f.write("$bodycolor: red;\n")
+          }
 
-      mf = mdevel.find_by_path("/l1/depender.scss").first
-      path = mf.process
-      File.read(path).should match /color: red/
+          mdevel = Slinky::Manifest.new(dir, @config)
 
-      File.open("/src/l1/_dependee.scss", "w+"){|f|
-        f.write("$bodycolor: green;\n")
-      }
+          mf = mdevel.find_by_path("/l1/depender.scss").first
+          path = mf.process
+          File.read(path).should match /color: red/
 
-      mf = mdevel.find_by_path("/l1/depender.scss").first
-      path = mf.process
-      File.read(path).should match /color: green/
+          File.open("#{dir}/l1/_dependee.scss", "w+"){|f|
+            f.write("$bodycolor: green;\n")
+          }
+
+          mf = mdevel.find_by_path("/l1/depender.scss").first
+          path = mf.process
+          File.read(path).should match /color: green/
+        ensure
+          FileUtils.rm_rf(dir)
+        end          
+      end
     end
   end
 

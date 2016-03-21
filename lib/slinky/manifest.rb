@@ -139,14 +139,16 @@ module Slinky
     # Finds all the matching manifest files for a particular product.
     # This does not take into account dependencies.
     def files_for_product product
-      if !p = @config.produce[product]
-        SlinkyError.raise NoSuchProductError,
-               "Product '#{product}' has not been configured"
+      p = @config.produce[product]
+
+      if p.nil?
+        raise NoSuchProductError.new(
+                "Product '#{product}' has not been configured")
       end
 
       type = type_for_product product
       if type != ".js" && type != ".css"
-        SlinkyError.raise InvalidConfigError, "Only .js and .css products are supported"
+        raise InvalidConfigError.new("Only .js and .css products are supported")
       end
 
       g = dependency_graph.transitive_closure
@@ -308,6 +310,7 @@ module Slinky
     end
 
     def compressor_for_product product
+      require 'sassc'
       case type_for_product(product)
       when ".js"
         # Use UglifyJS
@@ -315,7 +318,7 @@ module Slinky
                                mangle: false, output: {ascii_only: false})}
       when ".css"
         # Use SASS's compressed output
-        lambda{|s| Sass::Engine.new(s, :syntax => :scss, :style => :compressed).render}
+        lambda{|s| SassC::Engine.new(s, :syntax => :scss, :style => :compressed).render}
       end
     end
 
@@ -752,7 +755,7 @@ module Slinky
     # to the build path
     def build
       return nil unless should_build
-      
+
       if !File.exists? @build_path
         FileUtils.mkdir_p(@build_path)
       end
