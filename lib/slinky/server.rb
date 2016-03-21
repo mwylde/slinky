@@ -48,8 +48,6 @@ module Slinky
         path += "/index.html"
       end
 
-      resp.content_type MIME::Types.type_for(path).first.to_s
-
       if file
         # They're requesting the source file and we should not
         # compile it (but still process directives)
@@ -61,6 +59,14 @@ module Slinky
       else
         not_found resp
       end
+
+      type = MIME::Types.type_for(path).first.to_s
+      if resp.content.encoding.to_s == "UTF-8"
+        type += "; charset=utf-8"
+      end
+
+      resp.content_type type
+
       resp
     end
 
@@ -116,7 +122,7 @@ module Slinky
         size = File.size(path)
         _, _, extension = path.match(EXTENSION_REGEX).to_a
         # File reading code from rack/file.rb
-        File.open path do |file|
+        File.open(path, "rb") do |file|
           resp.content = ""
           while size > 0
             part = file.read([8192, size].min)
