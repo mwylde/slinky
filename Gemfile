@@ -2,7 +2,7 @@ source "http://rubygems.org"
 
 # main gems
 gem 'multi_json', '~> 1.9.2'
-gem "eventmachine", "~> 1.0"
+gem "eventmachine", "~> 1.2"
 gem "eventmachine_httpserver", "~> 0.2"
 gem "em-websocket", "~> 0.3"
 gem "em-proxy", "~> 0.1"
@@ -20,7 +20,7 @@ group :development do
   gem "rspec", "~> 2.10"
   gem "yard", "~> 0.8"
   gem "bundler", "~> 1.5"
-  gem "jeweler", "~> 1.8"
+  gem "jeweler", :git => "https://github.com/steakknife/jeweler", :branch => "1d6f8d"
   gem "fakefs", '0.6.7', :require => "fakefs/safe"
   gem "em-http-request", '~> 1.0'
   gem 'simplecov'
@@ -29,5 +29,4 @@ group :development do
   gem "therubyracer" # for less
   gem "react-jsx", '~> 0.8.0'
   gem "rake-compiler", '~> 0.9.3'
-  gem "typescript-node", "~> 1.6.2"
 end

@@ -1,16 +1,24 @@
+require 'tempfile'
+
 module Slinky
   module TypescriptCompiler
     Compilers.register_compiler self,
                                 :inputs => ["ts"],
-                                :outputs => ["js"],
-                                :dependencies => [["typescript-node", "~> 1.6.0"]],
-                                :requires => ["typescript-node"]
+                                :outputs => ["js"]
 
     def TypescriptCompiler::compile s, file
-      # Raises an error if node is not available
-      TypeScript::Node.check_node
+      f = Tempfile.new("tsc")
+      begin
+        f.close
+        output = `tsc --out #{f.path} #{file}`
+        if output && output.strip != ""
+          raise Exception.new(output.strip)
+        end
 
-      TypeScript::Node.compile_file(file, '--target', 'ES5').js
+        return File.read(f.path)
+      ensure
+        f.unlink
+      end
     end
   end
 end

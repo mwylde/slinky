@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib"]
   s.authors = ["Micah Wylde"]
-  s.date = "2016-07-30"
+  s.date = "2016-12-25"
   s.description = "A static file server for rich web apps that automatically compiles SASS, HAML, CoffeeScript and more"
   s.email = "micah@micahw.com"
   s.executables = ["slinky"]
@@ -67,7 +67,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "http://mwylde.github.com/slinky/"
   s.licenses = ["MIT"]
-  s.rubygems_version = "2.4.5.1"
+  s.rubygems_version = "2.5.1"
   s.summary = "Static file server for javascript apps"
 
   if s.respond_to? :specification_version then
@@ -75,7 +75,7 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<multi_json>, ["~> 1.9.2"])
-      s.add_runtime_dependency(%q<eventmachine>, ["~> 1.0"])
+      s.add_runtime_dependency(%q<eventmachine>, ["~> 1.2"])
       s.add_runtime_dependency(%q<eventmachine_httpserver>, ["~> 0.2"])
       s.add_runtime_dependency(%q<em-websocket>, ["~> 0.3"])
       s.add_runtime_dependency(%q<em-proxy>, ["~> 0.1"])
@@ -89,7 +89,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<rspec>, ["~> 2.10"])
       s.add_development_dependency(%q<yard>, ["~> 0.8"])
       s.add_development_dependency(%q<bundler>, ["~> 1.5"])
-      s.add_development_dependency(%q<jeweler>, ["~> 1.8"])
+      s.add_development_dependency(%q<jeweler>, [">= 0"])
       s.add_development_dependency(%q<fakefs>, ["= 0.6.7"])
       s.add_development_dependency(%q<em-http-request>, ["~> 1.0"])
       s.add_development_dependency(%q<simplecov>, [">= 0"])
@@ -97,10 +97,9 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<therubyracer>, [">= 0"])
       s.add_development_dependency(%q<react-jsx>, ["~> 0.8.0"])
       s.add_development_dependency(%q<rake-compiler>, ["~> 0.9.3"])
-      s.add_development_dependency(%q<typescript-node>, ["~> 1.6.2"])
     else
       s.add_dependency(%q<multi_json>, ["~> 1.9.2"])
-      s.add_dependency(%q<eventmachine>, ["~> 1.0"])
+      s.add_dependency(%q<eventmachine>, ["~> 1.2"])
       s.add_dependency(%q<eventmachine_httpserver>, ["~> 0.2"])
       s.add_dependency(%q<em-websocket>, ["~> 0.3"])
       s.add_dependency(%q<em-proxy>, ["~> 0.1"])
@@ -114,7 +113,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<rspec>, ["~> 2.10"])
       s.add_dependency(%q<yard>, ["~> 0.8"])
       s.add_dependency(%q<bundler>, ["~> 1.5"])
-      s.add_dependency(%q<jeweler>, ["~> 1.8"])
+      s.add_dependency(%q<jeweler>, [">= 0"])
       s.add_dependency(%q<fakefs>, ["= 0.6.7"])
       s.add_dependency(%q<em-http-request>, ["~> 1.0"])
       s.add_dependency(%q<simplecov>, [">= 0"])
@@ -122,11 +121,10 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<therubyracer>, [">= 0"])
       s.add_dependency(%q<react-jsx>, ["~> 0.8.0"])
       s.add_dependency(%q<rake-compiler>, ["~> 0.9.3"])
-      s.add_dependency(%q<typescript-node>, ["~> 1.6.2"])
     end
   else
     s.add_dependency(%q<multi_json>, ["~> 1.9.2"])
-    s.add_dependency(%q<eventmachine>, ["~> 1.0"])
+    s.add_dependency(%q<eventmachine>, ["~> 1.2"])
     s.add_dependency(%q<eventmachine_httpserver>, ["~> 0.2"])
     s.add_dependency(%q<em-websocket>, ["~> 0.3"])
     s.add_dependency(%q<em-proxy>, ["~> 0.1"])
@@ -140,7 +138,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<rspec>, ["~> 2.10"])
     s.add_dependency(%q<yard>, ["~> 0.8"])
     s.add_dependency(%q<bundler>, ["~> 1.5"])
-    s.add_dependency(%q<jeweler>, ["~> 1.8"])
+    s.add_dependency(%q<jeweler>, [">= 0"])
     s.add_dependency(%q<fakefs>, ["= 0.6.7"])
     s.add_dependency(%q<em-http-request>, ["~> 1.0"])
     s.add_dependency(%q<simplecov>, [">= 0"])
@@ -148,7 +146,6 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<therubyracer>, [">= 0"])
     s.add_dependency(%q<react-jsx>, ["~> 0.8.0"])
     s.add_dependency(%q<rake-compiler>, ["~> 0.9.3"])
-    s.add_dependency(%q<typescript-node>, ["~> 1.6.2"])
   end
 end
 
