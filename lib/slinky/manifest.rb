@@ -62,7 +62,12 @@ module Slinky
 
     # Notifies of an update to a file in the manifest
     def update_all_by_path paths
-      manifest_update paths
+      manifest_update paths do |path|
+        mf = find_by_path(path).first()
+        if mf
+          mf.find_directives
+        end
+      end
     end
 
     # Removes a file from the manifest
@@ -332,9 +337,9 @@ module Slinky
       end
     end
 
-    def invalidate_cache
+    def invalidate_cache invalidate_graph = true
       @files = nil
-      @dependency_graph = nil
+      @dependency_graph = nil if invalidate_graph
       @md5 = nil
       @files_for_all_products = nil
     end
@@ -356,13 +361,14 @@ module Slinky
     end
 
     def manifest_update paths
+      old_directives_hash = directives_md5
       paths.each{|path|
         if path[0] == '/'
           path = Pathname.new(path).relative_path_from(Pathname.new(@dir).expand_path).to_s
         end
         yield path if block_given?
       }
-      invalidate_cache
+      invalidate_cache(old_directives_hash != directives_md5)
       files.each{|f|
         if f.directives.include?(:slinky_scripts) ||
            f.directives.include?(:slinky_styles) ||
@@ -371,6 +377,15 @@ module Slinky
           f.find_directives
         end
       }
+    end
+
+    def directives_md5
+      Digest::MD5.hexdigest(files.map{|f|
+        ds = f.directives.map{|d|
+          d.flatten.map{|k| k.to_s}.join(':')
+        }.join(',')
+        "[#{f.source.inspect},#{ds}]"
+      }.join(','))
     end
   end
 
